@@ -2,7 +2,7 @@
 
 ![Geminize IO Logo](https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Favicon-dark-TCRh0L4cFUo5bEkp6OVorSUlogaWFf.png)
 
-Geminize IO is a digital accessory management platform for off-road enthusiasts. The application allows users to control and manage their vehicle accessories through a web interface with Bluetooth connectivity.
+Geminize IO is a digital accessory management platform for off-road enthusiasts. The application allows users to control and manage their vehicle accessories through a web interface with Bluetooth connectivity..
 
 ## Table of Contents
 
