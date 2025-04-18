@@ -758,7 +758,7 @@ default`,
     }
 
     longPressTimerRef.current = setTimeout(() => {
-      console.log("Long press detected for widget:", widgetId)
+
 
       // Remove the visual indicator
       if (widgetElement) {
