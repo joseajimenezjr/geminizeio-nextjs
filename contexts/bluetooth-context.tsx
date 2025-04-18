@@ -1,7 +1,6 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from "react"
-import { useEffectEvent } from "@/hooks/use-effect-event" // Import from our custom hook
+import { createContext, useContext, useState, useRef, useEffect, type ReactNode } from "react"
 import { useToast } from "@/hooks/use-toast"
 import { requestDevice, connectToDevice as connect, disconnectDevice as disconnect } from "@/utils/bluetooth-utils"
 import { setBluetoothCharacteristic } from "@/utils/bluetooth-commands"
@@ -18,7 +17,6 @@ interface BluetoothContextType {
   connectToDevice: (deviceName?: string, serviceUUID?: string) => Promise<void>
   disconnectDevice: () => Promise<void>
   sendCommand: (value: number) => Promise<boolean>
-  autoConnect: () => Promise<boolean>
 }
 
 const BluetoothContext = createContext<BluetoothContextType | undefined>(undefined)
@@ -34,19 +32,6 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
     errorType?: "permission" | "support" | "other"
   }>({ available: false })
   const { toast } = useToast()
-
-  // Use our custom useEffectEvent for handling device disconnection
-  const handleDisconnect = useEffectEvent(() => {
-    console.log("Device disconnected")
-    setIsConnected(false)
-    characteristicRef.current = null
-    setBluetoothCharacteristic(null)
-    toast({
-      title: "Disconnected",
-      description: "Bluetooth device has been disconnected",
-      variant: "default",
-    })
-  })
 
   // Check if Web Bluetooth is supported on component mount
   useEffect(() => {
@@ -139,7 +124,17 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
       setBluetoothDevice(device)
 
       // Setup disconnect listener
-      device.addEventListener("gattserverdisconnected", handleDisconnect)
+      device.addEventListener("gattserverdisconnected", () => {
+        console.log("Device disconnected")
+        setIsConnected(false)
+        characteristicRef.current = null
+        setBluetoothCharacteristic(null)
+        toast({
+          title: "Disconnected",
+          description: "Bluetooth device has been disconnected",
+          variant: "default",
+        })
+      })
 
       // Connect to the device
       const { server, service, characteristic } = await connect(device, serviceUUID)
@@ -186,36 +181,6 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
       throw error // Re-throw the error so the calling component can handle it
     } finally {
       setIsConnecting(false)
-    }
-  }
-
-  // Auto-connect to the last known device
-  const autoConnect = async (): Promise<boolean> => {
-    try {
-      // Implementation details would depend on how you're storing the last device info
-      // This is a placeholder implementation
-      console.log("Attempting to auto-connect to last known device")
-
-      // You would typically retrieve the last device info from localStorage or similar
-      const lastDeviceInfo = localStorage.getItem("lastBluetoothDevice")
-
-      if (!lastDeviceInfo) {
-        console.log("No previous device information found")
-        return false
-      }
-
-      const { name, serviceUUID } = JSON.parse(lastDeviceInfo)
-
-      if (!serviceUUID) {
-        console.log("Missing service UUID for auto-connect")
-        return false
-      }
-
-      await connectToDevice(name, serviceUUID)
-      return isConnected
-    } catch (error) {
-      console.error("Auto-connect failed:", error)
-      return false
     }
   }
 
@@ -311,7 +276,6 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
         connectToDevice,
         disconnectDevice,
         sendCommand,
-        autoConnect,
       }}
     >
       {children}

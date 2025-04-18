@@ -419,7 +419,7 @@ export function TimerWidget({
       >
         {/* Star icon in top right */}
         <div
-          className="absolute top-2 right-2 text-green-500 cursor-pointer hover:text-green-400 transition-colors z-10"
+          className="absolute top-2 right-2 text-yellow-500 cursor-pointer hover:text-yellow-400 transition-colors z-10"
           onClick={handleStarClick}
         >
           <Star className="h-5 w-5" />
@@ -485,7 +485,7 @@ export function TimerWidget({
                 {topTimes.map((entry, index) => (
                   <div
                     key={index}
-                    className={`border rounded-lg p-3 flex items-center justify-between ${index === 0 ? "bg-green-500/10 border-green-500/50" : "bg-muted/30"}`}
+                    className={`border rounded-lg p-3 flex items-center justify-between ${index === 0 ? "bg-yellow-500/10 border-yellow-500/50" : "bg-muted/30"}`}
                   >
                     <div className="flex items-center">
                       <span className="font-medium mr-2">{index + 1}.</span>

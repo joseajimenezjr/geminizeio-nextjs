@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { useEffectEvent } from "@/hooks/use-effect-event" // Import from our custom hook
 import { parseVoiceCommand } from "@/lib/voice-commands"
 
 type VoiceCommandHandler = (target: string, action: string, relayPosition: number | null) => void
@@ -58,35 +57,6 @@ export function useVoiceControl(onCommand: VoiceCommandHandler) {
       setPermissionState("unavailable")
     }
   }, [])
-
-  // Use our custom useEffectEvent for handling speech recognition results
-  const handleSpeechResult = useEffectEvent((event: any) => {
-    const transcript = event.results[event.results.length - 1][0].transcript
-    console.log(`[Voice Control ${new Date().toLocaleTimeString()}] Voice command received: "${transcript}"`)
-
-    // Process the command
-    const { target, action, relayPosition, isValid } = parseVoiceCommand(transcript)
-
-    if (isValid) {
-      console.log(
-        `[Voice Control ${new Date().toLocaleTimeString()}] Valid command detected: target=${target}, action=${action}, relayPosition=${relayPosition}`,
-      )
-      onCommand(target, action, relayPosition || null)
-
-      // For Chrome, do an aggressive reset after each command
-      if (isChromeRef.current) {
-        console.log(
-          `[Voice Control ${new Date().toLocaleTimeString()}] Chrome browser detected - scheduling aggressive recognition reset`,
-        )
-        setTimeout(() => {
-          console.log(
-            `[Voice Control ${new Date().toLocaleTimeString()}] Executing scheduled aggressive reset after successful command`,
-          )
-          forceRecreateRecognition()
-        }, 1000) // Longer delay to ensure the previous command is fully processed
-      }
-    }
-  })
 
   // Function for completely destroying and recreating the recognition instance
   const forceRecreateRecognition = useCallback(() => {
@@ -165,7 +135,7 @@ export function useVoiceControl(onCommand: VoiceCommandHandler) {
 
       try {
         // Create a completely new instance
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+        const SpeechRecognition: SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
         const recognition = new SpeechRecognition()
 
         recognition.continuous = true
@@ -173,7 +143,33 @@ export function useVoiceControl(onCommand: VoiceCommandHandler) {
         recognition.lang = "en-US"
 
         // Set up event handlers
-        recognition.onresult = handleSpeechResult
+        recognition.onresult = (event) => {
+          const transcript = event.results[event.results.length - 1][0].transcript
+          console.log(`[Voice Control ${new Date().toLocaleTimeString()}] Voice command received: "${transcript}"`)
+
+          // Process the command
+          const { target, action, relayPosition, isValid } = parseVoiceCommand(transcript)
+
+          if (isValid) {
+            console.log(
+              `[Voice Control ${new Date().toLocaleTimeString()}] Valid command detected: target=${target}, action=${action}, relayPosition=${relayPosition}`,
+            )
+            onCommand(target, action, relayPosition || null)
+
+            // For Chrome, do an aggressive reset after each command
+            if (isChromeRef.current) {
+              console.log(
+                `[Voice Control ${new Date().toLocaleTimeString()}] Chrome browser detected - scheduling aggressive recognition reset`,
+              )
+              setTimeout(() => {
+                console.log(
+                  `[Voice Control ${new Date().toLocaleTimeString()}] Executing scheduled aggressive reset after successful command`,
+                )
+                forceRecreateRecognition()
+              }, 1000) // Longer delay to ensure the previous command is fully processed
+            }
+          }
+        }
 
         recognition.onerror = (event) => {
           console.error(`[Voice Control ${new Date().toLocaleTimeString()}] Speech recognition error: ${event.error}`)
@@ -249,7 +245,7 @@ export function useVoiceControl(onCommand: VoiceCommandHandler) {
         }
       }
     }, 300) // Short delay between cleanup and recreation
-  }, [isListening, handleSpeechResult])
+  }, [isListening, onCommand])
 
   // Set up periodic reset for Chrome browsers
   useEffect(() => {

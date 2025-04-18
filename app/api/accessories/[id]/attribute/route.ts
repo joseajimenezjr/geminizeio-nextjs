@@ -2,7 +2,13 @@ import { type NextRequest, NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+interface Params {
+  params: {
+    id: string
+  }
+}
+
+export async function POST(request: NextRequest, { params }: Params) {
   try {
     const accessoryId = params.id
     const { attributeName, value } = await request.json()
@@ -63,7 +69,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       success: true,
       message: `Attribute ${attributeName} updated for accessory ${accessoryId}`,
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error("Unexpected error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }

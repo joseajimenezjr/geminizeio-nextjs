@@ -10,17 +10,17 @@ const nextConfig = {
         hostname: "**",
       },
     ],
-    unoptimized: true, // ADDED: Disable image optimization
+    unoptimized: true,
   },
   experimental: {
     serverComponentsExternalPackages: ["@supabase/auth-helpers-nextjs"],
     serverActions: true,
   },
   eslint: {
-    ignoreDuringBuilds: true, // ADDED: Ignore ESLint during builds
+    ignoreDuringBuilds: true,
   },
   typescript: {
-    ignoreBuildErrors: true, // ADDED: Ignore TypeScript build errors
+    ignoreBuildErrors: true,
   },
 }
 

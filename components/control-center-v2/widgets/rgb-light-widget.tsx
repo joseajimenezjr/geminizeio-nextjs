@@ -13,19 +13,18 @@ import { useToast } from "@/hooks/use-toast"
 
 // Predefined colors
 const PRESET_COLORS = [
-  { id: 1, name: "Blue", hex: "#0000FF", value: 1 },
-  { id: 2, name: "Green", hex: "#00FF00", value: 2 },
-  { id: 3, name: "OrangeRed", hex: "#FF4500", value: 3 },
-  { id: 4, name: "LimeGreen", hex: "#32CD32", value: 4 },
-  { id: 5, name: "SteelBlue", hex: "#4682B4", value: 5 },
-  { id: 6, name: "Gold", hex: "#FFD700", value: 6 },
-  { id: 7, name: "Aqua", hex: "#40E0D0", value: 7 },
-  { id: 8, name: "Purple", hex: "#800080", value: 8 },
-  { id: 9, name: "Yellow", hex: "#FFFF00", value: 9 },
-  { id: 10, name: "Teal", hex: "#008080", value: 10 },
-  { id: 11, name: "HotPink", hex: "#FF69B4", value: 11 },
-  { id: 12, name: "Red", hex: "#FF0000", value: 12 },
-  { id: 13, name: "White", hex: "#FFFFFF", value: 13 },
+  { name: "Blue", hex: "#0000FF" },
+  { name: "Green", hex: "#00FF00" },
+  { name: "OrangeRed", hex: "#FF4500" },
+  { name: "LimeGreen", hex: "#32CD32" },
+  { name: "SteelBlue", hex: "#4682B4" },
+  { name: "Turquoise", hex: "#40E0D0" },
+  { name: "Purple", hex: "#800080" },
+  { name: "Yellow", hex: "#FFFF00" },
+  { name: "Teal", hex: "#008080" },
+  { name: "HotPink", hex: "#FF69B4" },
+  { name: "Red", hex: "#FF0000" },
+  { name: "White", hex: "#FFFFFF" },
 ]
 
 interface RGBLightWidgetProps {
@@ -80,20 +79,15 @@ export function RGBLightWidget({
   const relayPositionDisplay = formatRelayPosition(relayPosition)
 
   // Handle color change
-  const handleColorChange = async (colorId: number) => {
-    const selectedColor = PRESET_COLORS.find((c) => c.id === colorId)
-    if (!selectedColor) {
-      console.error(`Color with ID ${colorId} not found`)
-      return
-    }
+  const handleColorChange = async (color: string) => {
+    setCurrentColor(color)
 
-    setCurrentColor(selectedColor.hex)
-
-    // Send the color ID to the Bluetooth device
+    // Send the hex code without the hashtag as a string to the Bluetooth device
     if (isBtConnected) {
-      const success = await sendCommand(selectedColor.value)
+      const hexCode = color.substring(1) // Remove the '#'
+      const success = await sendCommand(hexCode)
       if (success) {
-        console.log(`Sent color ID ${colorId} to Bluetooth device`)
+        console.log(`Sent color ${hexCode} to Bluetooth device`)
       } else {
         console.error("Failed to send color to Bluetooth device")
         toast({
@@ -145,8 +139,8 @@ export function RGBLightWidget({
           className={cn(
             "w-20 h-20 rounded-full flex items-center justify-center transition-colors border-4",
             isOn
-              ? "bg-green-500 text-white border-green-600"
-              : "bg-muted/50 text-muted-foreground border-muted-foreground/20",
+              ? "bg-green-500 border-green-600 text-white"
+              : "bg-muted/50 border-muted-foreground/20 text-muted-foreground",
           )}
           onClick={onToggle}
           disabled={isEditing || !isConnected}
@@ -157,7 +151,7 @@ export function RGBLightWidget({
         {/* Color Wheel Button */}
         <button
           className="w-20 h-20 rounded-full flex items-center justify-center relative overflow-hidden border-4 border-muted-foreground/20"
-          onClick={isEditing ? undefined : () => setColorPickerOpen(true)}
+          onClick={() => setColorPickerOpen(true)}
           disabled={isEditing || !isConnected}
         >
           <div
@@ -180,12 +174,12 @@ export function RGBLightWidget({
           <div className="grid grid-cols-4 gap-2 mb-4">
             {PRESET_COLORS.map((color) => (
               <button
-                key={color.id}
+                key={color.hex}
                 className={`w-12 h-12 rounded-full border-2 ${
                   currentColor === color.hex ? "border-white" : "border-gray-700"
                 }`}
                 style={{ backgroundColor: color.hex }}
-                onClick={() => handleColorChange(color.id)}
+                onClick={() => handleColorChange(color.hex)}
                 title={color.name}
               />
             ))}

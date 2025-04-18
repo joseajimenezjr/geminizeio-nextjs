@@ -1,12 +1,18 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
-import { useEffect } from "react"
 import type React from "react"
 
-import { useState, useRef } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Responsive, WidthProvider } from "react-grid-layout"
+import { Button } from "@/components/ui/button"
+import { Plus, Save, Undo, Settings, Trash } from "lucide-react"
+import { WidgetLibrary } from "./widget-library"
+import { UtilityLibrary } from "./utility-library"
+import { OBDIILibrary } from "./obdii-library" // Import the new OBD2 library
+import { ToggleWidget } from "./widgets/toggle-widget"
+import { GaugeWidget } from "./widgets/gauge-widget"
 import { SpeedometerWidget } from "./widgets/speedometer-widget"
+import { UtilityWidget } from "./widgets/utility-widget"
 import { useAccessories } from "@/contexts/device-context"
 import saveWidgetLayout from "@/app/actions/widget-layout"
 import { useToast } from "@/components/ui/use-toast"
@@ -17,20 +23,19 @@ import { WeatherWidget } from "./widgets/weather-widget"
 import { TimerWidget } from "./widgets/timer-widget"
 import { SpeedDisplayWidget } from "./widgets/speed-display-widget"
 import { RPMDisplayWidget } from "./widgets/rpm-display-widget"
+import { ChaseLightWidget } from "./widgets/chase-light-widget"
+import { RGBLightWidget } from "./widgets/rgb-light-widget"
 import { BatteryWidget } from "./widgets/battery-widget"
 import { TemperatureWidget } from "./widgets/temperature-widget"
 
 // Add a style tag for the long-press visual indicator
 const longPressStyle = `
-\
-  .long-press-active
-{
-  opacity: 0.7
-  transform: scale(0.98)
-  transition: all
-  0.2s ease
-}
-;`
+  .long-press-active {
+    opacity: 0.7;
+    transform: scale(0.98);
+    transition: all 0.2s ease;
+  }
+`
 
 // Enable responsiveness with the WidthProvider
 const ResponsiveGridLayout = WidthProvider(Responsive)
@@ -187,32 +192,18 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData }: ControlC
 
     // Add a speedometer widget by default
     defaultWidgets.push({
-      id: `
-widget-speedometer-
-default`,
+      id: `widget-speedometer-default`,
       type: "speedometer",
-      position: {
-        x: 0,
-        y: 0,
-      },
-      size: {
-        w: 2,
-        h: 2,
-      },
+      position: { x: 0, y: 0 },
+      size: { w: 2, h: 2 },
     })
 
     // Add a winch widget by default - now 1 column, 2 rows
     defaultWidgets.push({
       id: `widget-winch-default`,
       type: "winch",
-      position: {
-        x: 2,
-        y: 0,
-      }, // Position it next to the speedometer
-      size: {
-        w: 1,
-        h: 3,
-      },
+      position: { x: 2, y: 0 }, // Position it next to the speedometer
+      size: { w: 1, h: 3 },
     })
 
     // Update position for next widget
@@ -343,7 +334,7 @@ default`,
 
     // Find first available position
     for (let y = 0; y < maxRows; y++) {
-      for (let x = 0; y < GRID_CONFIG.cols; x++) {
+      for (let x = 0; x < GRID_CONFIG.cols; x++) {
         // Check if this position can fit the widget
         let canFit = true
 
@@ -737,6 +728,7 @@ default`,
 
   // Handle long press start
   const handleWidgetMouseDown = (e: React.MouseEvent | React.TouchEvent, widgetId: string) => {
+    console.log("Widget mouse down:", widgetId)
 
     // Only enable long press in editing mode
     if (!isEditing) {
@@ -758,7 +750,7 @@ default`,
     }
 
     longPressTimerRef.current = setTimeout(() => {
-
+      console.log("Long press detected for widget:", widgetId)
 
       // Remove the visual indicator
       if (widgetElement) {
@@ -767,7 +759,9 @@ default`,
 
       // Get the widget element to position the menu relative to it
       if (widgetElement) {
-        const rect = widgetElement.getBoundingClientRect
+        const rect = widgetElement.getBoundingClientRect()
+        console.log("Widget position:", rect)
+
         setContextMenu({
           visible: true,
           widgetId,
@@ -792,6 +786,7 @@ default`,
 
   // Handle mouse up to cancel long press
   const handleWidgetMouseUp = (widgetId: string) => {
+    console.log("Widget mouse up:", widgetId)
 
     // Remove the visual indicator
     const widgetElement = document.getElementById(widgetId)
@@ -807,6 +802,8 @@ default`,
 
   // Handle mouse leave to cancel long press
   const handleWidgetMouseLeave = (widgetId: string) => {
+    console.log("Widget mouse leave:", widgetId)
+
     // Remove the visual indicator
     const widgetElement = document.getElementById(widgetId)
     if (widgetElement) {
@@ -991,46 +988,348 @@ default`,
       )
     }
 
-    return <div>Unknown widget type: {widget.type}</div>
-  }
+    // For accessory-based widgets
+    const accessory = userData.accessories.find((a: any) => a.accessoryID === widget.accessoryId)
+    if (!accessory) return null
 
-  return (
-    <div className="relative">
-      <div className="widget-grid grid grid-cols-2 gap-4">
-        {widgets.map((widget) => (
-          <div
-            key={widget.id}
-            id={widget.id}
-            className="widget-container bg-card rounded-lg border shadow-sm overflow-hidden"
-            style={{
-              gridColumn: `span ${widget.size?.w || 1}`,
-              gridRow: `span ${widget.size?.h || 1}`,
-            }}
+    const isConnected = true // In a real implementation, check if the accessory is connected
+    const isOn = accessory.accessoryConnectionStatus || false
+
+    switch (widget.type) {
+      case "light":
+        return (
+          <ToggleWidget
+            title={accessory.accessoryName}
+            accessoryType={accessory.accessoryType}
+            relayPosition={accessory.relayPosition}
+            isConnected={isConnected}
+            isOn={isOn}
+            isEditing={isEditing}
+            onToggle={() => toggleAccessoryStatus(widget.accessoryId, !isOn)}
             onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
             onMouseUp={() => handleWidgetMouseUp(widget.id)}
             onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
             onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
             onTouchEnd={() => handleWidgetMouseUp(widget.id)}
             onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
-            onClick={() => handleWidgetEditClick(widget.id)}
+          />
+        )
+      case "utility":
+        return (
+          <UtilityWidget
+            title={accessory.accessoryName}
+            isConnected={isConnected}
+            isOn={isOn}
+            isEditing={isEditing}
+            onToggle={() => toggleAccessoryStatus(widget.accessoryId, !isOn)}
+            onLeftPress={() => handleUtilityLeftPress(widget.accessoryId)}
+            onRightPress={() => handleUtilityRightPress(widget.accessoryId)}
+            onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
+            onMouseUp={() => handleWidgetMouseUp(widget.id)}
+            onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
+            onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
+            onTouchEnd={() => handleWidgetMouseUp(widget.id)}
+            onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
+          />
+        )
+      case "gauge":
+        return (
+          <GaugeWidget
+            title={accessory.accessoryName}
+            value={75} // Example value
+            min={0}
+            max={100}
+            unit="%"
+            isEditing={isEditing}
+            onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
+            onMouseUp={() => handleWidgetMouseUp(widget.id)}
+            onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
+            onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
+            onTouchEnd={() => handleWidgetMouseUp(widget.id)}
+            onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
+          />
+        )
+      case "chaseLight":
+        return (
+          <ChaseLightWidget
+            title={accessory.accessoryName}
+            accessoryId={widget.accessoryId}
+            isConnected={isConnected}
+            isOn={isOn}
+            relayPosition={accessory.relayPosition}
+            isEditing={isEditing}
+            onToggle={() => toggleAccessoryStatus(widget.accessoryId, !isOn)}
+            onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
+            onMouseUp={() => handleWidgetMouseUp(widget.id)}
+            onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
+            onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
+            onTouchEnd={() => handleWidgetMouseUp(widget.id)}
+            onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
+          />
+        )
+      case "rgbLight":
+        return (
+          <RGBLightWidget
+            title={accessory.accessoryName}
+            accessoryId={widget.accessoryId}
+            isConnected={isConnected}
+            isOn={isOn}
+            relayPosition={accessory.relayPosition}
+            lastRGBColor={accessory.lastRGBColor || "#FF0000"}
+            isEditing={isEditing}
+            onToggle={() => toggleAccessoryStatus(widget.accessoryId, !isOn)}
+            onColorChange={(color) => handleRGBColorChange(widget.accessoryId, color)}
+            onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
+            onMouseUp={() => handleWidgetMouseUp(widget.id)}
+            onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
+            onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
+            onTouchEnd={() => handleWidgetMouseUp(widget.id)}
+            onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
+          />
+        )
+      case "temperature":
+        return (
+          <TemperatureWidget
+            title={accessory.accessoryName}
+            isConnected={isConnected}
+            isOn={isOn}
+            isEditing={isEditing}
+            onToggle={() => toggleAccessoryStatus(widget.accessoryId, !isOn)}
+            onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
+            onMouseUp={() => handleWidgetMouseUp(widget.id)}
+            onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
+            onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
+            onTouchEnd={() => handleWidgetMouseUp(widget.id)}
+            onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
+          />
+        )
+      default:
+        return (
+          <div
+            className="flex items-center justify-center h-full"
+            onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
+            onMouseUp={() => handleWidgetMouseUp(widget.id)}
+            onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
+            onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
+            onTouchEnd={() => handleWidgetMouseUp(widget.id)}
+            onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
           >
-            {renderWidget(widget)}
+            <p>Unknown widget type</p>
           </div>
-        ))}
+        )
+    }
+  }
+
+  // Add the style tag to the component
+  useEffect(() => {
+    // Add the style tag to the head
+    const styleTag = document.createElement("style")
+    styleTag.innerHTML = longPressStyle
+    document.head.appendChild(styleTag)
+
+    return () => {
+      // Remove the style tag when the component unmounts
+      document.head.removeChild(styleTag)
+    }
+  }, [])
+
+  return (
+    <div className="flex h-screen flex-col bg-black text-white">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-gray-800 p-4">
+        <div className="flex items-center gap-2">
+          <div>
+            <h1 className="text-xl font-bold">Control Center</h1>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {isEditing ? (
+            <>
+              <Button variant="outline" size="sm" onClick={handleCancelEditing} className="flex items-center gap-1">
+                <Undo className="h-4 w-4" />
+                Cancel
+              </Button>
+              <Button variant="default" size="sm" onClick={handleSaveLayout} className="flex items-center gap-1">
+                <Save className="h-4 w-4" />
+                Save Layout
+              </Button>
+            </>
+          ) : (
+            <Button variant="outline" size="sm" onClick={handleStartEditing} className="flex items-center gap-1">
+              <Settings className="h-4 w-4" />
+              Edit Layout
+            </Button>
+          )}
+        </div>
       </div>
 
-      {/* Context Menu */}
-      {contextMenu.visible && (
-        <div
-          id="widget-context-menu"
-          className="absolute z-50 bg-popover border border-border rounded-md shadow-lg p-2"
-          style={{ left: contextMenu.x - 75, top: contextMenu.y - 50 }}
+      {/* Main Content */}
+      <div className="flex-1 overflow-auto p-4">
+        {isEditing && (
+          <div className="bg-muted/50 p-3 rounded-lg flex justify-between items-center mb-6">
+            <p className="text-sm text-muted-foreground">
+              Drag widgets to rearrange them. Long-press any widget to remove it.
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant={showLibrary ? "default" : "outline"}
+                size="sm"
+                onClick={() => {
+                  setShowLibrary(!showLibrary)
+                  setShowUtilityLibrary(false)
+                  setShowOBDIILibrary(false)
+                }}
+                className="flex items-center gap-1"
+              >
+                <Plus className="h-4 w-4" />
+                Add Accessory
+              </Button>
+              <Button
+                variant={showUtilityLibrary ? "default" : "outline"}
+                size="sm"
+                onClick={() => {
+                  setShowUtilityLibrary(!showUtilityLibrary)
+                  setShowLibrary(false)
+                  setShowOBDIILibrary(false)
+                }}
+                className="flex items-center gap-1"
+              >
+                <Plus className="h-4 w-4" />
+                Add Utility
+              </Button>
+              {hasOBD2Accessory && (
+                <Button
+                  variant={showOBDIILibrary ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setShowOBDIILibrary(!showOBDIILibrary)
+                    setShowLibrary(false)
+                    setShowUtilityLibrary(false)
+                  }}
+                  className="flex items-center gap-1"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add OBD2
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {showLibrary && (
+          <div className="mb-6">
+            <WidgetLibrary
+              accessories={userData.accessories}
+              existingWidgets={widgets}
+              onAddWidget={handleAddWidget}
+              onClose={() => setShowLibrary(false)}
+            />
+          </div>
+        )}
+
+        {showUtilityLibrary && (
+          <div className="mb-6">
+            <UtilityLibrary
+              existingWidgets={widgets}
+              onAddUtility={handleAddUtilityWidget}
+              onClose={() => setShowUtilityLibrary(false)}
+            />
+          </div>
+        )}
+
+        {showOBDIILibrary && (
+          <div className="mb-6">
+            <OBDIILibrary
+              existingWidgets={widgets}
+              onAddOBDII={handleAddOBDIIWidget}
+              onClose={() => setShowOBDIILibrary(false)}
+            />
+          </div>
+        )}
+
+        <ResponsiveGridLayout
+          className="layout"
+          layouts={layouts}
+          breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+          cols={{ lg: GRID_CONFIG.cols, md: GRID_CONFIG.cols, sm: GRID_CONFIG.cols, xs: 2, xxs: 1 }}
+          rowHeight={GRID_CONFIG.rowHeight}
+          isDraggable={isEditing}
+          isResizable={false}
+          preventCollision={false}
+          onLayoutChange={onLayoutChange}
+          margin={[16, 16]}
+          containerPadding={[0, 0]}
+          compactType="vertical"
+          autoSize={true}
         >
-          <Button variant="ghost" size="sm" onClick={() => handleRemoveWidget(contextMenu.widgetId)}>
-            Remove Widget
-          </Button>
-        </div>
-      )}
+          {widgets.map((widget) => (
+            <div
+              key={widget.id}
+              id={widget.id}
+              className="widget-container bg-card rounded-lg shadow-sm overflow-hidden border h-full relative"
+              onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
+              onMouseUp={() => handleWidgetMouseUp(widget.id)}
+              onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
+              onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
+              onTouchEnd={() => handleWidgetMouseUp(widget.id)}
+              onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
+            >
+              {renderWidget(widget)}
+            </div>
+          ))}
+        </ResponsiveGridLayout>
+
+        {widgets.length === 0 && (
+          <div className="flex flex-col items-center justify-center p-8 bg-muted/30 rounded-lg border border-dashed">
+            <p className="text-muted-foreground mb-4">No widgets in your control center</p>
+            {isEditing && (
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowLibrary(true)}
+                  className="flex items-center gap-1"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Accessory Widget
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleAddSpeedometer} className="flex items-center gap-1">
+                  <Plus className="h-4 w-4" />
+                  Add Speedometer
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Context Menu for Widget Actions */}
+        {contextMenu.visible && contextMenu.widgetId && (
+          <div
+            id="widget-context-menu"
+            className="fixed bg-popover text-popover-foreground shadow-md rounded-md overflow-hidden z-50"
+            style={{
+              top: `${contextMenu.y}px`,
+              left: `${contextMenu.x}px`,
+              transform: "translate(-50%, -50%)",
+              minWidth: "200px",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-2 flex flex-col">
+              <div className="px-2 py-1 text-sm font-medium border-b mb-1">Widget Options</div>
+
+              {/* Remove option */}
+              <button
+                className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-destructive hover:text-destructive-foreground flex items-center gap-2 mt-1"
+                onClick={() => handleRemoveWidget(contextMenu.widgetId!)}
+              >
+                <Trash className="h-4 w-4" />
+                Remove Widget
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
