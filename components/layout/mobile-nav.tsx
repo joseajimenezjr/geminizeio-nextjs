@@ -1,33 +1,31 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Home, Lightbulb, Settings, LogOut, Menu } from "lucide-react"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { PreviewAuthLink } from "@/components/preview-auth-link"
 
 export function MobileNav() {
   const pathname = usePathname()
-  const router = useRouter()
   const supabase = createClientComponentClient()
   const [open, setOpen] = useState(false)
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     setOpen(false)
-    router.push("/")
-    router.refresh()
+    window.location.href = "/"
   }
 
   const routes = [
     {
-      href: "/dashboard",
-      label: "Dashboard",
+      href: "/control-center",
+      label: "Control Center",
       icon: Home,
-      active: pathname === "/dashboard",
+      active: pathname === "/control-center",
     },
     {
       href: "/lights",
@@ -59,13 +57,17 @@ export function MobileNav() {
       </SheetTrigger>
       <SheetContent side="right" className="w-[240px] sm:w-[300px]">
         <div className="flex flex-col space-y-4 py-4">
-          <Link href="/dashboard" className="flex items-center space-x-2 px-2" onClick={() => setOpen(false)}>
+          <PreviewAuthLink
+            href="/control-center"
+            className="flex items-center space-x-2 px-2"
+            onClick={() => setOpen(false)}
+          >
             <span className="font-bold">Geminize IO</span>
-          </Link>
+          </PreviewAuthLink>
           <div className="flex flex-col space-y-2">
             {routes.map((route) => (
               <Button key={route.href} variant={route.active ? "default" : "ghost"} className="justify-start" asChild>
-                <Link
+                <PreviewAuthLink
                   href={route.href}
                   onClick={() => setOpen(false)}
                   className={cn(
@@ -75,7 +77,7 @@ export function MobileNav() {
                 >
                   <route.icon className="mr-2 h-4 w-4" />
                   <span>{route.label}</span>
-                </Link>
+                </PreviewAuthLink>
               </Button>
             ))}
             <Button
@@ -92,4 +94,3 @@ export function MobileNav() {
     </Sheet>
   )
 }
-

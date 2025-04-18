@@ -1,12 +1,10 @@
 "use client"
 
 import { useAccessories } from "@/contexts/device-context"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Lightbulb, Plus, RefreshCw } from "lucide-react"
 import Link from "next/link"
 import { DashboardToggle } from "@/components/accessories/dashboard-toggle"
-import { cn } from "@/lib/utils"
 import { useState, useEffect } from "react"
 import { DeviceDetailsDialog } from "@/components/accessories/device-details-dialog"
 
@@ -62,37 +60,36 @@ export function AccessoriesPageContent() {
           accessories.map((accessory) => {
             const AccessoryIcon = getAccessoryIcon(accessory.accessoryType)
             return (
-              <Card
+              <div
                 key={accessory.accessoryID}
-                className={accessory.accessoryConnectionStatus ? "border-primary/20" : ""}
-                onClick={(e) => {
-                  // Only open the dialog if the click wasn't on a child interactive element
-                  if (e.target === e.currentTarget || !e.defaultPrevented) {
-                    handleAccessoryClick(accessory)
-                  }
-                }}
+                className="bg-black/80 rounded-lg overflow-hidden border border-gray-800"
               >
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-lg font-medium">{accessory.accessoryName}</CardTitle>
-                  <AccessoryIcon
-                    className={cn(
-                      "h-5 w-5",
-                      accessory.accessoryConnectionStatus ? "text-primary" : "text-muted-foreground",
-                    )}
-                  />
-                </CardHeader>
-                <CardContent>
+                <div className="p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="text-lg font-medium text-white">{accessory.accessoryName}</h3>
+                    <AccessoryIcon className="h-5 w-5 text-white" />
+                  </div>
+                  <p className="text-sm text-gray-400 mb-4">
+                    {accessory.relayPosition ? `Relay ${accessory.relayPosition}` : "No location set"}
+                  </p>
                   <div className="flex justify-between items-center mb-4">
-                    <span className="text-sm text-muted-foreground">{accessory.location || "No location set"}</span>
-                    <DashboardToggle id={accessory.accessoryID} />
+                    <span className="text-sm text-gray-400"></span>
+                    <DashboardToggle
+                      accessoryID={accessory.accessoryID}
+                      isOn={accessory.accessoryConnectionStatus || false}
+                      relayPosition={accessory.relayPosition?.toString()}
+                    />
                   </div>
-                  <div className="flex space-x-2">
-                    <Button variant="outline" size="sm" asChild className="flex-1">
-                      <Link href={`/accessories/${accessory.accessoryID}`}>Edit</Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full bg-transparent border-gray-700 text-white hover:bg-gray-800"
+                    onClick={() => handleAccessoryClick(accessory)}
+                  >
+                    Edit
+                  </Button>
+                </div>
+              </div>
             )
           })
         ) : (
@@ -117,4 +114,3 @@ export function AccessoriesPageContent() {
     </>
   )
 }
-

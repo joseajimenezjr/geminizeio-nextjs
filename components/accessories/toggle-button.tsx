@@ -53,4 +53,3 @@ export function ToggleButton({ id, active: initialActive }: ToggleButtonProps) {
     </Button>
   )
 }
-

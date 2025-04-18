@@ -1,21 +1,19 @@
 "use client"
 
-import { Lightbulb, Wrench, Radio, Thermometer, Zap, Star, Plus } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
-import { Badge } from "@/components/ui/badge"
-import { DashboardToggle } from "@/components/accessories/dashboard-toggle"
 import { useAccessories } from "@/contexts/device-context"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Lightbulb, Wrench, Radio, Thermometer, Zap, ChevronRight, Heart } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { DashboardToggle } from "@/components/accessories/dashboard-toggle"
 
 interface FavoritesTabProps {
-  onDeviceClick: (accessory: any) => void
+  onDeviceClick?: (accessory: any) => void
 }
 
 export function FavoritesTab({ onDeviceClick }: FavoritesTabProps) {
   const { accessories } = useAccessories()
 
-  // Filter to only show favorite accessories
+  // Filter favorites
   const favoriteAccessories = accessories.filter((accessory) => accessory.isFavorite)
 
   // Get the appropriate icon for each accessory type
@@ -29,71 +27,69 @@ export function FavoritesTab({ onDeviceClick }: FavoritesTabProps) {
     return Lightbulb // Default
   }
 
+  // Format relay position for display
+  const formatRelayPosition = (relayPosition: number | null | undefined): string => {
+    if (!relayPosition) return "No location set"
+    return `Relay ${relayPosition}`
+  }
+
   return (
-    <div className="space-y-4">
-      {favoriteAccessories.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {favoriteAccessories.map((accessory) => {
-            const AccessoryIcon = getAccessoryIcon(accessory.accessoryType)
-            const isConnected = accessory.accessoryConnectionStatus
+    <Card className="overflow-hidden border-none shadow-md bg-gradient-to-br from-background to-muted/30">
+      <CardHeader className="bg-background/50 backdrop-blur-sm border-b pb-3">
+        <CardTitle className="text-sm font-medium flex items-center gap-2">
+          FAVORITES
+          <Heart className="h-4 w-4 fill-red-500 text-red-500" />
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-0">
+        {favoriteAccessories.length > 0 ? (
+          <div className="divide-y divide-border/50">
+            {favoriteAccessories.map((accessory) => {
+              const AccessoryIcon = getAccessoryIcon(accessory.accessoryType)
+              const isConnected = accessory.accessoryConnectionStatus
 
-            return (
-              <div
-                key={accessory.accessoryID}
-                onClick={() => onDeviceClick(accessory)}
-                className={cn(
-                  "relative rounded-lg border p-4 transition-colors cursor-pointer hover:bg-accent/50",
-                  isConnected ? "bg-primary/5 border-primary/20" : "bg-card border-border",
-                )}
-              >
-                <div className="absolute top-3 right-3">
-                  <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                </div>
-
-                <div className="flex flex-col h-full">
-                  <div className="flex items-center mb-4">
+              return (
+                <div
+                  key={accessory.accessoryID}
+                  className={cn(
+                    "flex items-center justify-between p-4 transition-colors cursor-pointer",
+                    isConnected ? "bg-primary/5" : "",
+                  )}
+                  onClick={() => onDeviceClick?.(accessory)}
+                >
+                  <div className="flex items-center space-x-4">
                     <div
                       className={cn(
-                        "rounded-md p-2 mr-3 transition-colors",
+                        "rounded-md p-2 transition-colors",
                         isConnected ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground",
                       )}
                     >
                       <AccessoryIcon className="h-5 w-5" />
                     </div>
-                    <div>
-                      <h3 className="font-medium text-base">{accessory.accessoryName}</h3>
-                      <p className="text-xs text-muted-foreground">{accessory.location || "No location"}</p>
+                    <div className="space-y-1">
+                      <p className="font-medium leading-none">{accessory.accessoryName}</p>
+                      <p className="text-xs text-muted-foreground">{formatRelayPosition(accessory.relayPosition)}</p>
                     </div>
                   </div>
-
-                  <div className="mt-auto flex items-center justify-between">
-                    <Badge variant={isConnected ? "default" : "outline"} className="text-xs">
-                      {isConnected ? "Connected" : "Not Connected"}
-                    </Badge>
-
-                    <DashboardToggle id={accessory.accessoryID} />
+                  <div className="flex items-center space-x-2">
+                    <DashboardToggle
+                      accessoryID={accessory.accessoryID}
+                      isOn={accessory.accessoryConnectionStatus || false}
+                      relayPosition={accessory.relayPosition?.toString()}
+                    />
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </div>
                 </div>
-              </div>
-            )
-          })}
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <Star className="h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium mb-2">No Favorite Accessories</h3>
-          <p className="text-muted-foreground mb-6 max-w-md">
-            Add accessories to your favorites for quick access. You can mark any accessory as a favorite in its details.
-          </p>
-          <Button asChild>
-            <Link href="/accessories">
-              <Plus className="mr-2 h-4 w-4" />
-              Browse Accessories
-            </Link>
-          </Button>
-        </div>
-      )}
-    </div>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="p-6 text-center">
+            <p className="text-muted-foreground">No favorite accessories found</p>
+            <p className="text-xs text-muted-foreground mt-1">Mark accessories as favorites to see them here</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }
-

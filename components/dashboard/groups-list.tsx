@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { SquareXIcon as Squares2X2, Plus, ChevronRight } from "lucide-react"
+import { LayoutGrid, Plus, ChevronRight } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
 import { type Group, updateGroupStatus } from "@/app/actions/user-data"
 import { useToast } from "@/hooks/use-toast"
@@ -76,7 +76,7 @@ export function GroupsList({ initialGroups }: GroupsListProps) {
                       group.active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground",
                     )}
                   >
-                    <Squares2X2 className="h-5 w-5" />
+                    <LayoutGrid className="h-5 w-5" />
                   </div>
                   <div className="space-y-1">
                     <p className="font-medium leading-none">{group.name}</p>
@@ -107,4 +107,3 @@ export function GroupsList({ initialGroups }: GroupsListProps) {
     </Card>
   )
 }
-

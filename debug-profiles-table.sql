@@ -52,4 +52,3 @@ INSERT INTO "Profiles" (
   '[]'::jsonb
 )
 ON CONFLICT (id) DO NOTHING;
-

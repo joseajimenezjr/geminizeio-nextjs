@@ -2,17 +2,9 @@
 
 import { createContext, useContext, useState, useRef, useEffect, type ReactNode } from "react"
 import { useToast } from "@/hooks/use-toast"
-import {
-  requestDevice,
-  connectToDevice as connect,
-  disconnectDevice as disconnect,
-  sendCommand as sendBluetoothCommand,
-} from "@/utils/bluetooth-utils"
+import { requestDevice, connectToDevice as connect, disconnectDevice as disconnect } from "@/utils/bluetooth-utils"
 import { setBluetoothCharacteristic } from "@/utils/bluetooth-commands"
-
-// Use the exact UUIDs from your working code
-const SERVICE_UUID = "19b10000-e8f2-537e-4f6c-d104768a1214"
-const CHARACTERISTIC_UUID = "19b10001-e8f2-537e-4f6c-d104768a1214"
+import { bluetoothService } from "@/services/bluetooth-service"
 
 interface BluetoothContextType {
   isConnected: boolean
@@ -22,7 +14,7 @@ interface BluetoothContextType {
     error?: string
     errorType?: "permission" | "support" | "other"
   }
-  connectToDevice: () => Promise<void>
+  connectToDevice: (deviceName?: string, serviceUUID?: string) => Promise<void>
   disconnectDevice: () => Promise<void>
   sendCommand: (value: number) => Promise<boolean>
 }
@@ -45,6 +37,12 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     checkBluetoothAvailability()
   }, [])
+
+  // Debug connection state changes
+  useEffect(() => {
+    console.log(`Bluetooth connection state changed: ${isConnected ? "Connected" : "Disconnected"}`)
+    console.log(`Characteristic reference: ${characteristicRef.current ? "Set" : "Not set"}`)
+  }, [isConnected])
 
   // Function to check if Bluetooth is available
   const checkBluetoothAvailability = async () => {
@@ -92,7 +90,7 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
   }
 
   // Connect to Arduino device
-  const connectToDevice = async () => {
+  const connectToDevice = async (deviceName?: string, serviceUUID?: string) => {
     // Check availability again before attempting to connect
     const isAvailable = await checkBluetoothAvailability()
 
@@ -105,11 +103,24 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
       return
     }
 
+    // Validate serviceUUID
+    if (!serviceUUID) {
+      toast({
+        title: "Connection Error",
+        description: "Service UUID is required for Bluetooth connection",
+        variant: "destructive",
+      })
+      return
+    }
+
     try {
       setIsConnecting(true)
 
-      // Request a device
-      const device = await requestDevice()
+      // Log the connection attempt details
+      console.log(`Attempting to connect to device: ${deviceName || "any"} with service UUID: ${serviceUUID}`)
+
+      // Request a device - if deviceName is provided, use it to filter devices
+      const device = await requestDevice(deviceName, serviceUUID)
       setBluetoothDevice(device)
 
       // Setup disconnect listener
@@ -126,16 +137,31 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
       })
 
       // Connect to the device
-      const { server, service, characteristic } = await connect(device)
+      const { server, service, characteristic } = await connect(device, serviceUUID)
+
+      console.log(`Connected to device with characteristic UUID: ${characteristic.uuid}`)
 
       // Store the characteristic in the ref
       characteristicRef.current = characteristic
+
+      // Set the characteristic in the utility file
       setBluetoothCharacteristic(characteristic)
+
+      // Initialize the bluetoothService
+      bluetoothService.setServer(server)
+      bluetoothService.setServiceUUID(serviceUUID)
+      console.log("Initialized bluetoothService with server and serviceUUID")
+
+      console.log("Bluetooth connection established:", {
+        deviceName: device.name,
+        serviceUUID,
+        characteristicUUID: characteristic.uuid,
+      })
 
       setIsConnected(true)
       toast({
         title: "Connected",
-        description: "Successfully connected to Arduino device",
+        description: `Successfully connected to ${device.name || "device"}`,
         variant: "default",
       })
     } catch (error: any) {
@@ -151,6 +177,8 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
         description: errorMessage,
         variant: "destructive",
       })
+
+      throw error // Re-throw the error so the calling component can handle it
     } finally {
       setIsConnecting(false)
     }
@@ -166,7 +194,7 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
         setBluetoothCharacteristic(null)
         toast({
           title: "Disconnected",
-          description: "Successfully disconnected from Arduino device",
+          description: "Successfully disconnected from device",
         })
       } catch (error) {
         console.error("Disconnect error:", error)
@@ -179,7 +207,7 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  // Send command to device - updated to handle relay position commands
+  // Send command to device - updated to handle value 2 for shuffle
   const sendCommand = async (value: number): Promise<boolean> => {
     if (!characteristicRef.current) {
       console.error("Not connected to a Bluetooth device.")
@@ -191,32 +219,42 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
       return false
     }
 
-    // Valid values are now relay position (1-4) + state (0/1)
-    // 10, 11, 20, 21, 30, 31, 40, 41
-    const validValues = [10, 11, 20, 21, 30, 31, 40, 41]
+    // Ensure value is a number
+    value = Number(value)
 
-    if (!validValues.includes(value)) {
-      console.error(`Invalid command value: ${value}.`)
-      toast({
-        title: "Error",
-        description: `Invalid command value: ${value}`,
-        variant: "destructive",
-      })
+    // Handle NaN case explicitly
+    if (isNaN(value)) {
+      console.error(`Invalid command value: NaN. Only 0 (OFF), 1 (ON), and 2 (SHUFFLE) are supported.`)
       return false
     }
 
     try {
-      // Send the command using the utility function
-      await sendBluetoothCommand(characteristicRef.current, value)
+      // Create a Uint8Array with the raw value (0, 1, or 2)
+      const data = new Uint8Array([value])
 
-      // Extract relay position and state from the command value
-      const relayPosition = Math.floor(value / 10)
-      const state = value % 10
+      // Send the raw value directly to the device
+      await characteristicRef.current.writeValue(data)
 
-      toast({
-        title: "Command Sent",
-        description: `Relay ${relayPosition} turned ${state === 1 ? "ON" : "OFF"}`,
-      })
+      console.log(`Bluetooth write operation:
+        - Command value: ${value}
+        - Binary data: [${data}]
+        - State: ${value === 0 ? "OFF" : value === 1 ? "ON" : "SHUFFLE"}
+        - Characteristic UUID: ${characteristicRef.current.uuid}
+      `)
+
+      // Show appropriate toast message based on the value
+      if (value === 2) {
+        toast({
+          title: "Command Sent",
+          description: "Shuffle pattern activated",
+        })
+      } else {
+        toast({
+          title: "Command Sent",
+          description: `Device turned ${value === 1 ? "ON" : "OFF"}`,
+        })
+      }
+
       return true
     } catch (error) {
       console.error("Error sending command:", error)
@@ -245,11 +283,12 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
   )
 }
 
-export function useBluetooth() {
+export function useBluetoothContext() {
   const context = useContext(BluetoothContext)
   if (context === undefined) {
-    throw new Error("useBluetooth must be used within a BluetoothProvider")
+    throw new Error("useBluetoothContext must be used within a BluetoothProvider")
   }
   return context
 }
 
+export const useBluetooth = useBluetoothContext

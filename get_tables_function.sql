@@ -10,4 +10,3 @@ BEGIN
   WHERE t.table_schema = 'public';
 END;
 $$ LANGUAGE plpgsql;
-

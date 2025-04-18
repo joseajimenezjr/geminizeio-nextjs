@@ -16,6 +16,7 @@ export function DeviceStateDebugger() {
     }
   }, [accessories, isDebugMode])
 
+  // Early return if not in debug mode
   if (!isDebugMode) return null
 
   return (
@@ -45,4 +46,3 @@ export function DeviceStateDebugger() {
     </Card>
   )
 }
-

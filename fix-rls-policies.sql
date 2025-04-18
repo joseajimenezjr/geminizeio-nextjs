@@ -27,4 +27,3 @@ CREATE POLICY IF NOT EXISTS "Users can update their own profile"
 ON public."Profiles" 
 FOR UPDATE 
 USING (auth.uid() = id);
-

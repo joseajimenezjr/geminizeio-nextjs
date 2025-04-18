@@ -47,4 +47,3 @@ const CustomSwitch = React.forwardRef<HTMLButtonElement, CustomSwitchProps>(
 CustomSwitch.displayName = "CustomSwitch"
 
 export { CustomSwitch }
-

@@ -8,4 +8,3 @@ export function ThemeToggle() {
 
   return <Switch checked={theme === "dark"} onCheckedChange={() => setTheme(theme === "dark" ? "light" : "dark")} />
 }
-

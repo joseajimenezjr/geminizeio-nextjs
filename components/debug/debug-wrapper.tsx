@@ -9,6 +9,7 @@ import { DatabaseChecker } from "./database-checker"
 export function DebugWrapper({ userData }: { userData: any }) {
   const isDebugMode = useDebugMode()
 
+  // Only render in debug mode
   if (!isDebugMode) return null
 
   return (
@@ -30,4 +31,3 @@ export function DebugWrapper({ userData }: { userData: any }) {
     </DebugContainer>
   )
 }
-

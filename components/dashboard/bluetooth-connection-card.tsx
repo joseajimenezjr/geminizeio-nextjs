@@ -5,9 +5,102 @@ import { Bluetooth, BluetoothOff, Check, AlertCircle, ExternalLink } from "lucid
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { useBluetooth } from "@/contexts/bluetooth-context"
+import { useEffect, useState, useRef } from "react"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 
 export function BluetoothConnectionCard() {
   const { isConnected, isConnecting, bluetoothStatus, connectToDevice, disconnectDevice, sendCommand } = useBluetooth()
+  const [autoConnectAttempted, setAutoConnectAttempted] = useState(false)
+  const [hubDevice, setHubDevice] = useState<any>(null)
+  const supabase = createClientComponentClient()
+  const connectButtonRef = useRef<HTMLButtonElement>(null)
+
+  // Add effect to fetch hub details
+  useEffect(() => {
+    const fetchHubDetails = async () => {
+      try {
+        // Get the user's session
+        const { data: sessionData } = await supabase.auth.getSession()
+        if (!sessionData.session) {
+          console.log("No active session, skipping hub details fetch")
+          return
+        }
+
+        // Get the user's profile data to check hubDetails
+        const { data: profileData, error } = await supabase
+          .from("Profiles")
+          .select("hubDetails")
+          .eq("id", sessionData.session.user.id)
+          .single()
+
+        if (error || !profileData?.hubDetails) {
+          console.log("No hub details found")
+          return
+        }
+
+        // Find a hub or relay_hub device in hubDetails
+        const device = profileData.hubDetails.find(
+          (device: any) => device.deviceType === "hub" || device.deviceType === "relay_hub",
+        )
+
+        if (device) {
+          console.log(`Found ${device.deviceType} device: ${device.deviceName}`)
+          setHubDevice(device)
+        }
+      } catch (error) {
+        console.error("Error fetching hub details:", error)
+      }
+    }
+
+    fetchHubDetails()
+  }, [supabase])
+
+  // Add effect to automatically connect to hub devices
+  useEffect(() => {
+    const autoConnectToHub = async () => {
+      // Only attempt auto-connect once and only if not already connected or connecting
+      if (autoConnectAttempted || isConnected || isConnecting || !bluetoothStatus.available || !hubDevice) {
+        return
+      }
+
+      try {
+        setAutoConnectAttempted(true)
+
+        if (hubDevice.deviceName && hubDevice.serviceName) {
+          console.log(
+            `Attempting to auto-connect to device: ${hubDevice.deviceName} with service: ${hubDevice.serviceName}`,
+          )
+
+          // Automatically connect using the device name and service UUID
+          await connectToDevice(hubDevice.deviceName, hubDevice.serviceName)
+        } else {
+          console.log("Missing deviceName or serviceName in hubDevice", hubDevice)
+        }
+      } catch (error) {
+        console.error("Error in auto-connect:", error)
+      }
+    }
+
+    // Run the auto-connect function with a slight delay to ensure the component is fully mounted
+    const timer = setTimeout(() => {
+      autoConnectToHub()
+    }, 1000)
+
+    return () => clearTimeout(timer)
+  }, [bluetoothStatus.available, isConnected, isConnecting, autoConnectAttempted, connectToDevice, hubDevice])
+
+  // Handle manual connect button click
+  const handleConnectClick = () => {
+    if (isConnected) {
+      disconnectDevice()
+    } else if (hubDevice?.deviceName && hubDevice?.serviceName) {
+      connectToDevice(hubDevice.deviceName, hubDevice.serviceName)
+    } else {
+      // If no hub device is found, show an error
+      console.error("No hub device found for connection")
+      // You could show a toast here to inform the user
+    }
+  }
 
   // Render different content based on Bluetooth availability
   const renderContent = () => {
@@ -55,21 +148,30 @@ export function BluetoothConnectionCard() {
           <p className="text-2xl font-bold flex items-center gap-2">
             {isConnected ? (
               <>
-                <span className="text-blue-500">Connected</span>
+                <span className="text-green-500">Connected</span>
                 <Check className="h-5 w-5 text-green-500" />
               </>
             ) : (
-              <span>Not Connected</span>
+              <span className={isConnecting ? "" : "text-yellow-500"}>Not Connected</span>
             )}
           </p>
+          {hubDevice ? (
+            <p className="text-sm text-muted-foreground mt-1">Device: {hubDevice.deviceName || "Unknown"}</p>
+          ) : (
+            <p className="text-sm text-muted-foreground mt-1">No hub device configured</p>
+          )}
         </div>
         <div className="flex flex-col gap-2">
           <Button
+            ref={connectButtonRef}
             variant={isConnected ? "outline" : "default"}
             size="sm"
-            onClick={isConnected ? disconnectDevice : connectToDevice}
-            disabled={isConnecting}
-            className={cn("min-w-[130px]", isConnected && "border-blue-300")}
+            onClick={handleConnectClick}
+            disabled={isConnecting || (!isConnected && !hubDevice)}
+            className={cn(
+              "min-w-[130px]",
+              isConnected ? "border-green-300" : "bg-yellow-500 hover:bg-yellow-600 text-black",
+            )}
           >
             {isConnecting ? (
               <>
@@ -98,10 +200,12 @@ export function BluetoothConnectionCard() {
       className={cn(
         "transition-all duration-300 bg-gradient-to-br border-none shadow-md overflow-hidden h-full",
         isConnected
-          ? "from-blue-500/10 to-blue-600/5 border-blue-500/20"
+          ? "from-green-500/10 to-green-600/5 border-green-500/20"
           : !bluetoothStatus.available
             ? "from-amber-50/30 to-amber-100/10 dark:from-amber-950/10 dark:to-amber-900/5"
-            : "from-background to-muted/30",
+            : isConnecting
+              ? "from-background to-muted/30"
+              : "from-yellow-500/20 to-yellow-600/10 border-yellow-500/20 animate-pulse-very-slow",
       )}
     >
       <CardContent className="p-4 flex items-center justify-between h-full">{renderContent()}</CardContent>
@@ -110,4 +214,3 @@ export function BluetoothConnectionCard() {
 }
 
 export default BluetoothConnectionCard
-

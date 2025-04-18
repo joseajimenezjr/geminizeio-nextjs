@@ -19,6 +19,7 @@ interface Accessory {
   deviceID?: string
   deviceConnectionStatus?: boolean
   deviceSupportStatus?: boolean
+  relayPosition?: string | null
 }
 
 // Map accessory types to icons
@@ -82,9 +83,9 @@ export function FavoriteAccessories({ accessories }: FavoriteAccessoriesProps) {
                   </div>
                 </div>
                 <DashboardToggle
-                  id={accessory.deviceID || accessory.id}
-                  active={accessory.deviceConnectionStatus || accessory.deviceSupportStatus}
-                  onToggle={(active) => handleToggle(accessory.deviceID || accessory.id, active)}
+                  accessoryID={accessory.deviceID || accessory.id}
+                  isOn={accessory.deviceConnectionStatus || accessory.deviceSupportStatus || false}
+                  relayPosition={accessory.relayPosition}
                 />
               </div>
             )
@@ -113,4 +114,3 @@ export function FavoriteAccessories({ accessories }: FavoriteAccessoriesProps) {
     </Card>
   )
 }
-

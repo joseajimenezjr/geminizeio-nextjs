@@ -48,4 +48,3 @@ export async function updateDeviceStatus(deviceId: number, status: boolean) {
     return { success: false, error: "Unexpected error" }
   }
 }
-

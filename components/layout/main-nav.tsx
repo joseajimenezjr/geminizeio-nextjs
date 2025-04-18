@@ -1,11 +1,11 @@
 "use client"
 
-import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Home, Package, Settings, LogOut } from "lucide-react"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { PreviewAuthLink } from "@/components/preview-auth-link"
 
 export function MainNav() {
   const pathname = usePathname()
@@ -20,10 +20,10 @@ export function MainNav() {
 
   const routes = [
     {
-      href: "/dashboard",
-      label: "Dashboard",
+      href: "/control-center",
+      label: "Control Center",
       icon: Home,
-      active: pathname === "/dashboard",
+      active: pathname === "/control-center",
     },
     {
       href: "/accessories",
@@ -43,7 +43,7 @@ export function MainNav() {
     <nav className="flex items-center space-x-4 lg:space-x-6">
       {routes.map((route) => (
         <Button key={route.href} variant={route.active ? "default" : "ghost"} asChild>
-          <Link
+          <PreviewAuthLink
             href={route.href}
             className={cn(
               "flex items-center",
@@ -52,7 +52,7 @@ export function MainNav() {
           >
             <route.icon className="mr-2 h-4 w-4" />
             <span>{route.label}</span>
-          </Link>
+          </PreviewAuthLink>
         </Button>
       ))}
       <Button variant="ghost" onClick={handleSignOut} className="text-muted-foreground hover:text-primary">
@@ -62,4 +62,3 @@ export function MainNav() {
     </nav>
   )
 }
-

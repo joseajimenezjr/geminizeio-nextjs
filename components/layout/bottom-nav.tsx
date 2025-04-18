@@ -1,92 +1,69 @@
 "use client"
 
-import Image from "next/image"
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
-import { Home, Settings, ShoppingCart, Package } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Home, Lightbulb, Settings, ShoppingBag } from "lucide-react"
 
 export function BottomNav() {
   const pathname = usePathname()
 
-  const links = [
-    {
-      href: "/dashboard",
-      label: "Home",
-      icon: Home,
-      active: pathname === "/dashboard",
-    },
-    {
-      href: "/accessories",
-      label: "Accessories",
-      icon: Package,
-      active: pathname === "/accessories" || pathname.startsWith("/accessories/"),
-    },
-    // Logo will be inserted in the middle
-    {
-      href: "/shop",
-      label: "Shop",
-      icon: ShoppingCart,
-      active: pathname === "/shop",
-    },
-    {
-      href: "/settings",
-      label: "Settings",
-      icon: Settings,
-      active: pathname === "/settings",
-    },
-  ]
-
-  // Split the links array to insert the logo in the middle
-  const firstHalf = links.slice(0, 2)
-  const secondHalf = links.slice(2)
-
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-14 items-center">
-        {firstHalf.map((link) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            className={cn(
-              "flex flex-1 flex-col items-center justify-center gap-1 text-xs transition-colors",
-              link.active ? "text-primary" : "text-muted-foreground hover:text-primary",
-            )}
-          >
-            <link.icon className="h-5 w-5" />
-            <span>{link.label}</span>
-          </Link>
-        ))}
+    <div className="fixed bottom-0 left-0 z-50 w-full h-16 bg-black border-t border-gray-800">
+      <div className="grid h-full grid-cols-5 mx-auto">
+        {/* Home */}
+        <Link
+          href="/control-center-v2"
+          className={`inline-flex flex-col items-center justify-center px-5 ${
+            pathname === "/" || pathname === "/control-center" || pathname === "/control-center-v2"
+              ? "text-primary"
+              : "text-gray-300"
+          }`}
+        >
+          <Home className="w-5 h-5 mb-1" />
+          <span className="text-xs">Home</span>
+        </Link>
 
-        {/* Logo in the middle - now not a link */}
-        <div className="flex flex-1 flex-col items-center justify-center">
-          <div className="flex flex-col items-center">
-            <Image
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Favicon-dark-TCRh0L4cFUo5bEkp6OVorSUlogaWFf.png"
-              alt="Geminize IO"
-              width={32}
-              height={32}
-              className="h-8 w-8"
-            />
+        {/* Accessories */}
+        <Link
+          href="/accessories"
+          className={`inline-flex flex-col items-center justify-center px-5 ${
+            pathname === "/accessories" ? "text-primary" : "text-gray-300"
+          }`}
+        >
+          <Lightbulb className="w-5 h-5 mb-1" />
+          <span className="text-xs">Accessories</span>
+        </Link>
+
+        {/* Logo in the middle */}
+        <Link href="/control-center-v2" className="inline-flex flex-col items-center justify-center relative">
+          <div className="absolute -top-5 bg-black rounded-full p-2 border-2 border-gray-800">
+            <Image src="/images/geminize-logo.png" alt="Geminize" width={40} height={40} className="rounded-full" />
           </div>
-        </div>
+        </Link>
 
-        {secondHalf.map((link) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            className={cn(
-              "flex flex-1 flex-col items-center justify-center gap-1 text-xs transition-colors",
-              link.active ? "text-primary" : "text-muted-foreground hover:text-primary",
-            )}
-          >
-            <link.icon className="h-5 w-5" />
-            <span>{link.label}</span>
-          </Link>
-        ))}
+        {/* Shop */}
+        <Link
+          href="/shop"
+          className={`inline-flex flex-col items-center justify-center px-5 ${
+            pathname === "/shop" ? "text-primary" : "text-gray-300"
+          }`}
+        >
+          <ShoppingBag className="w-5 h-5 mb-1" />
+          <span className="text-xs">Shop</span>
+        </Link>
+
+        {/* Settings */}
+        <Link
+          href="/settings"
+          className={`inline-flex flex-col items-center justify-center px-5 ${
+            pathname === "/settings" ? "text-primary" : "text-gray-300"
+          }`}
+        >
+          <Settings className="w-5 h-5 mb-1" />
+          <span className="text-xs">Settings</span>
+        </Link>
       </div>
-      <div className="h-[env(safe-area-inset-bottom)]" />
-    </nav>
+    </div>
   )
 }
-

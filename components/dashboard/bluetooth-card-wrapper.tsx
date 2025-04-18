@@ -22,4 +22,3 @@ const BluetoothConnectionCard = dynamic(() => import("@/components/dashboard/blu
 export function BluetoothCardWrapper() {
   return <BluetoothConnectionCard />
 }
-

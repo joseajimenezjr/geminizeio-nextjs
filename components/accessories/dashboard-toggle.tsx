@@ -1,129 +1,170 @@
 "use client"
-import { useState, useEffect, useRef } from "react"
-import { useAccessories } from "@/contexts/device-context"
-import { useBluetooth } from "@/contexts/bluetooth-context"
-import { CustomSwitch } from "@/components/ui/custom-switch"
+
+import { useState, useEffect } from "react"
+import { Switch } from "@/components/ui/switch"
+import { updateDeviceStatus } from "@/app/actions/user-data"
+import { sendBluetoothCommand, isBluetoothConnected } from "@/utils/bluetooth-commands"
+import { bluetoothService } from "@/services/bluetooth-service"
+import { useToast } from "@/hooks/use-toast"
 
 interface DashboardToggleProps {
-  id: string
-  active?: boolean
-  onToggle?: (active: boolean) => void
+  accessoryID?: string
+  id?: string // For backward compatibility
+  isOn?: boolean
+  active?: boolean // For backward compatibility
+  relayPosition?: string | null
+  onToggle?: (isActive: boolean) => void // For backward compatibility
 }
 
-export function DashboardToggle({ id, active: propActive, onToggle }: DashboardToggleProps) {
-  const { accessories, toggleAccessoryStatus, isLoading } = useAccessories()
-  const { isConnected, sendCommand } = useBluetooth()
-  const initialRender = useRef(true)
+export function DashboardToggle({ accessoryID, id, isOn, active, relayPosition, onToggle }: DashboardToggleProps) {
+  // Handle backward compatibility
+  const deviceId = accessoryID || id || ""
+  const initialState = isOn !== undefined ? isOn : active || false
 
-  // If id is undefined, log an error and return null
-  if (id === undefined) {
-    console.error("DashboardToggle received undefined id")
-    return null
-  }
+  const [isToggling, setIsToggling] = useState(false)
+  const [isActive, setIsActive] = useState(initialState)
+  const { toast } = useToast()
 
-  // Find the accessory in the context
-  const accessory = accessories.find((a) => a.accessoryID === id)
-
-  // If no accessory is found, log an error and return null
-  if (!accessory) {
-    console.error(`DashboardToggle: No accessory found with id ${id}`)
-    return null
-  }
-
-  // Determine the active state from the accessory
-  const contextActive = accessory.accessoryConnectionStatus
-
-  // Use prop value if provided, otherwise use context value
-  const initialActiveState = propActive !== undefined ? propActive : contextActive
-  const [isActive, setIsActive] = useState<boolean>(initialActiveState ?? false)
-
-  // Update local state when accessory state changes in context
+  // Update isActive if the isOn or active prop changes
   useEffect(() => {
-    if (initialRender.current) {
-      initialRender.current = false
-      return
-    }
+    const newState = isOn !== undefined ? isOn : active || false
+    setIsActive(newState)
+  }, [isOn, active])
 
-    const accessoryState = accessory ? accessory.accessoryConnectionStatus : false
-    const stateToUse = propActive !== undefined ? propActive : accessoryState
-    setIsActive(stateToUse)
-  }, [accessory, propActive])
-
-  // Check if this specific toggle is loading
-  const loading = isLoading[`status-${id}`] || false
-
-  // When calling toggleAccessoryStatus, pass the accessoryID
-  const handleToggle = async (checked: boolean) => {
-    // Log for debugging
-    console.log(`Toggle clicked for accessory ${id}:`, {
-      newState: checked,
-      currentState: isActive,
-      loading,
-      accessory,
-    })
-
-    // Don't do anything if already loading
-    if (loading) return
-
-    // If there's an onToggle prop, call it
-    if (onToggle) {
-      onToggle(checked)
-    }
-
-    // Get the relay position from the accessory
-    const relayPosition = accessory.relayPosition ? Number.parseInt(accessory.relayPosition) : null
-
-    // If we have a valid relay position and Bluetooth is connected, send the command
-    if (relayPosition !== null && isConnected) {
-      // Construct the command value:
-      // For ON: relay position + "1" (e.g., relay 1 → 11)
-      // For OFF: relay position + "0" (e.g., relay 2 → 20)
-      const commandValue = relayPosition * 10 + (checked ? 1 : 0)
-
-      console.log(`Sending Bluetooth command: ${commandValue} for relay ${relayPosition} (${checked ? "ON" : "OFF"})`)
-
-      try {
-        // Send the Bluetooth command
-        await sendCommand(commandValue)
-      } catch (error) {
-        console.error(`Error sending Bluetooth command for accessory ${id}:`, error)
+  // Helper function to extract relay number from accessory ID or relay position
+  const getRelayNumber = (): number => {
+    // First try to use the relayPosition if available
+    if (relayPosition) {
+      console.log(`Using relayPosition: ${relayPosition} for accessory ${deviceId}`)
+      const relayNum = Number.parseInt(relayPosition, 10)
+      if (!isNaN(relayNum)) {
+        return relayNum
       }
-    } else if (relayPosition === null) {
-      console.warn(`Accessory ${id} does not have a relay position set, skipping Bluetooth command`)
-    } else if (!isConnected) {
-      console.warn(`Bluetooth is not connected, skipping Bluetooth command for accessory ${id}`)
     }
 
-    // Call the context method to update global state and server
+    // Fall back to extracting from accessory ID (e.g., "D001" -> 1)
+    if (deviceId && deviceId.length >= 4) {
+      const numPart = deviceId.substring(1)
+      const relayNum = Number.parseInt(numPart, 10)
+      if (!isNaN(relayNum)) {
+        return relayNum
+      }
+    }
+
+    // Default to relay 1 if we can't determine
+    return 1
+  }
+
+  const handleToggle = async () => {
+    if (isToggling) return
+
+    setIsToggling(true)
+    const newState = !isActive
+
+    console.log(`Toggling accessory ${deviceId} to ${newState ? "On" : "Off"}`)
+    console.log(`Relay position: ${relayPosition} (${typeof relayPosition})`)
+
+    // Try to send Bluetooth command if connected
+    let bluetoothSuccess = false
+
     try {
-      console.log(`Calling toggleAccessoryStatus with ID: ${id}, status: ${checked}`)
+      const relayNumber = getRelayNumber()
+      console.log(`Using relay number: ${relayNumber} for accessory ${deviceId}`)
 
-      const success = await toggleAccessoryStatus(id, checked)
+      // Check if Bluetooth is connected
+      if (isBluetoothConnected()) {
+        console.log(`Bluetooth is connected, sending command`)
 
-      if (!success) {
-        console.error(`Failed to toggle accessory ${id}`)
+        // Try using bluetoothService first
+        if (bluetoothService.isConnected()) {
+          try {
+            console.log(`Using bluetoothService to set relay ${relayNumber} to ${newState ? "on" : "off"}`)
+            await bluetoothService.setRelayState(relayNumber, newState ? "on" : "off")
+            bluetoothSuccess = true
+            console.log(`Bluetooth command sent successfully via bluetoothService`)
+          } catch (serviceError) {
+            console.error(`Error using bluetoothService:`, serviceError)
+            console.log(`Falling back to legacy sendBluetoothCommand`)
+
+            // Fall back to the legacy approach
+            try {
+              console.log(`Using legacy sendBluetoothCommand with value ${newState ? 1 : 0}`)
+              bluetoothSuccess = await sendBluetoothCommand(newState ? 1 : 0)
+              if (bluetoothSuccess) {
+                console.log(`Legacy bluetooth command sent successfully`)
+              }
+            } catch (legacyError) {
+              console.error(`Error using legacy bluetooth command:`, legacyError)
+            }
+          }
+        } else {
+          // Fall back to the legacy approach
+          console.log(
+            `bluetoothService not connected, using legacy sendBluetoothCommand with value ${newState ? 1 : 0}`,
+          )
+          try {
+            bluetoothSuccess = await sendBluetoothCommand(newState ? 1 : 0)
+            if (bluetoothSuccess) {
+              console.log(`Legacy bluetooth command sent successfully`)
+            }
+          } catch (legacyError) {
+            console.error(`Error using legacy bluetooth command:`, legacyError)
+          }
+        }
+
+        if (bluetoothSuccess) {
+          console.log(`Bluetooth command sent successfully`)
+        } else {
+          console.warn(`Bluetooth command failed for accessory ${deviceId}, but continuing with database update`)
+        }
       } else {
-        console.log(`Successfully toggled accessory ${id} to ${checked ? "On" : "Off"}`)
+        console.log(`Bluetooth is not connected, skipping Bluetooth command`)
       }
     } catch (error) {
-      console.error(`Error toggling accessory ${id}:`, error)
+      console.error(`Error toggling accessory:`, error)
+    }
+
+    // Always update the database, regardless of Bluetooth success
+    try {
+      // Call the onToggle callback if provided (for backward compatibility)
+      if (onToggle) {
+        onToggle(newState)
+      }
+
+      const result = await updateDeviceStatus(deviceId, newState)
+
+      console.log(`Server response:`, result)
+
+      if (result.success) {
+        setIsActive(newState)
+
+        // Only show toast if Bluetooth failed but database succeeded
+        if (!bluetoothSuccess) {
+          toast({
+            title: "Status Updated",
+            description: `${deviceId} is now ${newState ? "on" : "off"} (database only)`,
+          })
+        }
+      } else {
+        toast({
+          title: "Error",
+          description: `Failed to update ${deviceId} status: ${result.error}`,
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error(`Error updating device status:`, error)
+      toast({
+        title: "Error",
+        description: "Failed to update device status",
+        variant: "destructive",
+      })
+    } finally {
+      setIsToggling(false)
     }
   }
 
   return (
-    <div onClick={(e) => e.stopPropagation()} className="relative">
-      <CustomSwitch
-        checked={isActive}
-        disabled={loading}
-        onCheckedChange={handleToggle}
-        aria-label={isActive ? "Turn off" : "Turn on"}
-      />
-      {loading && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      )}
-    </div>
+    <Switch checked={isActive} onCheckedChange={handleToggle} disabled={isToggling} aria-label={`Toggle ${deviceId}`} />
   )
 }
-

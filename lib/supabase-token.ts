@@ -26,4 +26,3 @@ export async function createTokenClient(token: string) {
     userEmail: userData.user.email,
   }
 }
-

@@ -95,4 +95,3 @@ export function SettingsForm({ userData }: SettingsFormProps) {
     </form>
   )
 }
-

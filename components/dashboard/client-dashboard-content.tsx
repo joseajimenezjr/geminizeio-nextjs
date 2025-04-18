@@ -13,6 +13,7 @@ import { Tabs, TabsContent } from "@/components/ui/tabs"
 import { DeviceDetailsDialog } from "@/components/accessories/device-details-dialog"
 import { useAccessories } from "@/contexts/device-context"
 import { DeviceStateDebugger } from "@/components/debug/device-state-debugger"
+import { useDebugMode } from "@/hooks/use-debug-mode"
 
 export function ClientDashboardContent({
   userData,
@@ -29,15 +30,13 @@ export function ClientDashboardContent({
   const [selectedAccessory, setSelectedAccessory] = useState<any>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const groups = userData?.groups || []
-
-  // Get debug mode from localStorage on client side only
-  const [isDebugMode, setIsDebugMode] = useState<boolean>(false)
+  const isDebugMode = useDebugMode()
 
   // Initialize debug mode
   useEffect(() => {
     const storedDebugMode = localStorage.getItem("geminize-debug-mode")
     if (storedDebugMode === "true") {
-      setIsDebugMode(true)
+      console.log("Debug mode enabled from localStorage")
     }
   }, [])
 
@@ -106,7 +105,7 @@ export function ClientDashboardContent({
         />
       )}
 
-      {/* Debug Tools */}
+      {/* Debug Tools - Only shown in debug mode */}
       {isDebugMode && (
         <div className="mt-6 border border-amber-500 rounded-lg overflow-hidden bg-background">
           <div className="bg-amber-500/10 p-3 flex items-center justify-between">
@@ -145,9 +144,8 @@ export function ClientDashboardContent({
         </div>
       )}
 
-      {/* Add the accessory state debugger */}
+      {/* DeviceStateDebugger is already conditionally rendered inside the component */}
       <DeviceStateDebugger />
     </>
   )
 }
-

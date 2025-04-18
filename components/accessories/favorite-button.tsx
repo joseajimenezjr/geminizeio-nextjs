@@ -54,4 +54,3 @@ export function FavoriteButton({ id, isFavorite: initialFavorite }: FavoriteButt
     </Button>
   )
 }
-
