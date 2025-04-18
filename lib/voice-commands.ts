@@ -1,3 +1,5 @@
+import { bluetoothService } from "@/services/bluetooth-service"
+
 // Parse voice commands to extract the target device and action
 export function parseVoiceCommand(command: string) {
   // Convert to lowercase for easier matching
@@ -160,5 +162,121 @@ export function parseVoiceCommand(command: string) {
     action,
     hasWakeWord,
     relayPosition,
+  }
+}
+
+// Execute a voice command by controlling the appropriate device
+export async function executeVoiceCommand(command: string): Promise<{
+  success: boolean
+  message: string
+  action?: string
+  target?: string
+  relayPosition?: number | null
+}> {
+  try {
+    console.log("🎯 Executing voice command:", command)
+
+    // Parse the command
+    const parsedCommand = parseVoiceCommand(command)
+
+    if (!parsedCommand.isValid) {
+      return {
+        success: false,
+        message: "Could not understand the command. Please try again.",
+      }
+    }
+
+    const { action, target, relayPosition } = parsedCommand
+
+    // Handle relay commands specifically
+    if (relayPosition !== null && relayPosition > 0) {
+      try {
+        if (action === "on" || action === "off") {
+          await bluetoothService.setRelayState(relayPosition, action as "on" | "off")
+          return {
+            success: true,
+            message: `Relay ${relayPosition} turned ${action}`,
+            action,
+            target,
+            relayPosition,
+          }
+        }
+      } catch (error) {
+        console.error("Error controlling relay:", error)
+        return {
+          success: false,
+          message: `Failed to control relay ${relayPosition}: ${error instanceof Error ? error.message : String(error)}`,
+          action,
+          target,
+          relayPosition,
+        }
+      }
+    }
+
+    // Handle other device types based on target name
+    // This is a simplified implementation - in a real app, you'd have a mapping of
+    // device names to their control functions
+
+    // Example: Handle light-related commands
+    if (target.includes("light") || target.includes("lamp") || target.includes("spotlight")) {
+      // Find the appropriate relay for lights (example: relay 1)
+      const lightRelay = 1
+
+      try {
+        await bluetoothService.setRelayState(lightRelay, action as "on" | "off")
+        return {
+          success: true,
+          message: `${target} turned ${action}`,
+          action,
+          target,
+        }
+      } catch (error) {
+        console.error("Error controlling light:", error)
+        return {
+          success: false,
+          message: `Failed to control ${target}: ${error instanceof Error ? error.message : String(error)}`,
+          action,
+          target,
+        }
+      }
+    }
+
+    // Example: Handle winch commands
+    if (target.includes("winch")) {
+      // Find the appropriate relay for winch (example: relay 2)
+      const winchRelay = 2
+
+      try {
+        await bluetoothService.setRelayState(winchRelay, action as "on" | "off")
+        return {
+          success: true,
+          message: `Winch turned ${action}`,
+          action,
+          target,
+        }
+      } catch (error) {
+        console.error("Error controlling winch:", error)
+        return {
+          success: false,
+          message: `Failed to control winch: ${error instanceof Error ? error.message : String(error)}`,
+          action,
+          target,
+        }
+      }
+    }
+
+    // Default case: we understood the command but don't know how to execute it
+    return {
+      success: false,
+      message: `I understood you want to turn ${action} the ${target}, but I don't know how to control that device.`,
+      action,
+      target,
+    }
+  } catch (error) {
+    console.error("Error executing voice command:", error)
+    return {
+      success: false,
+      message: `Error executing command: ${error instanceof Error ? error.message : String(error)}`,
+    }
   }
 }

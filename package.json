@@ -62,7 +62,9 @@
     "@supabase/auth-helpers-nextjs": "latest",
     "html5-qrcode": "latest",
     "react-grid-layout": "latest",
-    "react-resizable": "latest"
+    "react-resizable": "latest",
+    "fs": "latest",
+    "path": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",

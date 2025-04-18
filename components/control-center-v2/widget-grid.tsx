@@ -1,6 +1,7 @@
 "use client"
 import { WeatherWidget } from "./widgets/weather-widget"
 import type React from "react"
+import { useEffectEvent } from "@/hooks/use-effect-event" // Import from our custom hook
 
 import { TimerWidget } from "./widgets/timer-widget"
 import { SpeedDisplayWidget } from "./widgets/speed-display-widget"
@@ -33,6 +34,12 @@ export function WidgetGrid({
   onTouchEnd,
   onTouchCancel,
 }: WidgetGridProps) {
+  // Use our custom useEffectEvent for handling widget interactions
+  const handleWidgetInteraction = useEffectEvent((widgetId: string, action: string) => {
+    console.log(`Widget ${widgetId} ${action}`)
+    // Additional interaction handling logic would go here
+  })
+
   // Render a specific widget based on its type
   const renderWidget = (widget: any) => {
     switch (widget.type) {
@@ -44,48 +51,120 @@ export function WidgetGrid({
         return (
           <SpeedDisplayWidget
             isEditing={isEditMode}
-            onMouseDown={(e) => onMouseDown?.(e, widget.id)}
-            onMouseUp={() => onMouseUp?.(widget.id)}
-            onMouseLeave={() => onMouseLeave?.(widget.id)}
-            onTouchStart={(e) => onTouchStart?.(e, widget.id)}
-            onTouchEnd={() => onTouchEnd?.(widget.id)}
-            onTouchCancel={() => onTouchCancel?.(widget.id)}
+            onMouseDown={(e) => {
+              onMouseDown?.(e, widget.id)
+              handleWidgetInteraction(widget.id, "mousedown")
+            }}
+            onMouseUp={() => {
+              onMouseUp?.(widget.id)
+              handleWidgetInteraction(widget.id, "mouseup")
+            }}
+            onMouseLeave={() => {
+              onMouseLeave?.(widget.id)
+              handleWidgetInteraction(widget.id, "mouseleave")
+            }}
+            onTouchStart={(e) => {
+              onTouchStart?.(e, widget.id)
+              handleWidgetInteraction(widget.id, "touchstart")
+            }}
+            onTouchEnd={() => {
+              onTouchEnd?.(widget.id)
+              handleWidgetInteraction(widget.id, "touchend")
+            }}
+            onTouchCancel={() => {
+              onTouchCancel?.(widget.id)
+              handleWidgetInteraction(widget.id, "touchcancel")
+            }}
           />
         )
       case "rpm-display":
         return (
           <RPMDisplayWidget
             isEditing={isEditMode}
-            onMouseDown={(e) => onMouseDown?.(e, widget.id)}
-            onMouseUp={() => onMouseUp?.(widget.id)}
-            onMouseLeave={() => onMouseLeave?.(widget.id)}
-            onTouchStart={(e) => onTouchStart?.(e, widget.id)}
-            onTouchEnd={() => onTouchEnd?.(widget.id)}
-            onTouchCancel={() => onTouchCancel?.(widget.id)}
+            onMouseDown={(e) => {
+              onMouseDown?.(e, widget.id)
+              handleWidgetInteraction(widget.id, "mousedown")
+            }}
+            onMouseUp={() => {
+              onMouseUp?.(widget.id)
+              handleWidgetInteraction(widget.id, "mouseup")
+            }}
+            onMouseLeave={() => {
+              onMouseLeave?.(widget.id)
+              handleWidgetInteraction(widget.id, "mouseleave")
+            }}
+            onTouchStart={(e) => {
+              onTouchStart?.(e, widget.id)
+              handleWidgetInteraction(widget.id, "touchstart")
+            }}
+            onTouchEnd={() => {
+              onTouchEnd?.(widget.id)
+              handleWidgetInteraction(widget.id, "touchend")
+            }}
+            onTouchCancel={() => {
+              onTouchCancel?.(widget.id)
+              handleWidgetInteraction(widget.id, "touchcancel")
+            }}
           />
         )
       case "battery":
         return (
           <BatteryWidget
             isEditing={isEditMode}
-            onMouseDown={(e) => onMouseDown?.(e, widget.id)}
-            onMouseUp={() => onMouseUp?.(widget.id)}
-            onMouseLeave={() => onMouseLeave?.(widget.id)}
-            onTouchStart={(e) => onTouchStart?.(e, widget.id)}
-            onTouchEnd={() => onTouchEnd?.(widget.id)}
-            onTouchCancel={() => onTouchCancel?.(widget.id)}
+            onMouseDown={(e) => {
+              onMouseDown?.(e, widget.id)
+              handleWidgetInteraction(widget.id, "mousedown")
+            }}
+            onMouseUp={() => {
+              onMouseUp?.(widget.id)
+              handleWidgetInteraction(widget.id, "mouseup")
+            }}
+            onMouseLeave={() => {
+              onMouseLeave?.(widget.id)
+              handleWidgetInteraction(widget.id, "mouseleave")
+            }}
+            onTouchStart={(e) => {
+              onTouchStart?.(e, widget.id)
+              handleWidgetInteraction(widget.id, "touchstart")
+            }}
+            onTouchEnd={() => {
+              onTouchEnd?.(widget.id)
+              handleWidgetInteraction(widget.id, "touchend")
+            }}
+            onTouchCancel={() => {
+              onTouchCancel?.(widget.id)
+              handleWidgetInteraction(widget.id, "touchcancel")
+            }}
           />
         )
       case "temperature":
         return (
           <TemperatureWidget
             isEditing={isEditMode}
-            onMouseDown={(e) => onMouseDown?.(e, widget.id)}
-            onMouseUp={() => onMouseUp?.(widget.id)}
-            onMouseLeave={() => onMouseLeave?.(widget.id)}
-            onTouchStart={(e) => onTouchStart?.(e, widget.id)}
-            onTouchEnd={() => onTouchEnd?.(widget.id)}
-            onTouchCancel={() => onTouchCancel?.(widget.id)}
+            onMouseDown={(e) => {
+              onMouseDown?.(e, widget.id)
+              handleWidgetInteraction(widget.id, "mousedown")
+            }}
+            onMouseUp={() => {
+              onMouseUp?.(widget.id)
+              handleWidgetInteraction(widget.id, "mouseup")
+            }}
+            onMouseLeave={() => {
+              onMouseLeave?.(widget.id)
+              handleWidgetInteraction(widget.id, "mouseleave")
+            }}
+            onTouchStart={(e) => {
+              onTouchStart?.(e, widget.id)
+              handleWidgetInteraction(widget.id, "touchstart")
+            }}
+            onTouchEnd={() => {
+              onTouchEnd?.(widget.id)
+              handleWidgetInteraction(widget.id, "touchend")
+            }}
+            onTouchCancel={() => {
+              onTouchCancel?.(widget.id)
+              handleWidgetInteraction(widget.id, "touchcancel")
+            }}
           />
         )
       default:

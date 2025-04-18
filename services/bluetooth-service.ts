@@ -6,7 +6,7 @@ export type RelayStates = {
   [relayNumber: number]: RelayState
 }
 
-class BluetoothService {
+export class BluetoothService {
   private server: BluetoothRemoteGATTServer | null = null
   private serviceUUID: string | null = null
   private characteristic: BluetoothRemoteGATTCharacteristic | null = null
