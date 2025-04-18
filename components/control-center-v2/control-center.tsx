@@ -768,9 +768,7 @@ default`,
 
       // Get the widget element to position the menu relative to it
       if (widgetElement) {
-        const rect = widgetElement.getBoundingClientRect()
-        console.log("Widget position:", rect)
-
+        const rect = widgetElement.getBoundingClientRect
         setContextMenu({
           visible: true,
           widgetId,
