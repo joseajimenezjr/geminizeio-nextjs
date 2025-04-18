@@ -728,7 +728,6 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData }: ControlC
 
   // Handle long press start
   const handleWidgetMouseDown = (e: React.MouseEvent | React.TouchEvent, widgetId: string) => {
-    console.log("Widget mouse down:", widgetId)
 
     // Only enable long press in editing mode
     if (!isEditing) {
@@ -760,7 +759,6 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData }: ControlC
       // Get the widget element to position the menu relative to it
       if (widgetElement) {
         const rect = widgetElement.getBoundingClientRect()
-        console.log("Widget position:", rect)
 
         setContextMenu({
           visible: true,
@@ -786,7 +784,6 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData }: ControlC
 
   // Handle mouse up to cancel long press
   const handleWidgetMouseUp = (widgetId: string) => {
-    console.log("Widget mouse up:", widgetId)
 
     // Remove the visual indicator
     const widgetElement = document.getElementById(widgetId)
@@ -802,7 +799,6 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData }: ControlC
 
   // Handle mouse leave to cancel long press
   const handleWidgetMouseLeave = (widgetId: string) => {
-    console.log("Widget mouse leave:", widgetId)
 
     // Remove the visual indicator
     const widgetElement = document.getElementById(widgetId)
