@@ -737,7 +737,6 @@ default`,
 
   // Handle long press start
   const handleWidgetMouseDown = (e: React.MouseEvent | React.TouchEvent, widgetId: string) => {
-    console.log("Widget mouse down:", widgetId)
 
     // Only enable long press in editing mode
     if (!isEditing) {
@@ -793,7 +792,6 @@ default`,
 
   // Handle mouse up to cancel long press
   const handleWidgetMouseUp = (widgetId: string) => {
-    console.log("Widget mouse up:", widgetId)
 
     // Remove the visual indicator
     const widgetElement = document.getElementById(widgetId)
