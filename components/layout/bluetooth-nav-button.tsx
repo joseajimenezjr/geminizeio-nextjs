@@ -35,18 +35,36 @@ export function BluetoothNavButton() {
         const userData = await getUserData()
         console.log("User data received:", userData)
 
-        // Check if user has hub details and it's a relay hub
+        // Check if user has hub details
         let deviceName = undefined
-        if (userData) {
-          console.log("Hub details:", userData.hubDetails)
-        }
 
         if (userData?.hubDetails) {
-          console.log("Device type:", userData.hubDetails.deviceType)
-          if (userData.hubDetails.deviceType === "relay_hub") {
-            deviceName = userData.hubDetails.deviceName
-            console.log(`Found relay hub device name: ${deviceName}`)
+          console.log("Hub details found:", userData.hubDetails)
+
+          // Check if hubDetails is an array
+          if (Array.isArray(userData.hubDetails)) {
+            console.log("Hub details is an array with", userData.hubDetails.length, "items")
+
+            // Loop through the array to find a device with deviceType = "relay_hub"
+            const relayHub = userData.hubDetails.find((hub) => hub.deviceType === "relay_hub")
+
+            if (relayHub) {
+              console.log("Found relay hub:", relayHub)
+              deviceName = relayHub.deviceName
+              console.log(`Using relay hub device name: ${deviceName}`)
+            } else {
+              console.log("No relay hub found in hubDetails array")
+            }
+          } else {
+            // If it's a single object (not an array)
+            console.log("Hub details is a single object")
+            if (userData.hubDetails.deviceType === "relay_hub") {
+              deviceName = userData.hubDetails.deviceName
+              console.log(`Found relay hub device name: ${deviceName}`)
+            }
           }
+        } else {
+          console.log("No hub details found in user data")
         }
 
         // Connect to the device, using the specific name if available
