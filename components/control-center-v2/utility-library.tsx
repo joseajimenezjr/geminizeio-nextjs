@@ -8,12 +8,12 @@ interface UtilityLibraryProps {
   existingWidgets: any[]
   onAddUtility: (utilityType: string) => void
   onClose: () => void
-  // Add this new prop
+  // Rename this prop to be more accurate
   hasTemperatureSensor?: boolean
 }
 
 export function UtilityLibrary({ existingWidgets, onAddUtility, onClose, hasTemperatureSensor }: UtilityLibraryProps) {
-  // Define available utility widgets
+  // Define available utility widgets - remove temperature from the default list
   const utilityWidgets = [
     {
       id: "weather",
@@ -79,6 +79,8 @@ export function UtilityLibrary({ existingWidgets, onAddUtility, onClose, hasTemp
               </Card>
             )
           })}
+
+          {/* Only show temperature widget if user has a temperature reader */}
           {hasTemperatureSensor && (
             <Card
               className={`cursor-pointer border-gray-800 transition-colors hover:bg-muted/50 ${
