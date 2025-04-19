@@ -20,7 +20,6 @@ import "react-grid-layout/css/styles.css"
 import "react-resizable/css/styles.css"
 import { StandaloneWinchWidget } from "./widgets/standalone-winch-widget"
 import { WeatherWidget } from "./widgets/weather-widget"
-import { TimerWidget } from "./widgets/timer-widget"
 import { SpeedDisplayWidget } from "./widgets/speed-display-widget"
 import { RPMDisplayWidget } from "./widgets/rpm-display-widget"
 import { ChaseLightWidget } from "./widgets/chase-light-widget"
@@ -105,6 +104,8 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData }: ControlC
 
   // Add a state to track if the user has a temperature reader
   const [hasTemperatureReader, setHasTemperatureReader] = useState(false)
+
+  const TEMPERATURE_SERVICE_UUID = "869c10ef-71d9-4f55-92d6-859350c3b8f6"
 
   // Check if user has OBD2 accessory and temperature reader
   useEffect(() => {
@@ -926,6 +927,7 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData }: ControlC
           onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
           onTouchEnd={() => handleWidgetMouseUp(widget.id)}
           onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
+          temperatureServiceUUID={TEMPERATURE_SERVICE_UUID}
         />
       )
     }
@@ -963,23 +965,6 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData }: ControlC
       return (
         <WeatherWidget
           title="Weather"
-          isEditing={isEditing}
-          onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
-          onMouseUp={() => handleWidgetMouseUp(widget.id)}
-          onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
-          onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
-          onTouchEnd={() => handleWidgetMouseUp(widget.id)}
-          onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
-        />
-      )
-    }
-
-    // For timer widget
-    if (widget.type === "timer") {
-      return (
-        <TimerWidget
-          title="Timer"
-          bestTime={userData.bestTime}
           isEditing={isEditing}
           onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
           onMouseUp={() => handleWidgetMouseUp(widget.id)}
@@ -1237,6 +1222,7 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData }: ControlC
               onAddUtility={handleAddUtilityWidget}
               onClose={() => setShowUtilityLibrary(false)}
               hasTemperatureSensor={hasTemperatureReader}
+              temperatureServiceUUID={TEMPERATURE_SERVICE_UUID}
             />
           </div>
         )}

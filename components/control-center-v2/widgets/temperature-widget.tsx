@@ -5,6 +5,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { Thermometer } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useBluetoothContext } from "@/contexts/bluetooth-context"
 
 interface TemperatureWidgetProps {
   title?: string
@@ -35,19 +36,40 @@ export function TemperatureWidget({
 }: TemperatureWidgetProps) {
   const [temperature, setTemperature] = useState(72)
   const [unit, setUnit] = useState<"F" | "C">("F")
+  const { requestTemperatureUpdate, temperatureCharacteristic } = useBluetoothContext()
 
   // Simulate temperature changes
   useEffect(() => {
-    if (!isEditing && isConnected && isOn) {
-      const interval = setInterval(() => {
-        // Random fluctuation between -1 and +1 degrees
-        const fluctuation = Math.random() * 2 - 1
-        setTemperature((prev) => Math.round((prev + fluctuation) * 10) / 10)
-      }, 5000)
+    if (isConnected && requestTemperatureUpdate) {
+      // Request temperature update immediately
+      requestTemperatureUpdate()
 
-      return () => clearInterval(interval)
+      // Set up interval to request temperature updates periodically
+      const intervalId = setInterval(() => {
+        requestTemperatureUpdate()
+      }, 5000) // Every 5 seconds
+
+      return () => clearInterval(intervalId)
     }
-  }, [isEditing, isConnected, isOn])
+  }, [isConnected, requestTemperatureUpdate])
+
+  useEffect(() => {
+    const handleTemperatureUpdate = (event: any) => {
+      const value = new TextDecoder().decode(event.target.value)
+      console.log("Current temperature:", value)
+      setTemperature(Number(value))
+    }
+
+    if (temperatureCharacteristic) {
+      temperatureCharacteristic.addEventListener("characteristicvaluechanged", handleTemperatureUpdate)
+    }
+
+    return () => {
+      if (temperatureCharacteristic) {
+        temperatureCharacteristic.removeEventListener("characteristicvaluechanged", handleTemperatureUpdate)
+      }
+    }
+  }, [temperatureCharacteristic])
 
   // Toggle between Fahrenheit and Celsius
   const toggleUnit = () => {

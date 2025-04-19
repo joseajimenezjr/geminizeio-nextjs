@@ -10,9 +10,16 @@ interface UtilityLibraryProps {
   onClose: () => void
   // Rename this prop to be more accurate
   hasTemperatureSensor?: boolean
+  temperatureServiceUUID?: string
 }
 
-export function UtilityLibrary({ existingWidgets, onAddUtility, onClose, hasTemperatureSensor }: UtilityLibraryProps) {
+export function UtilityLibrary({
+  existingWidgets,
+  onAddUtility,
+  onClose,
+  hasTemperatureSensor,
+  temperatureServiceUUID,
+}: UtilityLibraryProps) {
   // Define available utility widgets - remove temperature from the default list
   const utilityWidgets = [
     {

@@ -5,11 +5,18 @@ import { bluetoothService } from "@/services/bluetooth-service"
 // This is a utility file to handle Bluetooth commands without using hooks directly
 
 let bluetoothCharacteristic: BluetoothRemoteGATTCharacteristic | null = null
+let bluetoothTemperatureCharacteristic: BluetoothRemoteGATTCharacteristic | null = null
 
 // Function to set the characteristic from the BluetoothContext
 export function setBluetoothCharacteristic(characteristic: BluetoothRemoteGATTCharacteristic | null) {
   console.log(`Setting bluetoothCharacteristic: ${characteristic ? characteristic.uuid : "null"}`)
   bluetoothCharacteristic = characteristic
+}
+
+// Function to set the temperature characteristic
+export function setBluetoothTemperatureCharacteristic(characteristic: BluetoothRemoteGATTCharacteristic | null) {
+  bluetoothTemperatureCharacteristic = characteristic
+  console.log(`BluetoothService: Temperature Characteristic ${characteristic ? "set" : "cleared"}`)
 }
 
 // Function to check if Bluetooth is connected

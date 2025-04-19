@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useRef, useEffect, type ReactNode } from "react"
 import { useToast } from "@/hooks/use-toast"
 import { requestDevice, connectToDevice as connect, disconnectDevice as disconnect } from "@/utils/bluetooth-utils"
-import { setBluetoothCharacteristic } from "@/utils/bluetooth-commands"
+import { setBluetoothCharacteristic, setBluetoothTemperatureCharacteristic } from "@/utils/bluetooth-commands"
 import { bluetoothService } from "@/services/bluetooth-service"
 
 interface BluetoothContextType {
@@ -14,9 +14,10 @@ interface BluetoothContextType {
     error?: string
     errorType?: "permission" | "support" | "other"
   }
-  connectToDevice: (deviceName?: string, serviceUUID?: string) => Promise<void>
+  connectToDevice: (deviceName?: string, serviceUUIDs?: string[]) => Promise<void>
   disconnectDevice: () => Promise<void>
   sendCommand: (value: number) => Promise<boolean>
+  requestTemperatureUpdate: () => Promise<void>
 }
 
 const BluetoothContext = createContext<BluetoothContextType | undefined>(undefined)
@@ -26,6 +27,9 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
   const [isConnecting, setIsConnecting] = useState(false)
   const [bluetoothDevice, setBluetoothDevice] = useState<BluetoothDevice | null>(null)
   const characteristicRef = useRef<BluetoothRemoteGATTCharacteristic | null>(null)
+  const [temperatureCharacteristic, setTemperatureCharacteristic] = useState<BluetoothRemoteGATTCharacteristic | null>(
+    null,
+  )
   const [bluetoothStatus, setBluetoothStatus] = useState<{
     available: boolean
     error?: string
@@ -90,7 +94,7 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
   }
 
   // Connect to Arduino device
-  const connectToDevice = async (deviceName?: string, serviceUUID?: string) => {
+  const connectToDevice = async (deviceName?: string, serviceUUIDs?: string[]) => {
     // Check availability again before attempting to connect
     const isAvailable = await checkBluetoothAvailability()
 
@@ -103,11 +107,11 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    // Validate serviceUUID
-    if (!serviceUUID) {
+    // Validate serviceUUIDs
+    if (!serviceUUIDs || serviceUUIDs.length === 0) {
       toast({
         title: "Connection Error",
-        description: "Service UUID is required for Bluetooth connection",
+        description: "Service UUIDs are required for Bluetooth connection",
         variant: "destructive",
       })
       return
@@ -117,10 +121,10 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
       setIsConnecting(true)
 
       // Log the connection attempt details
-      console.log(`Attempting to connect to device: ${deviceName || "any"} with service UUID: ${serviceUUID}`)
+      console.log(`Attempting to connect to device: ${deviceName || "any"} with service UUIDs: ${serviceUUIDs}`)
 
       // Request a device - if deviceName is provided, use it to filter devices
-      const device = await requestDevice(deviceName, serviceUUID)
+      const device = await requestDevice(deviceName, serviceUUIDs)
       setBluetoothDevice(device)
 
       // Setup disconnect listener
@@ -129,6 +133,7 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
         setIsConnected(false)
         characteristicRef.current = null
         setBluetoothCharacteristic(null)
+        setTemperatureCharacteristic(null) // Clear temperature characteristic
         toast({
           title: "Disconnected",
           description: "Bluetooth device has been disconnected",
@@ -136,28 +141,33 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
         })
       })
 
-      // Connect to the device
-      const { server, service, characteristic } = await connect(device, serviceUUID)
+      // Connect to all services
+      for (const serviceUUID of serviceUUIDs) {
+        try {
+          console.log(`Attempting to connect to service UUID: ${serviceUUID}`)
+          const { server, service, characteristic } = await connect(device, [serviceUUID])
 
-      console.log(`Connected to device with characteristic UUID: ${characteristic.uuid}`)
+          if (serviceUUID === "869c10ef-71d9-4f55-92d6-859350c3b8f6") {
+            // This is the temperature service
+            setTemperatureCharacteristic(characteristic)
+            setBluetoothTemperatureCharacteristic(characteristic)
+            console.log(`Connected to temperature service with characteristic UUID: ${characteristic.uuid}`)
+          } else {
+            // This is the main service
+            characteristicRef.current = characteristic
+            setBluetoothCharacteristic(characteristic)
+            console.log(`Connected to main service with characteristic UUID: ${characteristic.uuid}`)
+          }
 
-      // Store the characteristic in the ref
-      characteristicRef.current = characteristic
+          bluetoothService.setServer(server)
+          bluetoothService.setServiceUUID(serviceUUID)
+          console.log("Initialized bluetoothService with server and serviceUUID")
+        } catch (serviceError: any) {
+          console.warn(`Failed to connect to service ${serviceUUID}:`, serviceError)
+        }
+      }
 
-      // Set the characteristic in the utility file
-      setBluetoothCharacteristic(characteristic)
-
-      // Initialize the bluetoothService
-      bluetoothService.setServer(server)
-      bluetoothService.setServiceUUID(serviceUUID)
-      console.log("Initialized bluetoothService with server and serviceUUID")
-
-      console.log("Bluetooth connection established:", {
-        deviceName: device.name,
-        serviceUUID,
-        characteristicUUID: characteristic.uuid,
-      })
-
+      console.log("Bluetooth connection established")
       setIsConnected(true)
       toast({
         title: "Connected",
@@ -267,6 +277,35 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const requestTemperatureUpdate = async () => {
+    if (!temperatureCharacteristic) {
+      console.error("Temperature characteristic not set")
+      toast({
+        title: "Error",
+        description: "Temperature characteristic not set",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      const command = "temp-reading-request"
+      const encoder = new TextEncoder()
+      const data = encoder.encode(command)
+
+      console.log(`Sending temperature request command: ${command}`)
+      await temperatureCharacteristic.writeValue(data)
+      console.log("Temperature request command sent successfully")
+    } catch (error) {
+      console.error("Error sending temperature request:", error)
+      toast({
+        title: "Error",
+        description: "Failed to send temperature request",
+        variant: "destructive",
+      })
+    }
+  }
+
   return (
     <BluetoothContext.Provider
       value={{
@@ -276,6 +315,7 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
         connectToDevice,
         disconnectDevice,
         sendCommand,
+        requestTemperatureUpdate,
       }}
     >
       {children}
