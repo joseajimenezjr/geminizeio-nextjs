@@ -103,6 +103,17 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData }: ControlC
   const [showOBDIILibrary, setShowOBDIILibrary] = useState(false)
   const [hasOBD2Accessory, setHasOBD2Accessory] = useState(false)
 
+  // Add a state or check to determine if the user has a temperature sensor
+  const [hasTemperatureSensor, setHasTemperatureSensor] = useState(false)
+
+  // Check if user has a temperature sensor
+  useEffect(() => {
+    if (userData?.accessories) {
+      const hasTempSensor = userData.accessories.some((accessory: any) => accessory.accessoryType === "sensor")
+      setHasTemperatureSensor(hasTempSensor)
+    }
+  }, [userData])
+
   // Check if user has OBD2 accessory
   useEffect(() => {
     if (userData?.accessories) {
@@ -1226,6 +1237,7 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData }: ControlC
               existingWidgets={widgets}
               onAddUtility={handleAddUtilityWidget}
               onClose={() => setShowUtilityLibrary(false)}
+              hasTemperatureSensor={hasTemperatureSensor}
             />
           </div>
         )}

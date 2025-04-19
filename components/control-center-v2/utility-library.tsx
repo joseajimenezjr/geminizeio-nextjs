@@ -8,9 +8,11 @@ interface UtilityLibraryProps {
   existingWidgets: any[]
   onAddUtility: (utilityType: string) => void
   onClose: () => void
+  // Add this new prop
+  hasTemperatureSensor?: boolean
 }
 
-export function UtilityLibrary({ existingWidgets, onAddUtility, onClose }: UtilityLibraryProps) {
+export function UtilityLibrary({ existingWidgets, onAddUtility, onClose, hasTemperatureSensor }: UtilityLibraryProps) {
   // Define available utility widgets
   const utilityWidgets = [
     {
@@ -30,12 +32,6 @@ export function UtilityLibrary({ existingWidgets, onAddUtility, onClose }: Utili
       name: "Battery",
       description: "Monitor battery levels",
       icon: BatteryFull,
-    },
-    {
-      id: "temperature",
-      name: "Temperature",
-      description: "Monitor temperature readings",
-      icon: Thermometer,
     },
   ]
 
@@ -83,6 +79,27 @@ export function UtilityLibrary({ existingWidgets, onAddUtility, onClose }: Utili
               </Card>
             )
           })}
+          {hasTemperatureSensor && (
+            <Card
+              className={`cursor-pointer border-gray-800 transition-colors hover:bg-muted/50 ${
+                isWidgetAdded("temperature") ? "opacity-50" : ""
+              }`}
+              onClick={() => {
+                if (!isWidgetAdded("temperature")) {
+                  onAddUtility("temperature")
+                }
+              }}
+            >
+              <CardContent className="p-4">
+                <div className="flex flex-col items-center text-center">
+                  <Thermometer className="mb-2 h-8 w-8" />
+                  <h3 className="font-medium">Temperature</h3>
+                  <p className="text-xs text-muted-foreground">Monitor temperature readings</p>
+                  {isWidgetAdded("temperature") && <p className="mt-2 text-xs text-amber-500">Already added</p>}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </CardContent>
       <CardFooter className="border-t border-gray-800 px-6 py-4">
