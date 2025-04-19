@@ -103,33 +103,18 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData }: ControlC
   const [showOBDIILibrary, setShowOBDIILibrary] = useState(false)
   const [hasOBD2Accessory, setHasOBD2Accessory] = useState(false)
 
-  // Add a state or check to determine if the user has a temperature sensor
-  const [hasTemperatureSensor, setHasTemperatureSensor] = useState(false)
-
   // Add a state to track if the user has a temperature reader
   const [hasTemperatureReader, setHasTemperatureReader] = useState(false)
 
-  // Check if user has a temperature sensor
+  // Check if user has OBD2 accessory and temperature reader
   useEffect(() => {
     if (userData?.accessories) {
-      const hasTempSensor = userData.accessories.some((accessory: any) => accessory.accessoryType === "sensor")
-      setHasTemperatureSensor(hasTempSensor)
-    }
-  }, [userData])
-
-  // Check if user has OBD2 accessory
-  useEffect(() => {
-    if (userData?.accessories) {
+      // Check for OBD2 accessory
       const hasOBD2 = userData.accessories.some((accessory: any) => accessory.accessoryType === "obd2")
       setHasOBD2Accessory(hasOBD2)
 
-      // Check if any accessory has a hubDetails array with a temp_reader
-      const hasTempReader = userData.accessories.some((accessory: any) => {
-        if (accessory.hubDetails && Array.isArray(accessory.hubDetails)) {
-          return accessory.hubDetails.some((detail: any) => detail.accessoryType === "temp_reader")
-        }
-        return false
-      })
+      // Check for temperature reader accessory
+      const hasTempReader = userData.accessories.some((accessory: any) => accessory.accessoryType === "temp_reader")
       setHasTemperatureReader(hasTempReader)
     }
   }, [userData])
@@ -322,6 +307,8 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData }: ControlC
       case "gauge":
         return "gauge"
       case "sensor":
+        return "temperature"
+      case "temp_reader":
         return "temperature"
       case "winch":
         return "winch"
