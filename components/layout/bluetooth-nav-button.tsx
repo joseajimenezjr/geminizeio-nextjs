@@ -73,11 +73,11 @@ export function BluetoothNavButton() {
 
               // Extract service UUIDs if available
               if (
-                userData.hubDetails.serviceName &&
-                Array.isArray(userData.hubDetails.serviceName) &&
-                userData.hubDetails.serviceName.length > 0
+                userData.hubDetails.services &&
+                Array.isArray(userData.hubDetails.services) &&
+                userData.hubDetails.services.length > 0
               ) {
-                serviceUUIDs = userData.hubDetails.serviceName
+                serviceUUIDs = userData.hubDetails.services
                 console.log(`Using service UUIDs from profile:`, serviceUUIDs)
               } else {
                 console.log(`No services found in relay hub, using default:`, DEFAULT_SERVICE_UUID)

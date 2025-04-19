@@ -3,8 +3,8 @@ import { MainNav } from "./main-nav"
 import { MobileNav } from "./mobile-nav"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
-import { BluetoothNavButton } from "./bluetooth-nav-button"
 import { VoiceControl } from "@/components/voice-control/voice-control"
+import { BluetoothNavButton } from "@/components/layout/bluetooth-nav-button"
 
 export function Header() {
   return (
