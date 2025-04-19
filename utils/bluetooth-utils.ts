@@ -254,7 +254,7 @@ export function BluetoothNavButton() {
 
         // Connect to the device, using the specific name and services if available
         console.log(`Connecting to device: ${deviceName || "any"} with services:`, serviceUUIDs)
-        // await connectToDevice(deviceName, serviceUUIDs)
+        await connectToDevice(deviceName, serviceUUIDs)
       } catch (error) {
         console.error("Failed to connect:", error)
       }
