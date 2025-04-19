@@ -728,7 +728,6 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData }: ControlC
 
   // Handle long press start
   const handleWidgetMouseDown = (e: React.MouseEvent | React.TouchEvent, widgetId: string) => {
-
     // Only enable long press in editing mode
     if (!isEditing) {
       return // Exit early if not in editing mode
@@ -784,7 +783,6 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData }: ControlC
 
   // Handle mouse up to cancel long press
   const handleWidgetMouseUp = (widgetId: string) => {
-
     // Remove the visual indicator
     const widgetElement = document.getElementById(widgetId)
     if (widgetElement) {
@@ -799,7 +797,6 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData }: ControlC
 
   // Handle mouse leave to cancel long press
   const handleWidgetMouseLeave = (widgetId: string) => {
-
     // Remove the visual indicator
     const widgetElement = document.getElementById(widgetId)
     if (widgetElement) {

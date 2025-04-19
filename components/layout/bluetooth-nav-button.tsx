@@ -10,8 +10,8 @@ export function BluetoothNavButton() {
   const { isConnected, connectToDevice, disconnectDevice } = useBluetooth()
   const [isFlashing, setIsFlashing] = useState(false)
 
-  // Default service UUID as fallback
-  const DEFAULT_SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
+  // Service UUID for connection
+  const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 
   // Toggle flashing effect when disconnected
   useEffect(() => {
@@ -35,9 +35,8 @@ export function BluetoothNavButton() {
         const userData = await getUserData()
         console.log("User data received:", userData)
 
-        // Initialize variables
+        // Check if user has hub details
         let deviceName = undefined
-        let serviceUUIDs = [DEFAULT_SERVICE_UUID] // Default fallback
 
         if (userData?.hubDetails) {
           console.log("Hub details found:", userData.hubDetails)
@@ -52,15 +51,6 @@ export function BluetoothNavButton() {
             if (relayHub) {
               console.log("Found relay hub:", relayHub)
               deviceName = relayHub.deviceName
-
-              // Extract service UUIDs if available
-              if (relayHub.services && Array.isArray(relayHub.serviceName) && relayHub.serviceName.length > 0) {
-                serviceUUIDs = relayHub.serviceName
-                console.log(`Using service UUIDs from profile:`, serviceUUIDs)
-              } else {
-                console.log(`No services found in relay hub, using default:`, DEFAULT_SERVICE_UUID)
-              }
-
               console.log(`Using relay hub device name: ${deviceName}`)
             } else {
               console.log("No relay hub found in hubDetails array")
@@ -70,19 +60,6 @@ export function BluetoothNavButton() {
             console.log("Hub details is a single object")
             if (userData.hubDetails.deviceType === "relay_hub") {
               deviceName = userData.hubDetails.deviceName
-
-              // Extract service UUIDs if available
-              if (
-                userData.hubDetails.services &&
-                Array.isArray(userData.hubDetails.services) &&
-                userData.hubDetails.services.length > 0
-              ) {
-                serviceUUIDs = userData.hubDetails.services
-                console.log(`Using service UUIDs from profile:`, serviceUUIDs)
-              } else {
-                console.log(`No services found in relay hub, using default:`, DEFAULT_SERVICE_UUID)
-              }
-
               console.log(`Found relay hub device name: ${deviceName}`)
             }
           }
@@ -90,9 +67,9 @@ export function BluetoothNavButton() {
           console.log("No hub details found in user data")
         }
 
-        // Connect to the device, using the specific name and services if available
-        console.log(`Connecting to device: ${deviceName || "any"} with services:`, serviceUUIDs)
-        await connectToDevice(deviceName, serviceUUIDs)
+        // Connect to the device, using the specific name if available
+        console.log(`Connecting to device: ${deviceName || "any"}`)
+        await connectToDevice(deviceName, SERVICE_UUID)
       } catch (error) {
         console.error("Failed to connect:", error)
       }
