@@ -3,25 +3,27 @@
 import { bluetoothService } from "@/services/bluetooth-service"
 
 // Function to request a Bluetooth device
-export async function requestDevice(deviceName?: string, serviceUUID?: string): Promise<BluetoothDevice> {
+export async function requestDevice(deviceName?: string, serviceUUIDs?: string[]): Promise<BluetoothDevice> {
   if (!navigator.bluetooth) {
     throw new Error("Web Bluetooth API is not available in this browser.")
   }
 
-  console.log(`Requesting Bluetooth device with name: ${deviceName || "any"}, serviceUUID: ${serviceUUID || "none"}`)
+  console.log(
+    `Requesting Bluetooth device with name: ${deviceName || "any"}, serviceUUIDs: ${serviceUUIDs?.join(", ") || "none"}`,
+  )
 
   // Prepare request options based on the desired format
   let options: RequestDeviceOptions
 
   if (deviceName) {
-    // If we have a device name, use it as a filter and add serviceUUID to optionalServices
+    // If we have a device name, use it as a filter
     options = {
       filters: [{ name: deviceName }],
     }
 
-    // Add optionalServices if serviceUUID is provided
-    if (serviceUUID) {
-      options.optionalServices = [serviceUUID]
+    // Add optionalServices if serviceUUIDs are provided
+    if (serviceUUIDs && serviceUUIDs.length > 0) {
+      options.optionalServices = serviceUUIDs
     }
   } else {
     // If no device name is provided, fall back to acceptAllDevices
@@ -29,9 +31,9 @@ export async function requestDevice(deviceName?: string, serviceUUID?: string): 
       acceptAllDevices: true,
     }
 
-    // Still add optionalServices if serviceUUID is provided
-    if (serviceUUID) {
-      options.optionalServices = [serviceUUID]
+    // Still add optionalServices if serviceUUIDs are provided
+    if (serviceUUIDs && serviceUUIDs.length > 0) {
+      options.optionalServices = serviceUUIDs
     }
   }
 

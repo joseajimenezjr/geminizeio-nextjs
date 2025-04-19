@@ -14,7 +14,7 @@ interface BluetoothContextType {
     error?: string
     errorType?: "permission" | "support" | "other"
   }
-  connectToDevice: (deviceName?: string, serviceUUID?: string) => Promise<void>
+  connectToDevice: (deviceName?: string, serviceUUIDs?: string | string[]) => Promise<void>
   disconnectDevice: () => Promise<void>
   sendCommand: (value: number) => Promise<boolean>
 }
@@ -90,7 +90,7 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
   }
 
   // Connect to Arduino device
-  const connectToDevice = async (deviceName?: string, serviceUUID?: string) => {
+  const connectToDevice = async (deviceName?: string, serviceUUIDs?: string | string[]) => {
     // Check availability again before attempting to connect
     const isAvailable = await checkBluetoothAvailability()
 
@@ -103,11 +103,14 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    // Validate serviceUUID
-    if (!serviceUUID) {
+    // Normalize serviceUUIDs to array
+    const normalizedServiceUUIDs = Array.isArray(serviceUUIDs) ? serviceUUIDs : serviceUUIDs ? [serviceUUIDs] : []
+
+    // Validate serviceUUIDs
+    if (normalizedServiceUUIDs.length === 0) {
       toast({
         title: "Connection Error",
-        description: "Service UUID is required for Bluetooth connection",
+        description: "At least one Service UUID is required for Bluetooth connection",
         variant: "destructive",
       })
       return
@@ -117,10 +120,10 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
       setIsConnecting(true)
 
       // Log the connection attempt details
-      console.log(`Attempting to connect to device: ${deviceName || "any"} with service UUID: ${serviceUUID}`)
+      console.log(`Attempting to connect to device: ${deviceName || "any"} with service UUIDs:`, normalizedServiceUUIDs)
 
       // Request a device - if deviceName is provided, use it to filter devices
-      const device = await requestDevice(deviceName, serviceUUID)
+      const device = await requestDevice(deviceName, normalizedServiceUUIDs)
       setBluetoothDevice(device)
 
       // Setup disconnect listener
@@ -136,8 +139,30 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
         })
       })
 
-      // Connect to the device
-      const { server, service, characteristic } = await connect(device, serviceUUID)
+      // Connect to the device - use the first service UUID for initial connection
+      // We'll try each service UUID until one works
+      let server, service, characteristic
+      let connected = false
+
+      for (const serviceUUID of normalizedServiceUUIDs) {
+        try {
+          console.log(`Trying to connect with service UUID: ${serviceUUID}`)
+          const result = await connect(device, serviceUUID)
+          server = result.server
+          service = result.service
+          characteristic = result.characteristic
+          connected = true
+          console.log(`Successfully connected with service UUID: ${serviceUUID}`)
+          break
+        } catch (error) {
+          console.warn(`Failed to connect with service UUID: ${serviceUUID}`, error)
+          // Continue to the next service UUID
+        }
+      }
+
+      if (!connected) {
+        throw new Error("Failed to connect with any of the provided service UUIDs")
+      }
 
       console.log(`Connected to device with characteristic UUID: ${characteristic.uuid}`)
 
@@ -147,14 +172,14 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
       // Set the characteristic in the utility file
       setBluetoothCharacteristic(characteristic)
 
-      // Initialize the bluetoothService
+      // Initialize the bluetoothService with the successful service UUID
       bluetoothService.setServer(server)
-      bluetoothService.setServiceUUID(serviceUUID)
-      console.log("Initialized bluetoothService with server and serviceUUID")
+      bluetoothService.setServiceUUID(service.uuid)
+      console.log("Initialized bluetoothService with server and serviceUUID:", service.uuid)
 
       console.log("Bluetooth connection established:", {
         deviceName: device.name,
-        serviceUUID,
+        serviceUUID: service.uuid,
         characteristicUUID: characteristic.uuid,
       })
 
