@@ -31,16 +31,26 @@ export function BluetoothNavButton() {
     } else {
       try {
         // Fetch user data to get hub details
+        console.log("Fetching user data...")
         const userData = await getUserData()
+        console.log("User data received:", userData)
 
         // Check if user has hub details and it's a relay hub
         let deviceName = undefined
-        if (userData?.hubDetails && userData.hubDetails.deviceType === "relay_hub") {
-          deviceName = userData.hubDetails.deviceName
-          console.log(`Found relay hub device name: ${deviceName}`)
+        if (userData) {
+          console.log("Hub details:", userData.hubDetails)
+        }
+
+        if (userData?.hubDetails) {
+          console.log("Device type:", userData.hubDetails.deviceType)
+          if (userData.hubDetails.deviceType === "relay_hub") {
+            deviceName = userData.hubDetails.deviceName
+            console.log(`Found relay hub device name: ${deviceName}`)
+          }
         }
 
         // Connect to the device, using the specific name if available
+        console.log(`Connecting to device: ${deviceName || "any"}`)
         await connectToDevice(deviceName, SERVICE_UUID)
       } catch (error) {
         console.error("Failed to connect:", error)

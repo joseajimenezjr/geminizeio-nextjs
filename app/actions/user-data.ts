@@ -30,6 +30,9 @@ export interface TopTimeEntry {
 
 // Update the function to avoid using cookies() when in preview mode
 export async function getUserData(isPreviewMode?: boolean) {
+  // Add this logging at the beginning of the getUserData function
+  console.log("getUserData called")
+
   // If explicitly in preview mode, return mock data without using cookies
   if (isPreviewMode === true) {
     console.log("getUserData: Returning mock data for preview mode")
@@ -165,6 +168,8 @@ export async function getUserData(isPreviewMode?: boolean) {
     }
 
     console.log("getUserData: Successfully retrieved profile data")
+    // Add this logging before returning the data
+    console.log("getUserData returning:", data)
     return data
   } catch (error) {
     console.error("Error in getUserData:", error)
