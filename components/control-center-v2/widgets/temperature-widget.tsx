@@ -56,6 +56,7 @@ export function TemperatureWidget({
   useEffect(() => {
     const handleTemperatureUpdate = (event: any) => {
       const value = new TextDecoder().decode(event.target.value)
+      console.log("Raw temperature data received:", event.target.value) // ADDED: Log raw data
       console.log("Current temperature:", value)
       setTemperature(Number(value))
     }
