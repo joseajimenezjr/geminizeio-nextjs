@@ -152,6 +152,14 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
             setTemperatureCharacteristic(characteristic)
             setBluetoothTemperatureCharacteristic(characteristic)
             console.log(`Connected to temperature service with characteristic UUID: ${characteristic.uuid}`)
+
+            // Start notifications for the temperature characteristic
+            try {
+              await characteristic.startNotifications()
+              console.log("Temperature notifications started")
+            } catch (error) {
+              console.error("Error starting temperature notifications:", error)
+            }
           } else {
             // This is the main service
             characteristicRef.current = characteristic
@@ -202,6 +210,7 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
         setIsConnected(false)
         characteristicRef.current = null
         setBluetoothCharacteristic(null)
+        setTemperatureCharacteristic(null)
         toast({
           title: "Disconnected",
           description: "Successfully disconnected from device",
