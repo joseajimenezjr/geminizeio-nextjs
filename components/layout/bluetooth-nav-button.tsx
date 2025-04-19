@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Bluetooth } from "lucide-react"
 import { useBluetooth } from "@/contexts/bluetooth-context"
+import { getUserData } from "@/app/actions/user-data"
 
 export function BluetoothNavButton() {
   const { isConnected, connectToDevice, disconnectDevice } = useBluetooth()
@@ -29,7 +30,18 @@ export function BluetoothNavButton() {
       await disconnectDevice()
     } else {
       try {
-        await connectToDevice(undefined, SERVICE_UUID)
+        // Fetch user data to get hub details
+        const userData = await getUserData()
+
+        // Check if user has hub details and it's a relay hub
+        let deviceName = undefined
+        if (userData?.hubDetails && userData.hubDetails.deviceType === "relay_hub") {
+          deviceName = userData.hubDetails.deviceName
+          console.log(`Found relay hub device name: ${deviceName}`)
+        }
+
+        // Connect to the device, using the specific name if available
+        await connectToDevice(deviceName, SERVICE_UUID)
       } catch (error) {
         console.error("Failed to connect:", error)
       }
