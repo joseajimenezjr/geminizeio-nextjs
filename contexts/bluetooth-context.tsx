@@ -18,6 +18,7 @@ interface BluetoothContextType {
   disconnectDevice: () => Promise<void>
   sendCommand: (value: number) => Promise<boolean>
   requestTemperatureUpdate: () => Promise<void>
+  temperatureCharacteristic: BluetoothRemoteGATTCharacteristic | null
 }
 
 const BluetoothContext = createContext<BluetoothContextType | undefined>(undefined)
@@ -157,6 +158,12 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
             try {
               await characteristic.startNotifications()
               console.log("Temperature notifications started")
+
+              characteristic.addEventListener("characteristicvaluechanged", (event) => {
+                const value = new TextDecoder().decode(event.target.value)
+                console.log("Raw temperature data received:", event.target.value)
+                console.log("Current temperature:", value)
+              })
             } catch (error) {
               console.error("Error starting temperature notifications:", error)
             }
@@ -325,6 +332,7 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
         disconnectDevice,
         sendCommand,
         requestTemperatureUpdate,
+        temperatureCharacteristic,
       }}
     >
       {children}
