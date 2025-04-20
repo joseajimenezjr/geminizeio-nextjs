@@ -33,7 +33,7 @@ interface TopTimeEntry {
 }
 
 interface TimerWidgetProps {
-  title: string
+  title?: string
   bestTime?: number | null
   topTimes?: TopTimeEntry[] | null
   isEditing?: boolean
@@ -46,7 +46,7 @@ interface TimerWidgetProps {
 }
 
 export function TimerWidget({
-  title,
+  title = "Timer",
   bestTime: initialBestTime = null,
   topTimes: initialTopTimes = null,
   isEditing = false,
@@ -82,7 +82,28 @@ export function TimerWidget({
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDescriptionDialog, setShowDescriptionDialog] = useState(false)
-  const [isWidgetEditing, setIsWidgetEditing] = useState(false)
+  const [isWidgetEditing, setIsWidgetEditing] = useState(isEditing)
+
+  // Load user data on mount
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const userData = await getUserData()
+        if (userData) {
+          if (userData.bestTimeCaptured !== undefined) {
+            setBestTime(userData.bestTimeCaptured)
+          }
+          if (userData.topTimesCaptured) {
+            setTopTimes(userData.topTimesCaptured)
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load user data:", error)
+      }
+    }
+
+    loadUserData()
+  }, [])
 
   // Clean up interval on unmount
   useEffect(() => {

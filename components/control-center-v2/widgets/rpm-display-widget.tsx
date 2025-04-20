@@ -67,3 +67,6 @@ export function RPMDisplayWidget({
     </div>
   )
 }
+
+// Add the correctly cased export alias
+export const RpmDisplayWidget = RPMDisplayWidget
