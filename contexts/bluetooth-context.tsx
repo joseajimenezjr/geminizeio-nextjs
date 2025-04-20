@@ -2,9 +2,11 @@
 
 import { createContext, useContext, useState, useRef, useEffect, type ReactNode } from "react"
 import { useToast } from "@/hooks/use-toast"
-import { requestDevice, connectToDevice as connect, disconnectDevice as disconnect } from "@/utils/bluetooth-utils"
+import { requestDevice, connectToDevice as connect } from "@/utils/bluetooth-utils"
+import { disconnectDevice as disconnect } from "@/utils/bluetooth-utils"
 import { setBluetoothCharacteristic, setBluetoothTemperatureCharacteristic } from "@/utils/bluetooth-commands"
 import { bluetoothService } from "@/services/bluetooth-service"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 
 interface BluetoothContextType {
   isConnected: boolean
@@ -19,6 +21,7 @@ interface BluetoothContextType {
   sendCommand: (value: number) => Promise<boolean>
   requestTemperatureUpdate: () => Promise<void>
   temperatureCharacteristic: BluetoothRemoteGATTCharacteristic | null
+  autoConnect: () => Promise<void>
 }
 
 const BluetoothContext = createContext<BluetoothContextType | undefined>(undefined)
@@ -37,6 +40,8 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
     errorType?: "permission" | "support" | "other"
   }>({ available: false })
   const { toast } = useToast()
+  const [autoConnectAttempted, setAutoConnectAttempted] = useState(false)
+  const supabase = createClientComponentClient()
 
   // Check if Web Bluetooth is supported on component mount
   useEffect(() => {
@@ -209,27 +214,47 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  // Disconnect from device
-  const disconnectDevice = async () => {
-    if (bluetoothDevice) {
-      try {
-        await disconnect(bluetoothDevice)
-        setIsConnected(false)
-        characteristicRef.current = null
-        setBluetoothCharacteristic(null)
-        setTemperatureCharacteristic(null)
-        toast({
-          title: "Disconnected",
-          description: "Successfully disconnected from device",
-        })
-      } catch (error) {
-        console.error("Disconnect error:", error)
-        toast({
-          title: "Error",
-          description: "Failed to disconnect from device",
-          variant: "destructive",
-        })
+  // Auto-connect function
+  const autoConnect = async () => {
+    if (autoConnectAttempted || isConnected || isConnecting) {
+      return
+    }
+
+    setAutoConnectAttempted(true)
+
+    try {
+      // Get user data to get hub details
+      console.log("Fetching user data for auto-connect...")
+      const { data: sessionData } = await supabase.auth.getSession()
+      if (!sessionData.session) {
+        console.log("No active session, skipping auto-connect")
+        return
       }
+
+      const { data: profileData, error } = await supabase
+        .from("Profiles")
+        .select("hubDetails")
+        .eq("id", sessionData.session.user.id)
+        .single()
+
+      if (error || !profileData?.hubDetails) {
+        console.log("No hub details found for auto-connect")
+        return
+      }
+
+      // Find a hub or relay_hub device in hubDetails
+      const device = profileData.hubDetails.find(
+        (device: any) => device.deviceType === "hub" || device.deviceType === "relay_hub",
+      )
+
+      if (device?.deviceName && device?.serviceName) {
+        console.log(`Attempting auto-connect to device: ${device.deviceName} with service: ${device.serviceName}`)
+        await connectToDevice(device.deviceName, device.serviceName)
+      } else {
+        console.log("Missing deviceName or serviceName in hubDevice", device)
+      }
+    } catch (error) {
+      console.error("Error in auto-connect:", error)
     }
   }
 
@@ -319,6 +344,36 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
         description: "Failed to send temperature request",
         variant: "destructive",
       })
+      return
+    }
+  }
+
+  const disconnectDevice = async () => {
+    if (!bluetoothDevice) {
+      console.warn("No device to disconnect from.")
+      return
+    }
+
+    try {
+      await disconnect(bluetoothDevice)
+      setIsConnected(false)
+      characteristicRef.current = null
+      setBluetoothCharacteristic(null)
+      setTemperatureCharacteristic(null)
+      setBluetoothDevice(null)
+
+      toast({
+        title: "Disconnected",
+        description: "Device has been disconnected",
+        variant: "default",
+      })
+    } catch (error) {
+      console.error("Disconnection failed:", error)
+      toast({
+        title: "Error",
+        description: "Failed to disconnect from device",
+        variant: "destructive",
+      })
     }
   }
 
@@ -333,6 +388,7 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
         sendCommand,
         requestTemperatureUpdate,
         temperatureCharacteristic,
+        autoConnect,
       }}
     >
       {children}

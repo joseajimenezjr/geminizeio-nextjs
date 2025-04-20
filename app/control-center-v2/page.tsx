@@ -1,14 +1,16 @@
+"use client"
+
 import { getUserData } from "@/app/actions/user-data"
 import { ControlCenterV2 } from "@/components/control-center-v2/control-center"
 import { DashboardHeaderWrapper } from "@/components/dashboard/dashboard-header-wrapper"
 import { BottomNav } from "@/components/layout/bottom-nav"
+import { AutoConnectHandler } from "@/components/dashboard/auto-connect-handler" // Import the new component
 
 export const dynamic = "force-dynamic"
 
 export default async function ControlCenterV2Page() {
   // Get user data
   const userData = await getUserData()
-  console.log("Control Center V2 - userData:", JSON.stringify(userData, null, 2))
 
   if (!userData) {
     return (
@@ -32,6 +34,8 @@ export default async function ControlCenterV2Page() {
       />
 
       <div className="container px-4 py-4 flex-1">
+        {/* Add the AutoConnectHandler component */}
+        <AutoConnectHandler />
         <ControlCenterV2 userData={userData} />
       </div>
 
