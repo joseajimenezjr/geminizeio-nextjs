@@ -26,6 +26,7 @@ import { ChaseLightWidget } from "./widgets/chase-light-widget"
 import { RGBLightWidget } from "./widgets/rgb-light-widget"
 import { BatteryWidget } from "./widgets/battery-widget"
 import { TemperatureWidget } from "./widgets/temperature-widget"
+import { TimerWidget } from "./widgets/timer-widget"
 
 // Add a style tag for the long-press visual indicator
 const longPressStyle = `
@@ -965,6 +966,22 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData }: ControlC
       return (
         <WeatherWidget
           title="Weather"
+          isEditing={isEditing}
+          onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
+          onMouseUp={() => handleWidgetMouseUp(widget.id)}
+          onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
+          onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
+          onTouchEnd={() => handleWidgetMouseUp(widget.id)}
+          onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
+        />
+      )
+    }
+
+    // For timer widget
+    if (widget.type === "timer") {
+      return (
+        <TimerWidget
+          title="Timer"
           isEditing={isEditing}
           onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
           onMouseUp={() => handleWidgetMouseUp(widget.id)}
