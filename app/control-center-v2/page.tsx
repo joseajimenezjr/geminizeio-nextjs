@@ -1,16 +1,41 @@
 "use client"
 
-import { getUserData } from "@/app/actions/user-data"
+import { useState, useEffect } from "react"
 import { ControlCenterV2 } from "@/components/control-center-v2/control-center"
 import { DashboardHeaderWrapper } from "@/components/dashboard/dashboard-header-wrapper"
 import { BottomNav } from "@/components/layout/bottom-nav"
-import { AutoConnectHandler } from "@/components/dashboard/auto-connect-handler" // Import the new component
+import { AutoConnectHandler } from "@/components/dashboard/auto-connect-handler"
+import { getUserData } from "@/app/actions/user-data"
+import { LoadingSpinner } from "@/components/ui/loading-spinner"
 
-export const dynamic = "force-dynamic"
+export default function ControlCenterV2Page() {
+  const [userData, setUserData] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
-export default async function ControlCenterV2Page() {
-  // Get user data
-  const userData = await getUserData()
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true)
+      try {
+        const data = await getUserData()
+        setUserData(data)
+      } catch (error) {
+        console.error("Error getting user data:", error)
+        setUserData(null)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    )
+  }
 
   if (!userData) {
     return (
