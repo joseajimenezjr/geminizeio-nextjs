@@ -108,7 +108,7 @@ export function LoginForm() {
 
       if (data?.session) {
         setMessage("Sign in successful! Redirecting...")
-        router.push("/control-center")
+        router.push("/control-center-v2")
         router.refresh()
       }
     } catch (error: any) {
