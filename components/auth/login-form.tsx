@@ -81,7 +81,7 @@ export function LoginForm() {
         }
 
         if (session) {
-          router.push("/control-center")
+          router.push("/control-center-v2")
           router.refresh()
         }
       } catch (error) {
