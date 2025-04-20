@@ -41,7 +41,7 @@ export async function middleware(req: NextRequest) {
 
     // Define protected routes
     const isProtectedRoute =
-      req.nextUrl.pathname.startsWith("/control-center") ||
+      req.nextUrl.pathname.startsWith("/control-center-v2") ||
       req.nextUrl.pathname.startsWith("/accessories") ||
       req.nextUrl.pathname.startsWith("/settings") ||
       req.nextUrl.pathname.startsWith("/shop")
@@ -56,7 +56,7 @@ export async function middleware(req: NextRequest) {
     // If user is signed in and tries to access auth route, redirect to control center
     if (isAuthRoute && session) {
       console.log("Redirecting from auth route to control center")
-      return NextResponse.redirect(new URL("/control-center", req.url))
+      return NextResponse.redirect(new URL("/control-center-v2", req.url))
     }
 
     // If user is not signed in and tries to access protected route, redirect to login
