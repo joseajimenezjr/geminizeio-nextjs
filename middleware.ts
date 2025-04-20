@@ -42,7 +42,6 @@ export async function middleware(req: NextRequest) {
     // Define protected routes
     const isProtectedRoute =
       req.nextUrl.pathname.startsWith("/control-center") ||
-      req.nextUrl.pathname.startsWith("/control-center-retired") ||
       req.nextUrl.pathname.startsWith("/accessories") ||
       req.nextUrl.pathname.startsWith("/settings") ||
       req.nextUrl.pathname.startsWith("/shop")

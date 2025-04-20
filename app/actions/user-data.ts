@@ -1,11 +1,9 @@
 "use server"
 
-import { createClient } from "@/lib/supabase"
 import { cookies } from "next/headers"
 import { revalidatePath } from "next/cache"
 import { createServerActionClient } from "@supabase/auth-helpers-nextjs"
-import { createClient as createSupabaseClient } from "@supabase/supabase-js"
-import { headers } from "next/headers"
+import { createClient } from "@supabase/supabase-js"
 
 export interface Device {
   accessoryID: string
@@ -24,45 +22,158 @@ export interface Group {
   devices: string[]
 }
 
-interface TopTimeEntry {
+export interface TopTimeEntry {
   time: number
   date: string
   description: string
 }
 
-export async function getUserData() {
-  try {
-    const cookieStore = cookies()
-    const supabase = createClient(cookieStore)
+// Update the function to avoid using cookies() when in preview mode
+export async function getUserData(isPreviewMode?: boolean) {
+  // Add this logging at the beginning of the getUserData function
+  console.log("getUserData called")
 
-    // Get the current user
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      return { error: "Not authenticated" }
-    }
-
-    // Get the user's profile
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single()
-
-    if (profileError) {
-      console.error("Error fetching profile:", profileError)
-      return { error: profileError.message }
-    }
-
+  // If explicitly in preview mode, return mock data without using cookies
+  if (isPreviewMode === true) {
+    console.log("getUserData: Returning mock data for preview mode")
     return {
-      bestTimeCaptured: profile.best_time_captured || null,
-      topTimesCaptured: profile.top_times_captured || [],
+      id: "preview-user-id",
+      email: "preview@example.com",
+      firstName: "Preview",
+      lastName: "User",
+      vehicleName: "Preview Vehicle",
+      vehicleType: "SUV",
+      bestTime: 12345,
+      topTimesCaptured: [
+        {
+          time: 12345,
+          date: new Date().toISOString(),
+          description: "First test run",
+        },
+        {
+          time: 13500,
+          date: new Date(Date.now() - 86400000).toISOString(), // Yesterday
+          description: "Second test run",
+        },
+      ],
+      accessories: [
+        {
+          accessoryID: "D001",
+          accessoryName: "Light Bar",
+          accessoryType: "light",
+          accessoryConnectionStatus: false,
+          isFavorite: true,
+          relayPosition: "1",
+        },
+        {
+          accessoryID: "D002",
+          accessoryName: "Spot Lights",
+          accessoryType: "light",
+          accessoryConnectionStatus: false,
+          isFavorite: false,
+          relayPosition: "2",
+        },
+        {
+          accessoryID: "D003",
+          accessoryName: "Rock Lights",
+          accessoryType: "light",
+          accessoryConnectionStatus: false,
+          isFavorite: false,
+          relayPosition: "3",
+        },
+        {
+          accessoryID: "D004",
+          accessoryName: "Winch",
+          accessoryType: "utility",
+          accessoryConnectionStatus: false,
+          isFavorite: false,
+          relayPosition: "4",
+        },
+      ],
+      groups: [
+        {
+          id: "G001",
+          name: "Exterior Lights",
+          active: false,
+          devices: ["D001", "D002"],
+        },
+        {
+          id: "G002",
+          name: "Interior Lights",
+          active: false,
+          devices: ["D003"],
+        },
+        {
+          id: "G003",
+          name: "Utility",
+          active: false,
+          devices: ["D004"],
+        },
+      ],
+      settings: {
+        darkMode: false,
+        notificationsEnabled: true,
+        showFavorites: true,
+      },
     }
+  }
+
+  try {
+    // Only create the Supabase client and use cookies when needed
+    const supabase = createServerActionClient({ cookies })
+    console.log("getUserData: Creating Supabase client")
+
+    console.log("getUserData: Checking for session")
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (!session) {
+      console.log("getUserData: No session found")
+      return null
+    }
+
+    console.log(`getUserData: Session found for user ${session.user.id}, email: ${session.user.email}`)
+    console.log(`getUserData: Querying Profiles table with id = "${session.user.id}"`)
+
+    const { data, error } = await supabase.from("Profiles").select("*").eq("id", session.user.id).maybeSingle() // Use maybeSingle instead of single
+
+    if (error) {
+      console.error("getUserData: Error fetching user data:", error)
+      console.error("getUserData: Error details:", {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+      })
+      return null
+    }
+
+    if (!data) {
+      console.log("getUserData: No profile found for user:", session.user.id)
+
+      // Return a default profile structure
+      return {
+        id: session.user.id,
+        email: session.user.email,
+        accessories: [],
+        groups: [],
+        topTimesCaptured: [],
+        settings: {
+          darkMode: false,
+          notificationsEnabled: true,
+          showFavorites: true,
+        },
+      }
+    }
+
+    console.log("getUserData: Successfully retrieved profile data")
+    // Add this logging before returning the data
+    console.log("getUserData returning:", data)
+    return data
   } catch (error) {
     console.error("Error in getUserData:", error)
-    return { error: "Failed to get user data" }
+    return null
   }
 }
 
@@ -213,6 +324,7 @@ export async function updateGroupStatus(groupId: string, active: boolean) {
 }
 
 // Update device name
+import { headers } from "next/headers"
 
 export async function updateDeviceName(accessoryID: string, accessoryName: string, relayPosition?: number | null) {
   console.log(
@@ -238,7 +350,7 @@ export async function updateDeviceName(accessoryID: string, accessoryName: strin
         console.log(`Supabase URL: ${process.env.NEXT_PUBLIC_SUPABASE_URL}`)
         console.log("Creating Supabase client with token")
 
-        const supabase = createSupabaseClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_KEY, {
+        const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_KEY, {
           auth: {
             persistSession: false,
             autoRefreshToken: false,
@@ -429,197 +541,213 @@ export async function updateDeviceName(accessoryID: string, accessoryName: strin
 
 // Update user's best time
 export async function updateBestTime(time: number) {
+  console.log(`Server action: Updating user's best time to ${time}ms`)
+
   try {
-    const cookieStore = cookies()
-    const supabase = createClient(cookieStore)
+    const supabase = createServerActionClient({ cookies })
 
-    // Get the current user
     const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
+      data: { session },
+    } = await supabase.auth.getSession()
+    if (!session) {
       return { success: false, error: "Not authenticated" }
     }
 
-    // Update the user's best time
-    const { error } = await supabase.from("profiles").update({ best_time_captured: time }).eq("id", user.id)
+    // Get the current profile data
+    const { data: profileData, error: profileError } = await supabase
+      .from("Profiles")
+      .select("bestTime")
+      .eq("id", session.user.id)
+      .single()
 
-    if (error) {
-      console.error("Error updating best time:", error)
-      return { success: false, error: error.message }
+    if (profileError) {
+      return { success: false, error: profileError.message }
     }
 
-    revalidatePath("/control-center")
-    return { success: true }
+    // Only update if the new time is better than the existing one
+    const currentBestTime = profileData.bestTime
+    if (currentBestTime === null || time < currentBestTime) {
+      // Update the profile with the new best time
+      const { error: updateError } = await supabase
+        .from("Profiles")
+        .update({ bestTime: time })
+        .eq("id", session.user.id)
+
+      if (updateError) {
+        return { success: false, error: updateError.message }
+      }
+
+      revalidatePath("/control-center-v2")
+      return { success: true, previousBestTime: currentBestTime }
+    }
+
+    return { success: true, noBestTimeUpdate: true }
   } catch (error) {
-    console.error("Error in updateBestTime:", error)
-    return { success: false, error: "Failed to update best time" }
+    return { success: false, error: "Unexpected error" }
   }
 }
 
 // Save top time with description
 export async function saveTopTime(time: number, description: string) {
+  console.log(`Server action: Saving top time ${time}ms with description: "${description}"`)
+
   try {
-    const cookieStore = cookies()
-    const supabase = createClient(cookieStore)
+    const supabase = createServerActionClient({ cookies })
 
-    // Get the current user
     const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
+      data: { session },
+    } = await supabase.auth.getSession()
+    if (!session) {
       return { success: false, error: "Not authenticated" }
     }
 
-    // Get the user's current top times
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("top_times_captured")
-      .eq("id", user.id)
+    // Get the current profile data
+    const { data: profileData, error: profileError } = await supabase
+      .from("Profiles")
+      .select("topTimesCaptured")
+      .eq("id", session.user.id)
       .single()
 
     if (profileError) {
-      console.error("Error fetching profile:", profileError)
       return { success: false, error: profileError.message }
     }
 
-    // Create a new top time entry
-    const newTopTime: TopTimeEntry = {
+    // Create the new top time entry
+    const newTopTime = {
       time,
       date: new Date().toISOString(),
       description,
     }
 
-    // Add the new top time to the array
-    let topTimes: TopTimeEntry[] = profile.top_times_captured || []
-    topTimes.push(newTopTime)
+    // Get existing top times or initialize empty array
+    const topTimes = profileData.topTimesCaptured || []
 
-    // Sort by time (ascending)
-    topTimes.sort((a, b) => a.time - b.time)
+    // Add the new time and sort by time (ascending)
+    const updatedTopTimes = [...topTimes, newTopTime].sort((a, b) => a.time - b.time).slice(0, 10) // Keep only top 10
 
-    // Keep only the top 10
-    if (topTimes.length > 10) {
-      topTimes = topTimes.slice(0, 10)
+    // Update the profile with the new top times array
+    const { error: updateError } = await supabase
+      .from("Profiles")
+      .update({ topTimesCaptured: updatedTopTimes })
+      .eq("id", session.user.id)
+
+    if (updateError) {
+      return { success: false, error: updateError.message }
     }
 
-    // Update the user's top times
-    const { error } = await supabase.from("profiles").update({ top_times_captured: topTimes }).eq("id", user.id)
-
-    if (error) {
-      console.error("Error updating top times:", error)
-      return { success: false, error: error.message }
-    }
-
-    revalidatePath("/control-center")
-    return { success: true, topTimes }
+    revalidatePath("/control-center-v2")
+    return { success: true, topTimes: updatedTopTimes }
   } catch (error) {
-    console.error("Error in saveTopTime:", error)
-    return { success: false, error: "Failed to save top time" }
+    return { success: false, error: "Unexpected error" }
   }
 }
 
 // Edit top time description
-export async function editTopTimeDescription(index: number, description: string) {
+export async function editTopTimeDescription(index: number, newDescription: string) {
+  console.log(`Server action: Editing top time at index ${index} with new description: "${newDescription}"`)
+
   try {
-    const cookieStore = cookies()
-    const supabase = createClient(cookieStore)
+    const supabase = createServerActionClient({ cookies })
 
-    // Get the current user
     const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
+      data: { session },
+    } = await supabase.auth.getSession()
+    if (!session) {
       return { success: false, error: "Not authenticated" }
     }
 
-    // Get the user's current top times
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("top_times_captured")
-      .eq("id", user.id)
+    // Get the current profile data
+    const { data: profileData, error: profileError } = await supabase
+      .from("Profiles")
+      .select("topTimesCaptured")
+      .eq("id", session.user.id)
       .single()
 
     if (profileError) {
-      console.error("Error fetching profile:", profileError)
       return { success: false, error: profileError.message }
     }
 
-    // Update the description of the specified top time
-    const topTimes: TopTimeEntry[] = profile.top_times_captured || []
+    // Get existing top times
+    const topTimes = profileData.topTimesCaptured || []
 
+    // Check if the index is valid
     if (index < 0 || index >= topTimes.length) {
-      return { success: false, error: "Invalid index" }
+      return { success: false, error: "Invalid top time index" }
     }
 
-    topTimes[index].description = description
-
-    // Update the user's top times
-    const { error } = await supabase.from("profiles").update({ top_times_captured: topTimes }).eq("id", user.id)
-
-    if (error) {
-      console.error("Error updating top times:", error)
-      return { success: false, error: error.message }
+    // Update the description at the specified index
+    const updatedTopTimes = [...topTimes]
+    updatedTopTimes[index] = {
+      ...updatedTopTimes[index],
+      description: newDescription,
     }
 
-    revalidatePath("/control-center")
-    return { success: true, topTimes }
+    // Update the profile with the modified top times array
+    const { error: updateError } = await supabase
+      .from("Profiles")
+      .update({ topTimesCaptured: updatedTopTimes })
+      .eq("id", session.user.id)
+
+    if (updateError) {
+      return { success: false, error: updateError.message }
+    }
+
+    revalidatePath("/control-center-v2")
+    return { success: true, topTimes: updatedTopTimes }
   } catch (error) {
-    console.error("Error in editTopTimeDescription:", error)
-    return { success: false, error: "Failed to edit top time description" }
+    return { success: false, error: "Unexpected error" }
   }
 }
 
 // Delete top time
 export async function deleteTopTime(index: number) {
+  console.log(`Server action: Deleting top time at index ${index}`)
+
   try {
-    const cookieStore = cookies()
-    const supabase = createClient(cookieStore)
+    const supabase = createServerActionClient({ cookies })
 
-    // Get the current user
     const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
+      data: { session },
+    } = await supabase.auth.getSession()
+    if (!session) {
       return { success: false, error: "Not authenticated" }
     }
 
-    // Get the user's current top times
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("top_times_captured")
-      .eq("id", user.id)
+    // Get the current profile data
+    const { data: profileData, error: profileError } = await supabase
+      .from("Profiles")
+      .select("topTimesCaptured")
+      .eq("id", session.user.id)
       .single()
 
     if (profileError) {
-      console.error("Error fetching profile:", profileError)
       return { success: false, error: profileError.message }
     }
 
-    // Remove the specified top time
-    const topTimes: TopTimeEntry[] = profile.top_times_captured || []
+    // Get existing top times
+    const topTimes = profileData.topTimesCaptured || []
 
+    // Check if the index is valid
     if (index < 0 || index >= topTimes.length) {
-      return { success: false, error: "Invalid index" }
+      return { success: false, error: "Invalid top time index" }
     }
 
-    topTimes.splice(index, 1)
+    // Remove the time at the specified index
+    const updatedTopTimes = topTimes.filter((_, i) => i !== index)
 
-    // Update the user's top times
-    const { error } = await supabase.from("profiles").update({ top_times_captured: topTimes }).eq("id", user.id)
+    // Update the profile with the modified top times array
+    const { error: updateError } = await supabase
+      .from("Profiles")
+      .update({ topTimesCaptured: updatedTopTimes })
+      .eq("id", session.user.id)
 
-    if (error) {
-      console.error("Error updating top times:", error)
-      return { success: false, error: error.message }
+    if (updateError) {
+      return { success: false, error: updateError.message }
     }
 
-    revalidatePath("/control-center")
-    return { success: true, topTimes }
+    revalidatePath("/control-center-v2")
+    return { success: true, topTimes: updatedTopTimes }
   } catch (error) {
-    console.error("Error in deleteTopTime:", error)
-    return { success: false, error: "Failed to delete top time" }
+    return { success: false, error: "Unexpected error" }
   }
 }

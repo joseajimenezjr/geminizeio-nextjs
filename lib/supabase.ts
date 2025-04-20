@@ -13,6 +13,3 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
   },
 })
-
-// Re-export createClient for use elsewhere
-export { createClient }
