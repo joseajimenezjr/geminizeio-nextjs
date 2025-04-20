@@ -18,7 +18,7 @@ export default async function LoginPage() {
     } = await supabase.auth.getSession()
 
     if (session) {
-      redirect("/control-center")
+      redirect("/control-center-v2")
     }
   } catch (error) {
     console.error("Error checking session:", error)
