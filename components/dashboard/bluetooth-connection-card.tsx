@@ -10,6 +10,7 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 
 export function BluetoothConnectionCard() {
   const { isConnected, isConnecting, bluetoothStatus, connectToDevice, disconnectDevice, sendCommand } = useBluetooth()
+  const [autoConnectAttempted, setAutoConnectAttempted] = useState(false)
   const [hubDevice, setHubDevice] = useState<any>(null)
   const supabase = createClientComponentClient()
   const connectButtonRef = useRef<HTMLButtonElement>(null)
@@ -53,6 +54,40 @@ export function BluetoothConnectionCard() {
 
     fetchHubDetails()
   }, [supabase])
+
+  // Add effect to automatically connect to hub devices
+  useEffect(() => {
+    const autoConnectToHub = async () => {
+      // Only attempt auto-connect once and only if not already connected or connecting
+      if (autoConnectAttempted || isConnected || isConnecting || !bluetoothStatus.available || !hubDevice) {
+        return
+      }
+
+      try {
+        setAutoConnectAttempted(true)
+
+        if (hubDevice.deviceName && hubDevice.serviceName) {
+          console.log(
+            `Attempting to auto-connect to device: ${hubDevice.deviceName} with service: ${hubDevice.serviceName}`,
+          )
+
+          // Automatically connect using the device name and service UUID
+          await connectToDevice(hubDevice.deviceName, hubDevice.serviceName)
+        } else {
+          console.log("Missing deviceName or serviceName in hubDevice", hubDevice)
+        }
+      } catch (error) {
+        console.error("Error in auto-connect:", error)
+      }
+    }
+
+    // Run the auto-connect function with a slight delay to ensure the component is fully mounted
+    const timer = setTimeout(() => {
+      autoConnectToHub()
+    }, 1000)
+
+    return () => clearTimeout(timer)
+  }, [bluetoothStatus.available, isConnected, isConnecting, autoConnectAttempted, connectToDevice, hubDevice])
 
   // Handle manual connect button click
   const handleConnectClick = () => {
