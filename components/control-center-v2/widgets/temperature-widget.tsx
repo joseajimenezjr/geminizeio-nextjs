@@ -80,8 +80,8 @@ export function TemperatureWidget({
         }
 
         const value = new TextDecoder().decode(target.value)
-        console.log("Raw temperature data received:", target.value)
-        console.log("Current temperature:", value)
+        //console.log("Raw temperature data received:", target.value)
+        //console.log("Current temperature:", value)
 
         const tempValue = Number.parseFloat(value)
         if (!isNaN(tempValue)) {
