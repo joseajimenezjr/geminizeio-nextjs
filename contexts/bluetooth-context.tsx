@@ -21,7 +21,6 @@ interface BluetoothContextType {
   sendCommand: (value: number) => Promise<boolean>
   requestTemperatureUpdate: () => Promise<void>
   temperatureCharacteristic: BluetoothRemoteGATTCharacteristic | null
-  autoConnect: () => Promise<void>
 }
 
 const BluetoothContext = createContext<BluetoothContextType | undefined>(undefined)
@@ -40,7 +39,6 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
     errorType?: "permission" | "support" | "other"
   }>({ available: false })
   const { toast } = useToast()
-  const [autoConnectAttempted, setAutoConnectAttempted] = useState(false)
   const supabase = createClientComponentClient()
 
   // Check if Web Bluetooth is supported on component mount
@@ -166,8 +164,8 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
 
               characteristic.addEventListener("characteristicvaluechanged", (event) => {
                 const value = new TextDecoder().decode(event.target.value)
-                console.log("Raw temperature data received:", event.target.value)
-                console.log("Current temperature:", value)
+                //console.log("Raw temperature data received:", event.target.value)
+                //console.log("Current temperature:", value)
               })
             } catch (error) {
               console.error("Error starting temperature notifications:", error)
@@ -211,50 +209,6 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
       throw error // Re-throw the error so the calling component can handle it
     } finally {
       setIsConnecting(false)
-    }
-  }
-
-  // Auto-connect function
-  const autoConnect = async () => {
-    if (autoConnectAttempted || isConnected || isConnecting) {
-      return
-    }
-
-    setAutoConnectAttempted(true)
-
-    try {
-      // Get user data to get hub details
-      console.log("Fetching user data for auto-connect...")
-      const { data: sessionData } = await supabase.auth.getSession()
-      if (!sessionData.session) {
-        console.log("No active session, skipping auto-connect")
-        return
-      }
-
-      const { data: profileData, error } = await supabase
-        .from("Profiles")
-        .select("hubDetails")
-        .eq("id", sessionData.session.user.id)
-        .single()
-
-      if (error || !profileData?.hubDetails) {
-        console.log("No hub details found for auto-connect")
-        return
-      }
-
-      // Find a hub or relay_hub device in hubDetails
-      const device = profileData.hubDetails.find(
-        (device: any) => device.deviceType === "hub" || device.deviceType === "relay_hub",
-      )
-
-      if (device?.deviceName && device?.serviceName) {
-        console.log(`Attempting auto-connect to device: ${device.deviceName} with service: ${device.serviceName}`)
-        await connectToDevice(device.deviceName, device.serviceName)
-      } else {
-        console.log("Missing deviceName or serviceName in hubDevice", device)
-      }
-    } catch (error) {
-      console.error("Error in auto-connect:", error)
     }
   }
 
@@ -388,7 +342,6 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
         sendCommand,
         requestTemperatureUpdate,
         temperatureCharacteristic,
-        autoConnect,
       }}
     >
       {children}
