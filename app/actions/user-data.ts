@@ -53,19 +53,35 @@ export async function updateDeviceStatus(id: string, active: boolean) {
     return { error: "Not authenticated" }
   }
 
-  const { data, error } = await supabase
+  // Get the current profile data
+  const { data: profileData, error: profileError } = await supabase
     .from("Profiles")
-    .update({ "devices[].deviceSupportStatus": active })
+    .select("accessories")
     .eq("id", session.user.id)
-    .eq("devices[].id", id)
-    .select()
+    .single()
+
+  if (profileError) {
+    return { error: profileError.message }
+  }
+
+  // Update the device in the accessories array
+  const accessories = profileData.accessories || []
+  const updatedAccessories = accessories.map((accessory: any) =>
+    accessory.accessoryID === id ? { ...accessory, accessoryConnectionStatus: active } : accessory,
+  )
+
+  // Update the profile with the new accessories array
+  const { error } = await supabase
+    .from("Profiles")
+    .update({ accessories: updatedAccessories })
+    .eq("id", session.user.id)
 
   if (error) {
     return { error: error.message }
   }
 
   revalidatePath("/dashboard")
-  return { success: true, data }
+  return { success: true, data: updatedAccessories }
 }
 
 export async function updateDeviceFavorite(id: string, isFavorite: boolean) {
@@ -78,12 +94,28 @@ export async function updateDeviceFavorite(id: string, isFavorite: boolean) {
     return { error: "Not authenticated" }
   }
 
+  // Get the current profile data
+  const { data: profileData, error: profileError } = await supabase
+    .from("Profiles")
+    .select("accessories")
+    .eq("id", session.user.id)
+    .single()
+
+  if (profileError) {
+    return { error: profileError.message }
+  }
+
+  // Update the device in the accessories array
+  const accessories = profileData.accessories || []
+  const updatedAccessories = accessories.map((accessory: any) =>
+    accessory.accessoryID === id ? { ...accessory, isFavorite } : accessory,
+  )
+
+  // Update the profile with the new accessories array
   const { data, error } = await supabase
     .from("Profiles")
-    .update({ "devices[].isFavorite": isFavorite })
+    .update({ accessories: updatedAccessories })
     .eq("id", session.user.id)
-    .eq("devices[].id", id)
-    .select()
 
   if (error) {
     return { error: error.message }
@@ -103,17 +135,34 @@ export async function updateDeviceName(id: string, name: string, relayPosition?:
     return { error: "Not authenticated" }
   }
 
-  const updates: any = { "devices[].deviceName": name }
-  if (relayPosition !== undefined) {
-    updates["devices[].relayPosition"] = relayPosition
+  // Get the current profile data
+  const { data: profileData, error: profileError } = await supabase
+    .from("Profiles")
+    .select("accessories")
+    .eq("id", session.user.id)
+    .single()
+
+  if (profileError) {
+    return { error: profileError.message }
   }
 
+  // Update the device in the accessories array
+  const accessories = profileData.accessories || []
+  const updatedAccessories = accessories.map((accessory: any) =>
+    accessory.accessoryID === id
+      ? {
+          ...accessory,
+          accessoryName: name,
+          relayPosition: relayPosition !== undefined ? relayPosition : accessory.relayPosition,
+        }
+      : accessory,
+  )
+
+  // Update the profile with the new accessories array
   const { data, error } = await supabase
     .from("Profiles")
-    .update(updates)
+    .update({ accessories: updatedAccessories })
     .eq("id", session.user.id)
-    .eq("devices[].id", id)
-    .select()
 
   if (error) {
     return { error: error.message }
@@ -201,7 +250,7 @@ export async function saveTopTime(time: number, description: string) {
   const updatedTopTimes = [...topTimesCaptured, newTopTime]
 
   // Update the profile with the new top times array
-  const { error: updateError } = await supabase
+  const { data, error: updateError } = await supabase
     .from("Profiles")
     .update({ topTimesCaptured: updatedTopTimes })
     .eq("id", session.user.id)
@@ -247,7 +296,7 @@ export async function editTopTimeDescription(index: number, description: string)
   topTimesCaptured[index].description = description
 
   // Update the profile with the new top times array
-  const { error: updateError } = await supabase
+  const { data, error: updateError } = await supabase
     .from("Profiles")
     .update({ topTimesCaptured: topTimesCaptured })
     .eq("id", session.user.id)
@@ -293,7 +342,7 @@ export async function deleteTopTime(index: number) {
   topTimesCaptured.splice(index, 1)
 
   // Update the profile with the new top times array
-  const { error: updateError } = await supabase
+  const { data, error: updateError } = await supabase
     .from("Profiles")
     .update({ topTimesCaptured: topTimesCaptured })
     .eq("id", session.user.id)
