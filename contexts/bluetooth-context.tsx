@@ -334,9 +334,7 @@ export function BluetoothProvider({ children }: { children: ReactNode }) {
       const encoder = new TextEncoder()
       const data = encoder.encode(command)
 
-
       await temperatureCharacteristic.writeValue(data)
-
     } catch (error) {
       console.error("Error sending temperature request:", error)
       toast({
