@@ -995,14 +995,7 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData }: ControlC
 
     // For accessory-based widgets
     const accessory = userData.accessories.find((a: any) => a.accessoryID === widget.accessoryId)
-    if (!accessory) {
-      console.log(`No accessory found for widget ${widget.id}, accessoryId: ${widget.accessoryId}`)
-      console.log(
-        "Available accessories:",
-        userData.accessories.map((a) => a.accessoryID),
-      )
-      return null
-    }
+    if (!accessory) return null
 
     const isConnected = true // In a real implementation, check if the accessory is connected
     const isOn = accessory.accessoryConnectionStatus || false
