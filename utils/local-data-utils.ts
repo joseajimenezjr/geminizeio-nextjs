@@ -8,8 +8,14 @@
  * @returns Updated user data object
  */
 export function updateLocalAccessoryStatus(userData: any, accessoryId: string, isOn: boolean): any {
-  if (!userData || typeof userData !== "object" || !userData.accessories || !Array.isArray(userData.accessories)) {
-    console.warn("Invalid userData format. Returning original userData.")
+  if (!userData || typeof userData !== "object") {
+    console.warn("Invalid userData format: userData is not an object. Returning original userData.")
+    return userData
+  }
+
+  // Check if userData.accessories exists and is an array
+  if (!userData.accessories || !Array.isArray(userData.accessories)) {
+    console.warn("Invalid userData format: userData.accessories is not an array. Returning original userData.")
     return userData
   }
 
