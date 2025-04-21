@@ -8,7 +8,8 @@
  * @returns Updated user data object
  */
 export function updateLocalAccessoryStatus(userData: any, accessoryId: string, isOn: boolean): any {
-  if (!userData || !userData.accessories) {
+  if (!userData || typeof userData !== "object" || !userData.accessories || !Array.isArray(userData.accessories)) {
+    console.warn("Invalid userData format. Returning original userData.")
     return userData
   }
 
