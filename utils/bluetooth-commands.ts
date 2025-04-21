@@ -1,58 +1,97 @@
-// Utility functions for Bluetooth commands
-import type { useBluetoothContext } from "@/contexts/bluetooth-context"
+"use client"
 
-// Check if Bluetooth is connected
-export function isBluetoothConnected(): boolean {
-  // This is a client-side function, so we need to check if window exists
-  if (typeof window === "undefined") {
-    return false
-  }
+import { bluetoothService } from "@/services/bluetooth-service"
 
-  // Check if there's a stored connection state in localStorage
-  // This is just a simple way to persist connection state between page refreshes
-  const storedState = localStorage.getItem("bluetoothConnected")
-  return storedState === "true"
+// This is a utility file to handle Bluetooth commands without using hooks directly
+
+let bluetoothCharacteristic: BluetoothRemoteGATTCharacteristic | null = null
+let bluetoothTemperatureCharacteristic: BluetoothRemoteGATTCharacteristic | null = null
+
+// Function to set the characteristic from the BluetoothContext
+export function setBluetoothCharacteristic(characteristic: BluetoothRemoteGATTCharacteristic | null) {
+  console.log(`Setting bluetoothCharacteristic: ${characteristic ? characteristic.uuid : "null"}`)
+  bluetoothCharacteristic = characteristic
 }
 
-// Send a command to the Bluetooth device
-export async function sendBluetoothCommand(command: number, relayPosition = 1): Promise<boolean> {
-  // This is a client-side function, so we need to check if window exists
-  if (typeof window === "undefined") {
-    console.log("Cannot send Bluetooth command on server side")
-    return false
-  }
+// Function to set the temperature characteristic
+export function setBluetoothTemperatureCharacteristic(characteristic: BluetoothRemoteGATTCharacteristic | null) {
+  bluetoothTemperatureCharacteristic = characteristic
+  console.log(`BluetoothService: Temperature Characteristic ${characteristic ? "set" : "cleared"}`)
+}
+
+// Function to check if Bluetooth is connected
+export function isBluetoothConnected(): boolean {
+  return bluetoothCharacteristic !== null
+}
+
+// Function to send a command to the Bluetooth device
+export async function sendBluetoothCommand(value: string | number, relayNumber = 1): Promise<boolean> {
+  console.log(`sendBluetoothCommand called with value: ${value}, relay: ${relayNumber}`)
 
   try {
-    // In a real implementation, this would use the actual Bluetooth API
-    // For now, we'll just log the command and return success
-    console.log(`Sending Bluetooth command: ${command} to relay ${relayPosition}`)
+    let commandValue: number
 
-    // Get the Bluetooth context from the global window object if available
-    // This is a workaround since we can't use hooks outside of components
-    const bluetoothContext = (window as any).__bluetoothContext
+    if (typeof value === "string") {
+      // If value is a string, assume it's a hex code and parse it
+      const parsedValue = Number.parseInt(value, 16)
 
-    if (bluetoothContext && typeof bluetoothContext.sendCommand === "function") {
-      return await bluetoothContext.sendCommand(command, relayPosition)
+      if (isNaN(parsedValue)) {
+        console.error(`Invalid hex code: ${value}. Could not parse to a number.`)
+        return false
+      }
+
+      if (parsedValue < 0 || parsedValue > 255) {
+        console.error(`Hex code out of range: ${value}. Must be between 00 and FF.`)
+        return false
+      }
+
+      commandValue = parsedValue
+    } else {
+      // If value is a number, use it directly
+      commandValue = value
     }
 
-    // Simulate a successful command if no context available
-    // In a real app, you would use the Web Bluetooth API
-    localStorage.setItem("lastCommand", JSON.stringify({ command, relayPosition }))
+    // First try using the bluetoothService
+    if (bluetoothService.isConnected()) {
+      console.log(`Using bluetoothService to send command: ${commandValue} to relay: ${relayNumber}`)
 
-    // Simulate a delay for the command
-    await new Promise((resolve) => setTimeout(resolve, 300))
+      // Create a simple command array with format: [relay_number, state_value]
+      const commandArray = new Uint8Array([
+        relayNumber, // Relay number (1-based)
+        commandValue, // State (0 = on, 1 = off)
+      ])
 
-    return true
+      await bluetoothCharacteristic.writeValue(commandArray)
+      console.log(`Command sent successfully via local characteristic`)
+      return true
+    }
+
+    // Fall back to the local characteristic if available
+    if (bluetoothCharacteristic) {
+      console.log(`Using local characteristic to send command: ${commandValue} to relay: ${relayNumber}`)
+
+      // Create a simple command array with format: [relay_number, state_value]
+      const commandArray = new Uint8Array([
+        relayNumber, // Relay number (1-based)
+        commandValue, // State (0 = on, 1 = off)
+      ])
+
+      console.log(`Sending command array to characteristic:
+        - Relay: ${relayNumber}
+        - Value: ${commandValue}
+        - Binary data: [${Array.from(commandArray)}]
+        - Characteristic UUID: ${bluetoothCharacteristic.uuid}
+      `)
+
+      await bluetoothCharacteristic.writeValue(commandArray)
+      console.log(`Command sent successfully via local characteristic`)
+      return true
+    }
+
+    console.error("Not connected to a Bluetooth device.")
+    return false
   } catch (error) {
     console.error("Error sending Bluetooth command:", error)
     return false
-  }
-}
-
-// Initialize the Bluetooth context in the global window object
-// This should be called from a component that has access to the context
-export function initializeBluetoothCommands(context: ReturnType<typeof useBluetoothContext>) {
-  if (typeof window !== "undefined") {
-    ;(window as any).__bluetoothContext = context
   }
 }

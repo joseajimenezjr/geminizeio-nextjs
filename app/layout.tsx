@@ -1,39 +1,56 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import { Suspense } from "react"
 import "./globals.css"
-import { ThemeProvider } from "@/components/theme-provider"
-import { DeviceProvider } from "@/contexts/device-context"
-import { BluetoothProvider } from "@/contexts/bluetooth-context"
-import { BluetoothInitializer } from "@/components/bluetooth-initializer"
+import { getUserData } from "@/app/actions/user-data"
+import { AppProviders } from "@/components/providers/app-providers"
 import { PreviewModeRouter } from "@/components/preview-mode-router"
-import { HashAuthHandler } from "@/components/hash-auth-handler"
-
-const inter = Inter({ subsets: ["latin"] })
+import { PreviewModeInitializer } from "@/components/preview-mode-initializer"
 
 export const metadata: Metadata = {
-  title: "Geminize.io",
-  description: "Control your IoT devices with ease",
-    generator: 'v0.dev'
+  title: "Geminize IO",
+  description: "Digital Accessory Management for Off-Road Enthusiasts",
+  generator: "v0.dev",
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode
-}>) {
+}) {
+  // Get user data at the root level - but don't use headers() here
+  let userData
+  try {
+    // Pass false as default to avoid dynamic server usage
+    userData = await getUserData(false)
+  } catch (error) {
+    console.error("Error getting user data:", error)
+    userData = null
+  }
+
+  // Get all accessories
+  const accessories = userData?.accessories || []
+
   return (
-    <html lang="en">
-      <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <BluetoothProvider>
-            <DeviceProvider initialAccessories={[]}>
-              <BluetoothInitializer />
-              <HashAuthHandler />
-              <PreviewModeRouter>{children}</PreviewModeRouter>
-            </DeviceProvider>
-          </BluetoothProvider>
-        </ThemeProvider>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <link
+          rel="icon"
+          href="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Favicon-dark-TCRh0L4cFUo5bEkp6OVorSUlogaWFf.png"
+          type="image/png"
+        />
+      </head>
+      <body>
+        <AppProviders initialAccessories={accessories}>
+          <Suspense fallback={null}>
+            <PreviewModeRouter />
+            {/* Wrap PreviewModeInitializer in Suspense */}
+            <Suspense fallback={null}>
+              <PreviewModeInitializer />
+            </Suspense>
+          </Suspense>
+          {children}
+        </AppProviders>
       </body>
     </html>
   )

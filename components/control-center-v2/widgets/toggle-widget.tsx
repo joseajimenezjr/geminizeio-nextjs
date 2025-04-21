@@ -5,40 +5,37 @@ import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { LightbulbIcon, PowerIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useAccessories } from "@/contexts/device-context"
-import { useBluetoothContext } from "@/contexts/bluetooth-context"
-import { useToast } from "@/hooks/use-toast"
 
 // Add a style tag for the pulse animation
 const pulseAnimationStyle = `
- @keyframes pulse-animation {
-   0% {
-     box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.3);
-   }
-   70% {
-     box-shadow: 0 0 0 10px rgba(22, 163, 74, 0);
-   }
-   100% {
-     box-shadow: 0 0 0 0 rgba(22, 163, 74, 0);
-   }
- }
- 
- .widget-pulse {
-   animation: pulse-animation 1.5s ease-out;
- }
+  @keyframes pulse-animation {
+    0% {
+      box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.3);
+    }
+    70% {
+      box-shadow: 0 0 0 10px rgba(22, 163, 74, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(22, 163, 74, 0);
+    }
+  }
+  
+  .widget-pulse {
+    animation: pulse-animation 1.5s ease-out;
+  }
 
- @keyframes continuous-flash {
-   0%, 100% {
-     opacity: 1;
-   }
-   50% {
-     opacity: 0.7;
-   }
- }
- 
- .continuous-flash {
-   animation: continuous-flash 1s infinite;
- }
+  @keyframes continuous-flash {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+  }
+  
+  .continuous-flash {
+    animation: continuous-flash 1s infinite;
+  }
 `
 
 interface ToggleWidgetProps {
@@ -49,7 +46,7 @@ interface ToggleWidgetProps {
   isOn: boolean
   isEditing?: boolean
   onToggle: () => void
-  onMouseDown?: (e: React.MouseEvent) => void
+  onMouseDown?: (e: React.MouseEvent | React.TouchEvent) => void
   onMouseUp?: () => void
   onMouseLeave?: () => void
   onTouchStart?: (e: React.TouchEvent) => void
@@ -76,14 +73,9 @@ export function ToggleWidget({
   const [isPulsing, setIsPulsing] = useState(false)
   const [localIsOn, setLocalIsOn] = useState(isOn)
   const toggleButtonRef = useRef<HTMLDivElement>(null)
-  const { accessories } = useAccessories()
-  const { isConnected: isBtConnected, sendCommand } = useBluetoothContext()
-  const { toast } = useToast()
-  const onToggleRef = useRef(onToggle)
 
   // Update local state when prop changes
   useEffect(() => {
-    console.log(`ToggleWidget: useEffect - isOn prop changed. New value: ${isOn}`)
     setLocalIsOn(isOn)
   }, [isOn])
 
@@ -97,11 +89,6 @@ export function ToggleWidget({
       document.head.removeChild(styleTag)
     }
   }, [])
-
-  // Persist onToggle prop using useRef
-  useEffect(() => {
-    onToggleRef.current = onToggle
-  }, [onToggle])
 
   const handleToggle = (e: React.MouseEvent) => {
     // Only toggle if not in editing mode and the accessory is connected
@@ -130,8 +117,8 @@ export function ToggleWidget({
         }
       }
 
-      // Call the actual toggle function using the ref
-      onToggleRef.current()
+      // Call the actual toggle function
+      onToggle()
     }
   }
 

@@ -1,9 +1,12 @@
 "use client"
 
-import type React from "react"
-
-import { createContext, useContext, useState, useEffect, useCallback } from "react"
+import { createContext, useContext, useState, useRef, useEffect, type ReactNode } from "react"
 import { useToast } from "@/hooks/use-toast"
+import { requestDevice, connectToDevice as connect } from "@/utils/bluetooth-utils"
+import { disconnectDevice as disconnect } from "@/utils/bluetooth-utils"
+import { setBluetoothCharacteristic, setBluetoothTemperatureCharacteristic } from "@/utils/bluetooth-commands"
+import { bluetoothService } from "@/services/bluetooth-service"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 
 interface BluetoothContextType {
   isConnected: boolean
@@ -11,268 +14,394 @@ interface BluetoothContextType {
   bluetoothStatus: {
     available: boolean
     error?: string
-    errorType?: "permission" | "support" | null
+    errorType?: "permission" | "support" | "other"
   }
-  device: BluetoothDevice | null
-  server: BluetoothRemoteGATTServer | null
-  temperatureCharacteristic: BluetoothRemoteGATTCharacteristic | null
-  connect: (deviceName?: string, serviceUUIDs?: string | string[]) => Promise<boolean>
-  disconnect: () => void
-  sendCommand: (command: number, relayPosition?: number) => Promise<boolean>
+  connectToDevice: (deviceName?: string, serviceUUIDs?: string[]) => Promise<void>
+  disconnectDevice: () => Promise<void>
+  sendCommand: (value: number) => Promise<boolean>
   requestTemperatureUpdate: () => Promise<void>
+  temperatureCharacteristic: BluetoothRemoteGATTCharacteristic | null
+  autoConnect: () => Promise<void>
 }
 
 const BluetoothContext = createContext<BluetoothContextType | undefined>(undefined)
 
-export function BluetoothProvider({ children }: { children: React.ReactNode }) {
+export function BluetoothProvider({ children }: { children: ReactNode }) {
   const [isConnected, setIsConnected] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false)
-  const [bluetoothStatus, setBluetoothStatus] = useState({
-    available: false,
-    error: undefined,
-    errorType: null as "permission" | "support" | null,
-  })
-  const [device, setDevice] = useState<BluetoothDevice | null>(null)
-  const [server, setServer] = useState<BluetoothRemoteGATTServer | null>(null)
+  const [bluetoothDevice, setBluetoothDevice] = useState<BluetoothDevice | null>(null)
+  const characteristicRef = useRef<BluetoothRemoteGATTCharacteristic | null>(null)
   const [temperatureCharacteristic, setTemperatureCharacteristic] = useState<BluetoothRemoteGATTCharacteristic | null>(
     null,
   )
+  const [bluetoothStatus, setBluetoothStatus] = useState<{
+    available: boolean
+    error?: string
+    errorType?: "permission" | "support" | "other"
+  }>({ available: false })
   const { toast } = useToast()
+  const [autoConnectAttempted, setAutoConnectAttempted] = useState(false)
+  const supabase = createClientComponentClient()
 
-  // Check if we're in a browser environment
-  const isBrowser = typeof window !== "undefined" && typeof navigator !== "undefined"
-
+  // Check if Web Bluetooth is supported on component mount
   useEffect(() => {
-    const checkBluetoothAvailability = async () => {
-      if (!isBrowser) {
-        return // Skip on server-side
-      }
+    checkBluetoothAvailability()
+  }, [])
 
-      if (!navigator.bluetooth) {
+  // Debug connection state changes
+  useEffect(() => {
+    console.log(`Bluetooth connection state changed: ${isConnected ? "Connected" : "Disconnected"}`)
+    console.log(`Characteristic reference: ${characteristicRef.current ? "Set" : "Not set"}`)
+  }, [isConnected])
+
+  // Function to check if Bluetooth is available
+  const checkBluetoothAvailability = async () => {
+    // First check if the API exists
+    if (typeof navigator === "undefined" || !("bluetooth" in navigator)) {
+      setBluetoothStatus({
+        available: false,
+        error: "Web Bluetooth is not supported in your browser",
+        errorType: "support",
+      })
+      return false
+    }
+
+    // Try to access the API to check for permissions
+    try {
+      // This is a minimal request just to test permissions
+      await navigator.bluetooth.getAvailability()
+      setBluetoothStatus({ available: true })
+      return true
+    } catch (error: any) {
+      console.error("Bluetooth availability check error:", error)
+
+      // Check for permissions policy error
+      if (error.message && error.message.includes("permissions policy")) {
         setBluetoothStatus({
           available: false,
-          error: "Web Bluetooth API is not available in this browser.",
-          errorType: "support",
+          error: "Bluetooth access is blocked by browser permissions",
+          errorType: "permission",
         })
-        return
-      }
-
-      try {
-        // Check for Bluetooth availability
-        const available = await navigator.bluetooth.getAvailability()
-        setBluetoothStatus({
-          available,
-          error: available ? undefined : "Bluetooth is not available on this device.",
-          errorType: available ? null : "support",
-        })
-      } catch (error: any) {
-        console.error("Bluetooth availability error:", error)
+      } else if (error.name === "NotFoundError") {
         setBluetoothStatus({
           available: false,
-          error: error.message,
+          error: "No Bluetooth adapter found",
           errorType: "support",
         })
-      }
-    }
-
-    if (isBrowser) {
-      checkBluetoothAvailability()
-    }
-  }, [isBrowser])
-
-  const connect = useCallback(
-    async (deviceName?: string, serviceUUIDs?: string | string[]): Promise<boolean> => {
-      if (!isBrowser) {
-        console.warn("Bluetooth is not available in server-side rendering")
-        return false
-      }
-
-      if (!navigator.bluetooth) {
-        toast({
-          title: "Bluetooth Not Supported",
-          description: "Web Bluetooth API is not available in this browser.",
-          variant: "destructive",
-        })
-        return false
-      }
-
-      setIsConnecting(true)
-
-      try {
-        console.log(`Connecting to device: ${deviceName || "any"} with services:`, serviceUUIDs)
-
-        // Request the Bluetooth device
-        const requestOptions: RequestDeviceOptions = {
-          acceptAllDevices: !deviceName,
-        }
-
-        if (deviceName) {
-          requestOptions.filters = [{ name: deviceName }]
-        }
-
-        if (serviceUUIDs) {
-          requestOptions.optionalServices = Array.isArray(serviceUUIDs) ? serviceUUIDs : [serviceUUIDs]
-        }
-
-        console.log("Request options:", requestOptions)
-        const bluetoothDevice = await navigator.bluetooth.requestDevice(requestOptions)
-
-        if (!bluetoothDevice) {
-          throw new Error("No Bluetooth device selected")
-        }
-
-        console.log("Device selected:", bluetoothDevice.name)
-        setDevice(bluetoothDevice)
-
-        // Connect to the GATT server
-        console.log("Connecting to GATT server...")
-        if (!bluetoothDevice.gatt) {
-          throw new Error("Device does not have GATT server")
-        }
-
-        const gattServer = await bluetoothDevice.gatt.connect()
-        console.log("GATT server connected:", gattServer)
-        setServer(gattServer)
-
-        // For now, we'll just set connected state without trying to get services
-        // This makes the connection more robust for different types of devices
-        setIsConnected(true)
-
-        toast({
-          title: "Bluetooth Connected",
-          description: `Connected to ${bluetoothDevice.name || "device"}`,
-        })
-
-        // Store connection state in localStorage for persistence
-        localStorage.setItem("bluetoothConnected", "true")
-
-        return true
-      } catch (error: any) {
-        console.error("Bluetooth connection error:", error)
-
+      } else {
         setBluetoothStatus({
-          ...bluetoothStatus,
-          error: error.message,
-          errorType: error.message.includes("permission") ? "permission" : "support",
+          available: false,
+          error: error.message || "Unknown Bluetooth error",
+          errorType: "other",
         })
-
-        toast({
-          title: "Connection Failed",
-          description: error.message || "Failed to connect to Bluetooth device",
-          variant: "destructive",
-        })
-
-        return false
-      } finally {
-        setIsConnecting(false)
       }
-    },
-    [isBrowser, toast, bluetoothStatus],
-  )
-
-  const disconnect = useCallback(() => {
-    if (device && server) {
-      try {
-        if (server.connected) {
-          server.disconnect()
-        }
-
-        setIsConnected(false)
-        setDevice(null)
-        setServer(null)
-        setTemperatureCharacteristic(null)
-
-        // Update localStorage
-        localStorage.setItem("bluetoothConnected", "false")
-
-        toast({
-          title: "Bluetooth Disconnected",
-          description: "Bluetooth device has been disconnected",
-        })
-      } catch (error) {
-        console.error("Error disconnecting:", error)
-      }
+      return false
     }
-  }, [device, server, toast])
+  }
 
-  const sendCommand = useCallback(
-    async (command: number, relayPosition = 1): Promise<boolean> => {
-      console.log(`Sending command ${command} to relay ${relayPosition}`)
+  // Connect to Arduino device
+  const connectToDevice = async (deviceName?: string, serviceUUIDs?: string[]) => {
+    // Check availability again before attempting to connect
+    const isAvailable = await checkBluetoothAvailability()
 
-      if (!isConnected || !server) {
-        console.warn("Not connected to Bluetooth device")
-        toast({
-          title: "Not Connected",
-          description: "Please connect to a Bluetooth device first",
-          variant: "destructive",
-        })
-        return false
-      }
+    if (!isAvailable) {
+      toast({
+        title: "Bluetooth Unavailable",
+        description: bluetoothStatus.error || "Bluetooth is not available",
+        variant: "destructive",
+      })
+      return
+    }
 
-      try {
-        // For now, we'll simulate sending a command
-        console.log(`Simulating command: ${command} to relay ${relayPosition}`)
-
-        // In a real implementation, you would:
-        // 1. Get the appropriate service
-        // 2. Get the characteristic
-        // 3. Write the command value
-
-        // Simulate success
-        toast({
-          title: "Command Sent",
-          description: `Sent command ${command} to relay ${relayPosition}`,
-        })
-
-        return true
-      } catch (error) {
-        console.error("Error sending command:", error)
-        toast({
-          title: "Command Failed",
-          description: error instanceof Error ? error.message : "Failed to send command to device",
-          variant: "destructive",
-        })
-        return false
-      }
-    },
-    [isConnected, server, toast],
-  )
-
-  const requestTemperatureUpdate = useCallback(async () => {
-    if (!temperatureCharacteristic) {
-      console.warn("Temperature characteristic not available")
+    // Validate serviceUUIDs
+    if (!serviceUUIDs || serviceUUIDs.length === 0) {
+      toast({
+        title: "Connection Error",
+        description: "Service UUIDs are required for Bluetooth connection",
+        variant: "destructive",
+      })
       return
     }
 
     try {
-      await temperatureCharacteristic.readValue()
-    } catch (error) {
-      console.error("Error reading temperature:", error)
-    }
-  }, [temperatureCharacteristic])
+      setIsConnecting(true)
 
-  const contextValue = {
-    isConnected,
-    isConnecting,
-    bluetoothStatus,
-    device,
-    server,
-    temperatureCharacteristic,
-    connect,
-    disconnect,
-    sendCommand,
-    requestTemperatureUpdate,
+      // Log the connection attempt details
+      console.log(`Attempting to connect to device: ${deviceName || "any"} with service UUIDs: ${serviceUUIDs}`)
+
+      // Request a device - if deviceName is provided, use it to filter devices
+      const device = await requestDevice(deviceName, serviceUUIDs)
+      setBluetoothDevice(device)
+
+      // Setup disconnect listener
+      device.addEventListener("gattserverdisconnected", () => {
+        console.log("Device disconnected")
+        setIsConnected(false)
+        characteristicRef.current = null
+        setBluetoothCharacteristic(null)
+        setTemperatureCharacteristic(null) // Clear temperature characteristic
+        toast({
+          title: "Disconnected",
+          description: "Bluetooth device has been disconnected",
+          variant: "default",
+        })
+      })
+
+      // Connect to all services
+      for (const serviceUUID of serviceUUIDs) {
+        try {
+          console.log(`Attempting to connect to service UUID: ${serviceUUID}`)
+          const { server, service, characteristic } = await connect(device, [serviceUUID])
+
+          if (serviceUUID === "869c10ef-71d9-4f55-92d6-859350c3b8f6") {
+            // This is the temperature service
+            setTemperatureCharacteristic(characteristic)
+            setBluetoothTemperatureCharacteristic(characteristic)
+            console.log(`Connected to temperature service with characteristic UUID: ${characteristic.uuid}`)
+
+            // Start notifications for the temperature characteristic
+            try {
+              await characteristic.startNotifications()
+              console.log("Temperature notifications started")
+
+              characteristic.addEventListener("characteristicvaluechanged", (event) => {
+                const value = new TextDecoder().decode(event.target.value)
+                console.log("Raw temperature data received:", event.target.value)
+                console.log("Current temperature:", value)
+              })
+            } catch (error) {
+              console.error("Error starting temperature notifications:", error)
+            }
+          } else {
+            // This is the main service
+            characteristicRef.current = characteristic
+            setBluetoothCharacteristic(characteristic)
+            console.log(`Connected to main service with characteristic UUID: ${characteristic.uuid}`)
+          }
+
+          bluetoothService.setServer(server)
+          bluetoothService.setServiceUUID(serviceUUID)
+          console.log("Initialized bluetoothService with server and serviceUUID")
+        } catch (serviceError: any) {
+          console.warn(`Failed to connect to service ${serviceUUID}:`, serviceError)
+        }
+      }
+
+      console.log("Bluetooth connection established")
+      setIsConnected(true)
+      toast({
+        title: "Connected",
+        description: `Successfully connected to ${device.name || "device"}`,
+        variant: "default",
+      })
+    } catch (error: any) {
+      console.error("Bluetooth connection error:", error)
+      let errorMessage = "Failed to connect to Bluetooth device"
+
+      if (error instanceof Error) {
+        errorMessage = error.message
+      }
+
+      toast({
+        title: "Connection Error",
+        description: errorMessage,
+        variant: "destructive",
+      })
+
+      throw error // Re-throw the error so the calling component can handle it
+    } finally {
+      setIsConnecting(false)
+    }
   }
 
-  return <BluetoothContext.Provider value={contextValue}>{children}</BluetoothContext.Provider>
+  // Auto-connect function
+  const autoConnect = async () => {
+    if (autoConnectAttempted || isConnected || isConnecting) {
+      return
+    }
+
+    setAutoConnectAttempted(true)
+
+    try {
+      // Get user data to get hub details
+      console.log("Fetching user data for auto-connect...")
+      const { data: sessionData } = await supabase.auth.getSession()
+      if (!sessionData.session) {
+        console.log("No active session, skipping auto-connect")
+        return
+      }
+
+      const { data: profileData, error } = await supabase
+        .from("Profiles")
+        .select("hubDetails")
+        .eq("id", sessionData.session.user.id)
+        .single()
+
+      if (error || !profileData?.hubDetails) {
+        console.log("No hub details found for auto-connect")
+        return
+      }
+
+      // Find a hub or relay_hub device in hubDetails
+      const device = profileData.hubDetails.find(
+        (device: any) => device.deviceType === "hub" || device.deviceType === "relay_hub",
+      )
+
+      if (device?.deviceName && device?.serviceName) {
+        console.log(`Attempting auto-connect to device: ${device.deviceName} with service: ${device.serviceName}`)
+        await connectToDevice(device.deviceName, device.serviceName)
+      } else {
+        console.log("Missing deviceName or serviceName in hubDevice", device)
+      }
+    } catch (error) {
+      console.error("Error in auto-connect:", error)
+    }
+  }
+
+  // Send command to device - updated to handle value 2 for shuffle
+  const sendCommand = async (value: number): Promise<boolean> => {
+    if (!characteristicRef.current) {
+      console.error("Not connected to a Bluetooth device.")
+      toast({
+        title: "Error",
+        description: "Not connected to a Bluetooth device",
+        variant: "destructive",
+      })
+      return false
+    }
+
+    // Ensure value is a number
+    value = Number(value)
+
+    // Handle NaN case explicitly
+    if (isNaN(value)) {
+      console.error(`Invalid command value: NaN. Only 0 (OFF), 1 (ON), and 2 (SHUFFLE) are supported.`)
+      return false
+    }
+
+    try {
+      // Create a Uint8Array with the raw value (0, 1, or 2)
+      const data = new Uint8Array([value])
+
+      // Send the raw value directly to the device
+      await characteristicRef.current.writeValue(data)
+
+      console.log(`Bluetooth write operation:
+        - Command value: ${value}
+        - Binary data: [${data}]
+        - State: ${value === 0 ? "OFF" : value === 1 ? "ON" : "SHUFFLE"}
+        - Characteristic UUID: ${characteristicRef.current.uuid}
+      `)
+
+      // Show appropriate toast message based on the value
+      if (value === 2) {
+        toast({
+          title: "Command Sent",
+          description: "Shuffle pattern activated",
+        })
+      } else {
+        toast({
+          title: "Command Sent",
+          description: `Device turned ${value === 1 ? "ON" : "OFF"}`,
+        })
+      }
+
+      return true
+    } catch (error) {
+      console.error("Error sending command:", error)
+      toast({
+        title: "Error",
+        description: "Failed to send command to device",
+        variant: "destructive",
+      })
+      return false
+    }
+  }
+
+  const requestTemperatureUpdate = async () => {
+    if (!temperatureCharacteristic) {
+      console.error("Temperature characteristic not set")
+      toast({
+        title: "Error",
+        description: "Temperature characteristic not set",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      const command = "temp-reading-request"
+      const encoder = new TextEncoder()
+      const data = encoder.encode(command)
+
+      console.log(`Sending temperature request command: ${command}`)
+      await temperatureCharacteristic.writeValue(data)
+      console.log("Temperature request command sent successfully")
+    } catch (error) {
+      console.error("Error sending temperature request:", error)
+      toast({
+        title: "Error",
+        description: "Failed to send temperature request",
+        variant: "destructive",
+      })
+      return
+    }
+  }
+
+  const disconnectDevice = async () => {
+    if (!bluetoothDevice) {
+      console.warn("No device to disconnect from.")
+      return
+    }
+
+    try {
+      await disconnect(bluetoothDevice)
+      setIsConnected(false)
+      characteristicRef.current = null
+      setBluetoothCharacteristic(null)
+      setTemperatureCharacteristic(null)
+      setBluetoothDevice(null)
+
+      toast({
+        title: "Disconnected",
+        description: "Device has been disconnected",
+        variant: "default",
+      })
+    } catch (error) {
+      console.error("Disconnection failed:", error)
+      toast({
+        title: "Error",
+        description: "Failed to disconnect from device",
+        variant: "destructive",
+      })
+    }
+  }
+
+  return (
+    <BluetoothContext.Provider
+      value={{
+        isConnected,
+        isConnecting,
+        bluetoothStatus,
+        connectToDevice,
+        disconnectDevice,
+        sendCommand,
+        requestTemperatureUpdate,
+        temperatureCharacteristic,
+        autoConnect,
+      }}
+    >
+      {children}
+    </BluetoothContext.Provider>
+  )
 }
 
-export function useBluetooth() {
+export function useBluetoothContext() {
   const context = useContext(BluetoothContext)
-  if (!context) {
-    throw new Error("useBluetooth must be used within a BluetoothProvider")
+  if (context === undefined) {
+    throw new Error("useBluetoothContext must be used within a BluetoothProvider")
   }
   return context
 }
 
-export const useBluetoothContext = useBluetooth
+export const useBluetooth = useBluetoothContext

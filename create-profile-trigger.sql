@@ -4,38 +4,38 @@
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
- INSERT INTO public."Profiles" (
-   id, 
-   email, 
-   first_name,
-   last_name,
-   phone_number,
-   vehicle_name,
-   vehicle_type,
-   vehicle_year,
-   membership_plan_id,
-   accessories,
-   group_ids,
-   accessoryLimit
- ) VALUES (
-   NEW.id, 
-   NEW.email,
-   '', -- first_name
-   '', -- last_name
-   '', -- phone_number
-   'My Vehicle', -- vehicle_name
-   '', -- vehicle_type
-   '', -- vehicle_year
-   'free', -- membership_plan_id
-   '[]'::jsonb, -- accessories
-   '[]'::jsonb, -- group_ids
-   4 -- accessoryLimit
- );
- RETURN NEW;
+  INSERT INTO public."Profiles" (
+    id, 
+    email, 
+    first_name,
+    last_name,
+    phone_number,
+    vehicle_name,
+    vehicle_type,
+    vehicle_year,
+    membership_plan_id,
+    accessories,
+    group_ids,
+    accessoryLimit
+  ) VALUES (
+    NEW.id, 
+    NEW.email,
+    '', -- first_name
+    '', -- last_name
+    '', -- phone_number
+    'My Vehicle', -- vehicle_name
+    '', -- vehicle_type
+    '', -- vehicle_year
+    'free', -- membership_plan_id
+    '[]'::jsonb, -- accessories
+    '[]'::jsonb, -- group_ids
+    4 -- accessoryLimit
+  );
+  RETURN NEW;
 EXCEPTION
- WHEN unique_violation THEN
-   -- If the profile already exists, do nothing
-   RETURN NEW;
+  WHEN unique_violation THEN
+    -- If the profile already exists, do nothing
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
