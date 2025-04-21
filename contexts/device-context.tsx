@@ -30,6 +30,8 @@ export function DeviceProvider({
   const [isLoading, setIsLoading] = useState<Record<string, boolean>>({})
   const { toast } = useToast()
   const { fetchWithAuth } = useApi()
+  const [togglingAccessory, setTogglingAccessory] = useState<string | null>(null)
+  const isToggling = (id: string) => togglingAccessory === id
 
   // Update accessories when initialAccessories changes (e.g., after server refetch)
   useEffect(() => {
@@ -70,6 +72,13 @@ export function DeviceProvider({
   // Update the toggleDeviceStatus function:
   const toggleAccessoryStatus = useCallback(
     async (id: string, status: boolean): Promise<boolean> => {
+      // Prevent multiple simultaneous toggles for the same accessory
+      if (togglingAccessory === id) {
+        console.log(`🔄 DeviceContext: Already toggling accessory ${id}, skipping this request.`)
+        return false
+      }
+      setTogglingAccessory(id)
+
       // Set loading state for this specific accessory
       const loadingKey = `status-${id}`
       setIsLoading((prev) => ({ ...prev, [loadingKey]: true }))
@@ -94,22 +103,6 @@ export function DeviceProvider({
         // Get the relay position
         const relayPosition = accessory.relayPosition ? Number.parseInt(accessory.relayPosition) : 1
         console.log(`🔢 DeviceContext: Using relay position: ${relayPosition}`)
-
-        // Update the accessories state immediately with the new status for better UX
-        setAccessories((prevAccessories) =>
-          prevAccessories.map((accessory) => {
-            if (accessory.accessoryID === id) {
-              console.log(`Updating ${accessory.accessoryName} status to ${status}`)
-              return {
-                ...accessory,
-                accessoryConnectionStatus: status,
-              }
-            }
-            return accessory
-          }),
-        )
-
-        console.log(`✅ DeviceContext: Updated local state for ${accessory.accessoryName}`)
 
         // Try to send Bluetooth command if available
         if (isBluetoothConnected()) {
@@ -137,19 +130,6 @@ export function DeviceProvider({
         console.log(`🔄 DeviceContext: Server action result:`, result)
 
         if (!result.success) {
-          // Revert the state if the server update failed
-          setAccessories((prevAccessories) =>
-            prevAccessories.map((accessory) => {
-              if (accessory.accessoryID === id) {
-                return {
-                  ...accessory,
-                  accessoryConnectionStatus: !status,
-                }
-              }
-              return accessory
-            }),
-          )
-
           toast({
             title: "Error",
             description: result.error || "Failed to update accessory status",
@@ -158,27 +138,21 @@ export function DeviceProvider({
           return false
         }
 
-        // Update with the server response to ensure consistency
-        if (result.updatedAccessories) {
-          setAccessories(result.updatedAccessories)
-        }
+        setAccessories((prevAccessories) => {
+          return prevAccessories.map((acc) => {
+            if (acc.accessoryID === id) {
+              return {
+                ...acc,
+                accessoryConnectionStatus: status,
+              }
+            }
+            return acc
+          })
+        })
 
         return true
       } catch (error) {
         console.error("Error toggling accessory status:", error)
-
-        // Revert the state if there was an error
-        setAccessories((prevAccessories) =>
-          prevAccessories.map((accessory) => {
-            if (accessory.accessoryID === id) {
-              return {
-                ...accessory,
-                accessoryConnectionStatus: !status,
-              }
-            }
-            return accessory
-          }),
-        )
 
         toast({
           title: "Error",
@@ -190,10 +164,11 @@ export function DeviceProvider({
         // Add a small delay before removing loading state for better UX
         setTimeout(() => {
           setIsLoading((prev) => ({ ...prev, [loadingKey]: false }))
+          setTogglingAccessory(null) // Clear toggling state
         }, 500)
       }
     },
-    [accessories, toast],
+    [accessories, toast, setTogglingAccessory],
   )
 
   const toggleAccessoryFavorite = useCallback(
