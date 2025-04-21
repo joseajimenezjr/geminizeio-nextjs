@@ -155,6 +155,8 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
       [accessoryId]: isOn,
     }))
 
+    console.log("Pass this point");
+
     // Update userData state
     setUserData((prevUserData) => {
       if (!prevUserData) return prevUserData
