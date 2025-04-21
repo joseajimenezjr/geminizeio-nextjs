@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { Responsive, WidthProvider } from "react-grid-layout"
 import { Button } from "@/components/ui/button"
 import { Plus, Save, Undo, Settings, Trash } from "lucide-react"
@@ -27,8 +27,6 @@ import { RGBLightWidget } from "./widgets/rgb-light-widget"
 import { BatteryWidget } from "./widgets/battery-widget"
 import { TemperatureWidget } from "./widgets/temperature-widget"
 import { TimerWidget } from "./widgets/timer-widget"
-// Add import for the local data utilities
-import { updateLocalAccessoryStatus } from "@/utils/local-data-utils"
 
 // Add a style tag for the long-press visual indicator
 const longPressStyle = `
@@ -148,21 +146,30 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
   }, [userData])
 
   // Add a function to handle local userData updates
-  const handleLocalUserDataUpdate = (accessoryId: string, isOn: boolean) => {
-    // Update local accessory status state for immediate UI feedback
-    setLocalAccessoryStatuses((prev) => ({
-      ...prev,
-      [accessoryId]: isOn,
-    }))
+  const handleLocalUserDataUpdate = useCallback(
+    (accessoryId: string, isOn: boolean) => {
+      setUserData((prevUserData) => {
+        if (!prevUserData) return prevUserData
 
-    console.log("Pass this point");
+        // Create a deep copy of userData to avoid mutation
+        const updatedUserData = JSON.parse(JSON.stringify(prevUserData))
 
-    // Update userData state
-    setUserData((prevUserData) => {
-      if (!prevUserData) return prevUserData
-      return updateLocalAccessoryStatus(prevUserData, accessoryId, isOn)
-    })
-  }
+        // Update the specific accessory in the accessories array
+        updatedUserData.accessories = updatedUserData.accessories.map((accessory: any) => {
+          if (accessory.accessoryID === accessoryId) {
+            return {
+              ...accessory,
+              accessoryConnectionStatus: isOn,
+            }
+          }
+          return accessory
+        })
+
+        return updatedUserData
+      })
+    },
+    [setUserData],
+  )
 
   // Initialize from user's saved control center data
   const initializeFromUserData = () => {
