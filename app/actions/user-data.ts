@@ -10,15 +10,15 @@ export interface Device {
   accessoryType: string
   accessoryConnectionStatus: boolean
   isFavorite: boolean
-  location?: string
-  relayPosition?: string
+  relayPosition?: number
+  lastRGBColor?: string
 }
 
 export interface Group {
   id: string
   name: string
   active: boolean
-  devices: string[]
+  accessories: string[]
 }
 
 export async function getUserData(isPreviewMode = false) {
@@ -53,11 +53,31 @@ export async function updateDeviceStatus(id: string, active: boolean) {
     return { error: "Not authenticated" }
   }
 
+  // First get the current accessories
+  const { data: profileData, error: fetchError } = await supabase
+    .from("Profiles")
+    .select("accessories")
+    .eq("id", session.user.id)
+    .single()
+
+  if (fetchError) {
+    return { error: fetchError.message }
+  }
+
+  // Update the specific accessory in the accessories array
+  const accessories = profileData.accessories || []
+  const updatedAccessories = accessories.map((accessory: any) => {
+    if (accessory.accessoryID === id) {
+      return { ...accessory, accessoryConnectionStatus: active }
+    }
+    return accessory
+  })
+
+  // Save the updated accessories back to the profile
   const { data, error } = await supabase
     .from("Profiles")
-    .update({ "devices[].deviceSupportStatus": active })
+    .update({ accessories: updatedAccessories })
     .eq("id", session.user.id)
-    .eq("devices[].id", id)
     .select()
 
   if (error) {
@@ -78,11 +98,31 @@ export async function updateDeviceFavorite(id: string, isFavorite: boolean) {
     return { error: "Not authenticated" }
   }
 
+  // First get the current accessories
+  const { data: profileData, error: fetchError } = await supabase
+    .from("Profiles")
+    .select("accessories")
+    .eq("id", session.user.id)
+    .single()
+
+  if (fetchError) {
+    return { error: fetchError.message }
+  }
+
+  // Update the specific accessory in the accessories array
+  const accessories = profileData.accessories || []
+  const updatedAccessories = accessories.map((accessory: any) => {
+    if (accessory.accessoryID === id) {
+      return { ...accessory, isFavorite: isFavorite }
+    }
+    return accessory
+  })
+
+  // Save the updated accessories back to the profile
   const { data, error } = await supabase
     .from("Profiles")
-    .update({ "devices[].isFavorite": isFavorite })
+    .update({ accessories: updatedAccessories })
     .eq("id", session.user.id)
-    .eq("devices[].id", id)
     .select()
 
   if (error) {
@@ -103,16 +143,35 @@ export async function updateDeviceName(id: string, name: string, relayPosition?:
     return { error: "Not authenticated" }
   }
 
-  const updates: any = { "devices[].deviceName": name }
-  if (relayPosition !== undefined) {
-    updates["devices[].relayPosition"] = relayPosition
+  // First get the current accessories
+  const { data: profileData, error: fetchError } = await supabase
+    .from("Profiles")
+    .select("accessories")
+    .eq("id", session.user.id)
+    .single()
+
+  if (fetchError) {
+    return { error: fetchError.message }
   }
 
+  // Update the specific accessory in the accessories array
+  const accessories = profileData.accessories || []
+  const updatedAccessories = accessories.map((accessory: any) => {
+    if (accessory.accessoryID === id) {
+      const updates = { ...accessory, accessoryName: name }
+      if (relayPosition !== undefined) {
+        updates.relayPosition = Number.parseInt(relayPosition, 10) || accessory.relayPosition
+      }
+      return updates
+    }
+    return accessory
+  })
+
+  // Save the updated accessories back to the profile
   const { data, error } = await supabase
     .from("Profiles")
-    .update(updates)
+    .update({ accessories: updatedAccessories })
     .eq("id", session.user.id)
-    .eq("devices[].id", id)
     .select()
 
   if (error) {
@@ -133,11 +192,31 @@ export async function updateGroupStatus(id: string, active: boolean) {
     return { error: "Not authenticated" }
   }
 
+  // First get the current groups
+  const { data: profileData, error: fetchError } = await supabase
+    .from("Profiles")
+    .select("groups")
+    .eq("id", session.user.id)
+    .single()
+
+  if (fetchError) {
+    return { error: fetchError.message }
+  }
+
+  // Update the specific group in the groups array
+  const groups = profileData.groups || []
+  const updatedGroups = groups.map((group: any) => {
+    if (group.id === id) {
+      return { ...group, active: active }
+    }
+    return group
+  })
+
+  // Save the updated groups back to the profile
   const { data, error } = await supabase
     .from("Profiles")
-    .update({ "groups[].active": active })
+    .update({ groups: updatedGroups })
     .eq("id", session.user.id)
-    .eq("groups[].id", id)
     .select()
 
   if (error) {
