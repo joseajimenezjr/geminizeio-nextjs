@@ -61,7 +61,7 @@ export default function ControlCenterV2Page() {
       <div className="container px-4 py-4 flex-1">
         {/* Add the AutoConnectHandler component */}
         <AutoConnectHandler />
-        <ControlCenterV2 userData={userData} />
+        <ControlCenterV2 userData={userData} setUserData={setUserData} />
       </div>
 
       <BottomNav />
