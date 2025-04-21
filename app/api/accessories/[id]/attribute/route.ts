@@ -65,9 +65,14 @@ export async function POST(request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: "Error updating profile" }, { status: 500 })
     }
 
+    // Find the accessory that was updated
+    const updatedAccessory = updatedAccessories.find((acc: any) => acc.accessoryID === accessoryId)
+
+    // Return the updated accessory in the response
     return NextResponse.json({
       success: true,
       message: `Attribute ${attributeName} updated for accessory ${accessoryId}`,
+      accessory: updatedAccessory,
     })
   } catch (error: any) {
     console.error("Unexpected error:", error)

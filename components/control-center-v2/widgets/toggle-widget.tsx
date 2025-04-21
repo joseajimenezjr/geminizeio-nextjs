@@ -38,6 +38,7 @@ const pulseAnimationStyle = `
   }
 `
 
+// Update the ToggleWidgetProps interface to include a userData update callback
 interface ToggleWidgetProps {
   title: string
   accessoryType: string
@@ -46,6 +47,8 @@ interface ToggleWidgetProps {
   isOn: boolean
   isEditing?: boolean
   onToggle: () => void
+  onUpdateUserData?: (accessoryId: string, isOn: boolean) => void // Add this new prop
+  accessoryId?: string // Add this to identify which accessory is being toggled
   onMouseDown?: (e: React.MouseEvent | React.TouchEvent) => void
   onMouseUp?: () => void
   onMouseLeave?: () => void
@@ -62,6 +65,8 @@ export function ToggleWidget({
   isOn,
   isEditing = false,
   onToggle,
+  onUpdateUserData,
+  accessoryId,
   onMouseDown,
   onMouseUp,
   onMouseLeave,
@@ -90,6 +95,7 @@ export function ToggleWidget({
     }
   }, [])
 
+  // Update the handleToggle function to call the onUpdateUserData callback
   const handleToggle = (e: React.MouseEvent) => {
     // Only toggle if not in editing mode and the accessory is connected
     if (!isEditing && isConnected) {
@@ -119,6 +125,11 @@ export function ToggleWidget({
 
       // Call the actual toggle function
       onToggle()
+
+      // Update local userData if callback and accessoryId are provided
+      if (onUpdateUserData && accessoryId) {
+        onUpdateUserData(accessoryId, !localIsOn)
+      }
     }
   }
 

@@ -47,9 +47,11 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
       // Update the accessory in the accessories array
       const accessories = profileData.accessories || []
+      let updatedAccessory = null
       const updatedAccessories = accessories.map((accessory: any) => {
         if (accessory.accessoryID === accessoryID) {
-          return { ...accessory, accessoryConnectionStatus: active }
+          updatedAccessory = { ...accessory, accessoryConnectionStatus: active }
+          return updatedAccessory
         }
         return accessory
       })
@@ -65,7 +67,11 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         return NextResponse.json({ error: updateError.message }, { status: 400 })
       }
 
-      return NextResponse.json({ data: updatedAccessories })
+      return NextResponse.json({
+        success: true,
+        message: `Accessory ${accessoryID} toggled successfully`,
+        accessory: updatedAccessory,
+      })
     } catch (error: any) {
       console.error("Error processing token:", error)
       return NextResponse.json({ error: error.message }, { status: 401 })
@@ -101,9 +107,11 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
   // Update the accessory in the accessories array
   const accessories = profileData.accessories || []
+  let updatedAccessory = null
   const updatedAccessories = accessories.map((accessory: any) => {
     if (accessory.accessoryID === accessoryID) {
-      return { ...accessory, accessoryConnectionStatus: active }
+      updatedAccessory = { ...accessory, accessoryConnectionStatus: active }
+      return updatedAccessory
     }
     return accessory
   })
@@ -120,5 +128,9 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     return NextResponse.json({ error: error.message }, { status: 400 })
   }
 
-  return NextResponse.json({ data })
+  return NextResponse.json({
+    success: true,
+    message: `Accessory ${accessoryID} toggled successfully`,
+    accessory: updatedAccessory,
+  })
 }

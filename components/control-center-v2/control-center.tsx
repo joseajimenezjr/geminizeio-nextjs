@@ -27,6 +27,8 @@ import { RGBLightWidget } from "./widgets/rgb-light-widget"
 import { BatteryWidget } from "./widgets/battery-widget"
 import { TemperatureWidget } from "./widgets/temperature-widget"
 import { TimerWidget } from "./widgets/timer-widget"
+// Add import for the local data utilities
+import { updateLocalAccessoryStatus } from "@/utils/local-data-utils"
 
 // Add a style tag for the long-press visual indicator
 const longPressStyle = `
@@ -69,9 +71,10 @@ interface ControlCenterV2Props {
   vehicleName: string
   vehicleType: string
   userData: any
+  setUserData: React.Dispatch<React.SetStateAction<any>>
 }
 
-export function ControlCenterV2({ vehicleName, vehicleType, userData }: ControlCenterV2Props) {
+export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserData }: ControlCenterV2Props) {
   const { accessories, toggleAccessoryStatus, isLoading, updateAccessoryAttribute } = useAccessories()
   const { toast } = useToast()
   const [isEditing, setIsEditing] = useState(false)
@@ -129,6 +132,15 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData }: ControlC
       initializeDefaultLayout()
     }
   }, [userData])
+
+  // Add a function to handle local userData updates
+  const handleLocalUserDataUpdate = (accessoryId: string, isOn: boolean) => {
+    // Update local userData state
+    setUserData((prevUserData) => {
+      if (!prevUserData) return prevUserData
+      return updateLocalAccessoryStatus(prevUserData, accessoryId, isOn)
+    })
+  }
 
   // Initialize from user's saved control center data
   const initializeFromUserData = () => {
@@ -1010,7 +1022,12 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData }: ControlC
             isConnected={isConnected}
             isOn={isOn}
             isEditing={isEditing}
-            onToggle={() => toggleAccessoryStatus(widget.accessoryId, !isOn)}
+            onToggle={() => {
+              toggleAccessoryStatus(widget.accessoryId, !isOn)
+              handleLocalUserDataUpdate(widget.accessoryId, !isOn)
+            }}
+            accessoryId={accessory.accessoryID}
+            onUpdateUserData={handleLocalUserDataUpdate}
             onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
             onMouseUp={() => handleWidgetMouseUp(widget.id)}
             onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
