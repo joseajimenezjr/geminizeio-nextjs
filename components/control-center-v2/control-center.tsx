@@ -106,10 +106,24 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
   const [showOBDIILibrary, setShowOBDIILibrary] = useState(false)
   const [hasOBD2Accessory, setHasOBD2Accessory] = useState(false)
 
+  // Create a local state to track accessory statuses for immediate UI updates
+  const [localAccessoryStatuses, setLocalAccessoryStatuses] = useState<Record<string, boolean>>({})
+
   // Add a state to track if the user has a temperature reader
   const [hasTemperatureReader, setHasTemperatureReader] = useState(false)
 
   const TEMPERATURE_SERVICE_UUID = "869c10ef-71d9-4f55-92d6-859350c3b8f6"
+
+  // Initialize localAccessoryStatuses from userData when it changes
+  useEffect(() => {
+    if (userData?.accessories) {
+      const statusMap: Record<string, boolean> = {}
+      userData.accessories.forEach((accessory: any) => {
+        statusMap[accessory.accessoryID] = !!accessory.accessoryConnectionStatus
+      })
+      setLocalAccessoryStatuses(statusMap)
+    }
+  }, [userData])
 
   // Check if user has OBD2 accessory and temperature reader
   useEffect(() => {
@@ -135,7 +149,13 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
 
   // Add a function to handle local userData updates
   const handleLocalUserDataUpdate = (accessoryId: string, isOn: boolean) => {
-    // Update local userData state
+    // Update local accessory status state for immediate UI feedback
+    setLocalAccessoryStatuses((prev) => ({
+      ...prev,
+      [accessoryId]: isOn,
+    }))
+
+    // Update userData state
     setUserData((prevUserData) => {
       if (!prevUserData) return prevUserData
       return updateLocalAccessoryStatus(prevUserData, accessoryId, isOn)
@@ -900,6 +920,21 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
     }
   }
 
+  // Handle toggle for accessory status
+  const handleToggleAccessory = (accessoryId: string, newStatus: boolean) => {
+    // Update local state immediately for responsive UI
+    setLocalAccessoryStatuses((prev) => ({
+      ...prev,
+      [accessoryId]: newStatus,
+    }))
+
+    // Call the server action to update the database
+    toggleAccessoryStatus(accessoryId, newStatus)
+
+    // Update userData for consistency
+    handleLocalUserDataUpdate(accessoryId, newStatus)
+  }
+
   // Render the appropriate widget component based on type
   const renderWidget = (widget: any) => {
     // For OBD2 widgets
@@ -1010,7 +1045,10 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
     if (!accessory) return null
 
     const isConnected = true // In a real implementation, check if the accessory is connected
-    const isOn = accessory.accessoryConnectionStatus || false
+
+    // Use the local state for the current status instead of the accessory object
+    // This ensures we always have the most up-to-date status
+    const isOn = localAccessoryStatuses[widget.accessoryId] ?? accessory.accessoryConnectionStatus ?? false
 
     switch (widget.type) {
       case "light":
@@ -1022,10 +1060,7 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
             isConnected={isConnected}
             isOn={isOn}
             isEditing={isEditing}
-            onToggle={() => {
-              toggleAccessoryStatus(widget.accessoryId, !isOn)
-              handleLocalUserDataUpdate(widget.accessoryId, !isOn)
-            }}
+            onToggle={() => handleToggleAccessory(widget.accessoryId, !isOn)}
             accessoryId={accessory.accessoryID}
             onUpdateUserData={handleLocalUserDataUpdate}
             onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
@@ -1043,7 +1078,7 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
             isConnected={isConnected}
             isOn={isOn}
             isEditing={isEditing}
-            onToggle={() => toggleAccessoryStatus(widget.accessoryId, !isOn)}
+            onToggle={() => handleToggleAccessory(widget.accessoryId, !isOn)}
             onLeftPress={() => handleUtilityLeftPress(widget.accessoryId)}
             onRightPress={() => handleUtilityRightPress(widget.accessoryId)}
             onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
@@ -1080,7 +1115,7 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
             isOn={isOn}
             relayPosition={accessory.relayPosition}
             isEditing={isEditing}
-            onToggle={() => toggleAccessoryStatus(widget.accessoryId, !isOn)}
+            onToggle={() => handleToggleAccessory(widget.accessoryId, !isOn)}
             onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
             onMouseUp={() => handleWidgetMouseUp(widget.id)}
             onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
@@ -1099,7 +1134,7 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
             relayPosition={accessory.relayPosition}
             lastRGBColor={accessory.lastRGBColor || "#FF0000"}
             isEditing={isEditing}
-            onToggle={() => toggleAccessoryStatus(widget.accessoryId, !isOn)}
+            onToggle={() => handleToggleAccessory(widget.accessoryId, !isOn)}
             onColorChange={(color) => handleRGBColorChange(widget.accessoryId, color)}
             onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
             onMouseUp={() => handleWidgetMouseUp(widget.id)}
@@ -1116,7 +1151,7 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
             isConnected={isConnected}
             isOn={isOn}
             isEditing={isEditing}
-            onToggle={() => toggleAccessoryStatus(widget.accessoryId, !isOn)}
+            onToggle={() => handleToggleAccessory(widget.accessoryId, !isOn)}
             onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
             onMouseUp={() => handleWidgetMouseUp(widget.id)}
             onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
