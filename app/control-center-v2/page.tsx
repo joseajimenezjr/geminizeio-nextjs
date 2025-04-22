@@ -10,10 +10,17 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { Button } from "@/components/ui/button"
 import { AddDeviceFlow } from "@/components/add-device/add-device-flow"
 
+interface LastAddedDevice {
+  type: string
+  name: string
+  timestamp: string
+}
+
 export default function ControlCenterV2Page() {
   const [userData, setUserData] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [showAddDeviceFlow, setShowAddDeviceFlow] = useState(false)
+  const [lastAddedDevice, setLastAddedDevice] = useState<LastAddedDevice | null>(null)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -21,6 +28,24 @@ export default function ControlCenterV2Page() {
       try {
         const data = await getUserData()
         setUserData(data)
+
+        // Check for last added device in localStorage
+        const storedDevice = localStorage.getItem("lastAddedDevice")
+        if (storedDevice) {
+          const parsedDevice = JSON.parse(storedDevice) as LastAddedDevice
+
+          // Only use the stored device if it was added in the last 24 hours
+          const addedTime = new Date(parsedDevice.timestamp).getTime()
+          const currentTime = new Date().getTime()
+          const hoursSinceAdded = (currentTime - addedTime) / (1000 * 60 * 60)
+
+          if (hoursSinceAdded < 24) {
+            setLastAddedDevice(parsedDevice)
+          } else {
+            // Clear old data
+            localStorage.removeItem("lastAddedDevice")
+          }
+        }
       } catch (error) {
         console.error("Error getting user data:", error)
         setUserData(null)
@@ -42,10 +67,31 @@ export default function ControlCenterV2Page() {
     getUserData()
       .then((data) => {
         setUserData(data)
+
+        // Check for updated last added device
+        const storedDevice = localStorage.getItem("lastAddedDevice")
+        if (storedDevice) {
+          setLastAddedDevice(JSON.parse(storedDevice))
+        } else {
+          setLastAddedDevice(null)
+        }
       })
       .catch((error) => {
         console.error("Error refreshing user data:", error)
       })
+  }
+
+  const getDeviceTypeDisplayName = (type: string) => {
+    switch (type) {
+      case "hub":
+        return "Hub"
+      case "relay_hub":
+        return "Relay Hub"
+      case "turn_signal":
+        return "Turn Signal Kit"
+      default:
+        return type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())
+    }
   }
 
   if (isLoading) {
@@ -73,7 +119,7 @@ export default function ControlCenterV2Page() {
   const hubDetails = userData.hubDetails || []
   const hasHubOrTurnSignal = hubDetails.some(
     (device: any) =>
-      device.deviceType === "relay_hub" || device.deviceType === "hub" || device.deviceType === "turn_signal",
+      device.deviceType === "hub" || device.deviceType === "relay_hub" || device.deviceType === "turn_signal",
   )
 
   return (
@@ -97,6 +143,18 @@ export default function ControlCenterV2Page() {
             </p>
             <Button size="lg" className="mt-4" onClick={handleAddDeviceClick}>
               Add hub or turn signal kit
+            </Button>
+          </div>
+        ) : lastAddedDevice ? (
+          <div className="flex flex-col items-center justify-center h-full text-center space-y-6 py-12">
+            <h2 className="text-2xl font-bold">
+              Congratulations! You added your {getDeviceTypeDisplayName(lastAddedDevice.type)}
+            </h2>
+            <p className="text-muted-foreground max-w-md">
+              Now add your accessories to your account to configure them in the control center.
+            </p>
+            <Button size="lg" className="mt-4" onClick={handleAddDeviceClick}>
+              Add accessories
             </Button>
           </div>
         ) : (

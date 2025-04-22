@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { Network, Cpu, Lightbulb } from "lucide-react"
+import { Network, Cpu, Lightbulb, Zap } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface DeviceTypeOption {
@@ -14,23 +14,30 @@ interface DeviceTypeOption {
   bgColor: string
 }
 
-// Update the props interface to include loading and error message
+// Update the props interface to include showAccessoryOption
 interface DeviceTypeSelectorProps {
   onSelect: (deviceType: string) => void
   isLoading?: boolean
   errorMessage?: string | null
+  showAccessoryOption?: boolean
 }
 
-// Update the component to accept and display loading and error states
-export function DeviceTypeSelector({ onSelect, isLoading = false, errorMessage = null }: DeviceTypeSelectorProps) {
-  const deviceTypes: DeviceTypeOption[] = [
+// Update the component to conditionally show device types
+export function DeviceTypeSelector({
+  onSelect,
+  isLoading = false,
+  errorMessage = null,
+  showAccessoryOption = true,
+}: DeviceTypeSelectorProps) {
+  // Define all possible device types
+  const allDeviceTypes: DeviceTypeOption[] = [
     {
-      id: "accessory",
-      title: "Hub Accessory",
-      description: "Add a new accessory to connect to your hub",
-      icon: Lightbulb,
-      color: "text-amber-500",
-      bgColor: "bg-amber-500/10",
+      id: "hub",
+      title: "Hub",
+      description: "Add a new central hub to control your accessories",
+      icon: Network,
+      color: "text-blue-500",
+      bgColor: "bg-blue-500/10",
     },
     {
       id: "relay-hub",
@@ -41,14 +48,27 @@ export function DeviceTypeSelector({ onSelect, isLoading = false, errorMessage =
       bgColor: "bg-green-500/10",
     },
     {
-      id: "hub",
-      title: "Hub",
-      description: "Add a new central hub to control your accessories",
-      icon: Network,
-      color: "text-blue-500",
-      bgColor: "bg-blue-500/10",
+      id: "turn-signal",
+      title: "Turn Signal Kit",
+      description: "Add a turn signal kit for your vehicle",
+      icon: Zap,
+      color: "text-yellow-500",
+      bgColor: "bg-yellow-500/10",
+    },
+    {
+      id: "accessory",
+      title: "Hub Accessory",
+      description: "Add a new accessory to connect to your hub",
+      icon: Lightbulb,
+      color: "text-amber-500",
+      bgColor: "bg-amber-500/10",
     },
   ]
+
+  // Filter device types based on showAccessoryOption
+  const deviceTypes = showAccessoryOption
+    ? allDeviceTypes
+    : allDeviceTypes.filter((device) => device.id !== "accessory")
 
   return (
     <div className="space-y-4">

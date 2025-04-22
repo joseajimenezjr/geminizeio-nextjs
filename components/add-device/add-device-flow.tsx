@@ -29,6 +29,7 @@ export function AddDeviceFlow({ open, onClose }: AddDeviceFlowProps) {
   const [isRelayHubAvailable, setIsRelayHubAvailable] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [hasHubOrTurnSignal, setHasHubOrTurnSignal] = useState<boolean>(false)
 
   // Reset all state when the flow is closed
   useEffect(() => {
@@ -41,8 +42,65 @@ export function AddDeviceFlow({ open, onClose }: AddDeviceFlowProps) {
       setIsRelayHubAvailable(false)
       setIsLoading(false)
       setErrorMessage(null)
+    } else {
+      // Check if user has hub or turn signal when the flow opens
+      checkUserDevices()
     }
   }, [open])
+
+  // Check if user has hub or turn signal devices
+  const checkUserDevices = async () => {
+    setIsLoading(true)
+    try {
+      // Get current user session
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (!session) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to add a device",
+          variant: "destructive",
+        })
+        setIsLoading(false)
+        return
+      }
+
+      // Get current profile data
+      const { data: profileData, error: profileError } = await supabase
+        .from("Profiles")
+        .select("hubDetails")
+        .eq("id", session.user.id)
+        .single()
+
+      if (profileError && profileError.code !== "PGRST116") {
+        throw profileError
+      }
+
+      // Check if user has any hub, relay hub, or turn signal configured
+      const hubDetails = profileData?.hubDetails || []
+      const hasRequiredDevice = hubDetails.some(
+        (device: any) =>
+          device.deviceType === "hub" || device.deviceType === "relay_hub" || device.deviceType === "turn_signal",
+      )
+
+      // Check specifically for relay hub
+      const hasRelayHub = hubDetails.some((device: any) => device.deviceType === "relay_hub")
+
+      setHasHubOrTurnSignal(hasRequiredDevice)
+      setIsRelayHubAvailable(hasRelayHub)
+    } catch (error: any) {
+      console.error("Error checking for devices:", error)
+      toast({
+        title: "Error",
+        description: error.message || "Failed to check for existing devices",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (open) {
@@ -133,6 +191,10 @@ export function AddDeviceFlow({ open, onClose }: AddDeviceFlowProps) {
           setStep("relay-hub-setup")
           break
         case "hub":
+          setStep("hub-setup")
+          break
+        case "turn-signal":
+          // Handle turn signal setup - for now, use hub setup as placeholder
           setStep("hub-setup")
           break
         default:
@@ -243,6 +305,24 @@ export function AddDeviceFlow({ open, onClose }: AddDeviceFlowProps) {
         throw updateError
       }
 
+      // Store information about the last added device if it's a hub, relay hub, or turn signal
+      if (
+        deviceDetails.deviceType === "hub" ||
+        deviceDetails.deviceType === "relay_hub" ||
+        deviceDetails.deviceType === "turn_signal"
+      ) {
+        // Store the last added device info in localStorage
+        const lastAddedDevice = {
+          type: deviceDetails.deviceType,
+          name: deviceDetails.deviceName,
+          timestamp: new Date().toISOString(),
+        }
+        localStorage.setItem("lastAddedDevice", JSON.stringify(lastAddedDevice))
+      } else if (deviceDetails.deviceType === "accessory") {
+        // If an accessory was added, clear the last added device info
+        localStorage.removeItem("lastAddedDevice")
+      }
+
       toast({
         title: "Success",
         description: `${deviceDetails.deviceType.replace("_", " ")} added successfully`,
@@ -283,7 +363,12 @@ export function AddDeviceFlow({ open, onClose }: AddDeviceFlowProps) {
       showCloseButton={step === "select-type"}
     >
       {step === "select-type" && (
-        <DeviceTypeSelector onSelect={handleDeviceTypeSelect} isLoading={isLoading} errorMessage={errorMessage} />
+        <DeviceTypeSelector
+          onSelect={handleDeviceTypeSelect}
+          isLoading={isLoading}
+          errorMessage={errorMessage}
+          showAccessoryOption={hasHubOrTurnSignal}
+        />
       )}
 
       {step === "select-accessory-type" && (
