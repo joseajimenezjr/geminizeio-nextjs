@@ -1149,7 +1149,6 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
         {showLibrary && (
           <div className="mb-6">
             <WidgetLibrary
-              accessories={userData.accessories}
               existingWidgets={widgets}
               onAddWidget={handleAddWidget}
               onClose={() => setShowLibrary(false)}
