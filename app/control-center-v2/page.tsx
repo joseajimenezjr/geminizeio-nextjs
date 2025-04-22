@@ -1,6 +1,8 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { Button } from "@/components/ui/button"
+
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { ControlCenterV2 } from "@/components/control-center-v2/control-center"
 import { DashboardHeaderWrapper } from "@/components/dashboard/dashboard-header-wrapper"
 import { BottomNav } from "@/components/layout/bottom-nav"
@@ -34,26 +36,27 @@ export default function ControlCenterV2Page() {
   }, [fetchData])
 
   // Recalculate hasHubDevices whenever userData changes
-  const hasHubDevices = () => {
+  const hasHubDevices = useMemo(() => {
     if (!userData?.hubDetails || !Array.isArray(userData.hubDetails)) {
       console.log("ControlCenterV2: No hubDetails found or not an array")
       return false
     }
 
-    const hasHub = userData.hubDetails.some(
+    return userData.hubDetails.some(
       (device: any) =>
         device.deviceType === "hub" || device.deviceType === "relay_hub" || device.deviceType === "turn_signal",
     )
-    console.log("ControlCenterV2: hasHubDevices calculated:", hasHub)
-    return hasHub
-  }
+  }, [userData?.hubDetails])
 
   // Log when userData changes
   useEffect(() => {
     console.log("ControlCenterV2: userData changed:", userData)
     console.log("ControlCenterV2: Recalculating hasHubDevices")
-    hasHubDevices() // Call hasHubDevices to trigger recalculation
-  }, [userData])
+  }, [userData, hasHubDevices]) // Include hasHubDevices in the dependency array
+
+  const getAddDeviceButtonText = () => {
+    return hasHubDevices ? "Add Accessory" : "Add Hub or Turn Signal Kit"
+  }
 
   if (isLoading) {
     return (
@@ -75,14 +78,13 @@ export default function ControlCenterV2Page() {
   // Check both camelCase and snake_case property names to be safe
   const vehicleName = userData.vehicleName || userData.vehicle_name || "My Vehicle"
   const vehicleType = userData.vehicleType || userData.vehicle_type || "Vehicle"
+  const accessories = userData?.accessories || []
+  const accessoryLimit = userData?.accessoryLimit || 4
+  const showFavorites = userData?.settings?.showFavorites ?? true
 
   return (
     <main className="flex min-h-screen flex-col pb-16">
-      <DashboardHeaderWrapper
-        vehicleName={vehicleName}
-        vehicleType={vehicleType}
-        showFavorites={userData.settings?.showFavorites ?? true}
-      />
+      <DashboardHeaderWrapper vehicleName={vehicleName} vehicleType={vehicleType} showFavorites={showFavorites} />
 
       <div className="container px-4 py-4 flex-1">
         {/* Add the AutoConnectHandler component */}
@@ -93,6 +95,15 @@ export default function ControlCenterV2Page() {
           vehicleName={vehicleName}
           vehicleType={vehicleType}
         />
+        <Button
+          onClick={() => {
+            setLimitDeviceOptions(false)
+            setShowAddDeviceFlow(true)
+          }}
+          className="mt-4"
+        >
+          {getAddDeviceButtonText()}
+        </Button>
       </div>
 
       <AddDeviceFlow
