@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { Responsive, WidthProvider } from "react-grid-layout"
 import { Trash } from "lucide-react"
 import { ToggleWidget } from "./widgets/toggle-widget"
@@ -24,42 +24,38 @@ import { BatteryWidget } from "./widgets/battery-widget"
 import { TemperatureWidget } from "./widgets/temperature-widget"
 import { TimerWidget } from "./widgets/timer-widget"
 import { Button } from "@/components/ui/button"
-import { AddDeviceFlow } from "@/components/add-device/add-device-flow"
+import { Plus } from "lucide-react"
 
 // Add a style tag for the long-press visual indicator
 const pulseAnimationStyle = `
-@keyframes pulse-animation {
-  0% {
-    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.3);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(22, 163, 74, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0);
-  }
-}
+ @keyframes pulse-animation {
+   0% {
+     box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.3);
+   }
+   70% {
+     box-shadow: 0 0 0 10px rgba(22, 163, 74, 0);
+   }
+   100% {
+     box-shadow: 0 0 0 0 rgba(22, 163, 74, 0);
+   }
+ }
+ 
+ .widget-pulse {
+   animation: pulse-animation 1.5s ease-out;
+ }
 
-.widget-pulse {
-  animation: pulse-animation 1.5s ease-out;
-}
-
-@keyframes continuous-flash {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
-}
-
-.continuous-flash {
-  animation: continuous-flash 1s infinite;
-}
-
-.continuous-flash {
-  animation: continuous-flash 1s infinite;
-}
+ @keyframes continuous-flash {
+   0%, 100% {
+     opacity: 1;
+   }
+   50% {
+     opacity: 0.7;
+   }
+ }
+ 
+ .continuous-flash {
+   animation: continuous-flash 1s infinite;
+ }
 `
 
 // Enable responsiveness with the WidthProvider
@@ -129,26 +125,12 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
   const [showOBDIILibrary, setShowOBDIILibrary] = useState(false)
   const [hasOBD2Accessory, setHasOBD2Accessory] = useState(false)
   const [addDeviceOpen, setAddDeviceOpen] = useState(false)
-  const [showAddDeviceFlow, setShowAddDeviceFlow] = useState(false)
-  const [limitDeviceOptions, setLimitDeviceOptions] = useState(false)
 
   // Create a local state to track accessory statuses for immediate UI updates
   const [localAccessoryStatuses, setLocalAccessoryStatuses] = useState<Record<string, boolean>>({})
 
   // Add a state to track if the user has a temperature reader
   const [hasTemperatureReader, setHasTemperatureReader] = useState(false)
-
-  // Check if user has any hub devices
-  const hasHubDevices = useMemo(() => {
-    if (!userData?.hubDetails || !Array.isArray(userData.hubDetails)) {
-      return false
-    }
-
-    return userData.hubDetails.some(
-      (device: any) =>
-        device.deviceType === "hub" || device.deviceType === "relay_hub" || device.deviceType === "turn_signal",
-    )
-  }, [userData?.hubDetails])
 
   const TEMPERATURE_SERVICE_UUID = "869c10ef-71d9-4f55-92d6-859350c3b8f6"
 
@@ -218,18 +200,6 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
     },
     [setUserData],
   )
-
-  // Handle adding a hub device
-  const handleAddHubDevice = () => {
-    setLimitDeviceOptions(true)
-    setShowAddDeviceFlow(true)
-  }
-
-  // Handle adding any device
-  const handleAddAnyDevice = () => {
-    setLimitDeviceOptions(false)
-    setShowAddDeviceFlow(true)
-  }
 
   // Initialize from user's saved control center data
   const initializeFromUserData = () => {
@@ -971,7 +941,7 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
           value={45}
           maxValue={120}
           unit="mph"
-          isEditing
+          isEditing={isEditing}
           onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
           onMouseUp={() => handleWidgetMouseUp(widget.id)}
           onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
@@ -1193,15 +1163,10 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
       {widgets.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-full">
           <h2 className="text-2xl font-bold mb-4">Welcome to a new way of managing your off-road accessories</h2>
-          {!hasHubDevices ? (
-            <Button onClick={handleAddHubDevice} className="mt-4">
-              Add Hub or Turn Signal Kit
-            </Button>
-          ) : (
-            <Button onClick={handleAddAnyDevice} className="mt-4">
-              Add Your First Device
-            </Button>
-          )}
+          <Button onClick={() => setAddDeviceOpen(true)} className="bg-primary text-primary-foreground">
+            <Plus className="mr-2 h-4 w-4" />
+            Add Accessory
+          </Button>
         </div>
       ) : (
         <ResponsiveGridLayout
@@ -1236,11 +1201,6 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
           ))}
         </ResponsiveGridLayout>
       )}
-      <AddDeviceFlow
-        open={showAddDeviceFlow}
-        onClose={() => setShowAddDeviceFlow(false)}
-        limitToHubDevices={limitDeviceOptions}
-      />
     </div>
   )
 }

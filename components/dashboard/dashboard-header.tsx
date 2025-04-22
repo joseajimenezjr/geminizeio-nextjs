@@ -42,7 +42,7 @@ export function DashboardHeader({ vehicleName, vehicleType, showFavorites }: Das
                         <DropdownMenuItem asChild>
                           <button className="flex w-full items-center text-left" onClick={() => setAddDeviceOpen(true)}>
                             <Plus className="mr-2 h-4 w-4 text-primary" />
-                            <span>Add Device</span>
+                            <span>Add Accessory</span>
                           </button>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>

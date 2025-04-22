@@ -11,19 +11,16 @@ import { AccessorySetup } from "@/components/add-device/accessory-setup"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { useAuthStore } from "@/contexts/auth-store"
 
 interface AddDeviceFlowProps {
   open: boolean
   onClose: () => void
-  limitToHubDevices?: boolean
 }
 
-export function AddDeviceFlow({ open, onClose, limitToHubDevices = false }: AddDeviceFlowProps) {
+export function AddDeviceFlow({ open, onClose }: AddDeviceFlowProps) {
   const router = useRouter()
   const { toast } = useToast()
   const supabase = createClientComponentClient()
-  const { updateUserData } = useAuthStore()
 
   const [step, setStep] = useState<string>("select-type")
   const [selectedDeviceType, setSelectedDeviceType] = useState<string | null>(null)
@@ -32,23 +29,6 @@ export function AddDeviceFlow({ open, onClose, limitToHubDevices = false }: AddD
   const [isRelayHubAvailable, setIsRelayHubAvailable] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-
-  // Reset all state when the modal is closed
-  const handleClose = () => {
-    // Call the parent's onClose function
-    onClose()
-
-    // Reset all state variables after a short delay to avoid visual glitches
-    setTimeout(() => {
-      setStep("select-type")
-      setSelectedDeviceType(null)
-      setSelectedAccessoryType(null)
-      setSelectedRelayAccessoryType(null)
-      setIsRelayHubAvailable(false)
-      setIsLoading(false)
-      setErrorMessage(null)
-    }, 300)
-  }
 
   useEffect(() => {
     if (open) {
@@ -143,7 +123,7 @@ export function AddDeviceFlow({ open, onClose, limitToHubDevices = false }: AddD
           break
         default:
           // Fallback
-          handleClose()
+          onClose()
           router.push("/accessories/new")
       }
     }
@@ -240,11 +220,10 @@ export function AddDeviceFlow({ open, onClose, limitToHubDevices = false }: AddD
       const updatedHubDetails = [...hubDetails, enhancedDeviceDetails]
 
       // Update the profile with the new hubDetails array
-      const { data: updateData, error: updateError } = await supabase
+      const { error: updateError } = await supabase
         .from("Profiles")
         .update({ hubDetails: updatedHubDetails })
         .eq("id", session.user.id)
-        .select()
 
       if (updateError) {
         throw updateError
@@ -254,17 +233,10 @@ export function AddDeviceFlow({ open, onClose, limitToHubDevices = false }: AddD
         title: "Success",
         description: `${deviceDetails.deviceType.replace("_", " ")} added successfully`,
       })
-      console.log("AddDeviceFlow: handleDeviceSetupComplete called")
-
-      // Update the user data in the parent component
-      if (updateUserData) {
-        updateUserData()
-        console.log("AddDeviceFlow: updateUserData called")
-      }
 
       // Close the flow after a short delay
       setTimeout(() => {
-        handleClose()
+        onClose()
       }, 1500)
     } catch (error: any) {
       console.error("Error saving device details:", error)
@@ -291,18 +263,13 @@ export function AddDeviceFlow({ open, onClose, limitToHubDevices = false }: AddD
   return (
     <BottomSheet
       open={open}
-      onClose={handleClose}
+      onClose={onClose}
       size={getSheetSize()}
       className="bg-background border-t border-border"
       showCloseButton={step === "select-type"}
     >
       {step === "select-type" && (
-        <DeviceTypeSelector
-          onSelect={handleDeviceTypeSelect}
-          isLoading={isLoading}
-          errorMessage={errorMessage}
-          limitToHubDevices={limitToHubDevices}
-        />
+        <DeviceTypeSelector onSelect={handleDeviceTypeSelect} isLoading={isLoading} errorMessage={errorMessage} />
       )}
 
       {step === "select-accessory-type" && (
@@ -314,16 +281,16 @@ export function AddDeviceFlow({ open, onClose, limitToHubDevices = false }: AddD
       )}
 
       {step === "relay-hub-setup" && (
-        <RelayHubSetup onClose={handleClose} onBack={handleBack} onComplete={handleDeviceSetupComplete} />
+        <RelayHubSetup onClose={onClose} onBack={handleBack} onComplete={handleDeviceSetupComplete} />
       )}
 
       {step === "hub-setup" && (
-        <HubSetup onClose={handleClose} onBack={handleBack} onComplete={handleDeviceSetupComplete} />
+        <HubSetup onClose={onClose} onBack={handleBack} onComplete={handleDeviceSetupComplete} />
       )}
 
       {step === "accessory-setup" && (
         <AccessorySetup
-          onClose={handleClose}
+          onClose={onClose}
           onBack={handleBack}
           onComplete={handleDeviceSetupComplete}
           accessoryType={selectedAccessoryType || "wireless_accessory"}
