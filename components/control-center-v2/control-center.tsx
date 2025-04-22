@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { Responsive, WidthProvider } from "react-grid-layout"
 import { Button } from "@/components/ui/button"
 import { Plus, Save, Undo, Settings, Trash } from "lucide-react"
@@ -58,6 +58,19 @@ export const WIDGET_SIZES = {
   "hazard-light": { w: 1, h: 1 },
 }
 
+// Define supported accessory types that have widget implementations
+const SUPPORTED_ACCESSORY_TYPES = [
+  "light",
+  "utility",
+  "gauge",
+  "chaseLight",
+  "rgbLight",
+  "battery",
+  "temperature",
+  "obd2",
+  // Note: "turn_signal" is not included if it doesn't have a proper implementation
+]
+
 // Grid configuration - 4 columns, infinite rows
 const GRID_CONFIG = {
   cols: 4,
@@ -109,6 +122,13 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
   const [hasTemperatureReader, setHasTemperatureReader] = useState(false)
 
   const TEMPERATURE_SERVICE_UUID = "869c10ef-71d9-4f55-92d6-859350c3b8f6"
+
+  // Filter accessories to only include supported types
+  const supportedAccessories = useMemo(() => {
+    if (!userData?.accessories) return []
+
+    return userData.accessories.filter((accessory: any) => SUPPORTED_ACCESSORY_TYPES.includes(accessory.accessoryType))
+  }, [userData?.accessories])
 
   // Initialize localAccessoryStatuses from userData when it changes
   useEffect(() => {
@@ -194,7 +214,18 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
 
     // Only set widgets if they exist and are in the correct format
     if (Array.isArray(userWidgets) && userWidgets.length > 0) {
-      setWidgets(userWidgets)
+      // Filter out widgets for accessories that are no longer supported
+      const validWidgets = userWidgets.filter((widget) => {
+        // For accessory-based widgets, check if the accessory exists and is supported
+        if (widget.accessoryId) {
+          const accessory = userData.accessories.find((a: any) => a.accessoryID === widget.accessoryId)
+          return accessory && SUPPORTED_ACCESSORY_TYPES.includes(accessory.accessoryType)
+        }
+        // For utility widgets, they're always valid
+        return true
+      })
+
+      setWidgets(validWidgets)
 
       // Create layout objects for react-grid-layout
       const userLayouts = {
@@ -206,7 +237,7 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
       }
 
       // Create layouts for each breakpoint
-      userWidgets.forEach((widget: any) => {
+      validWidgets.forEach((widget: any) => {
         // Skip any malformed widgets
         if (!widget.id || !widget.position || !widget.size) {
           console.warn("Skipping malformed widget:", widget)
@@ -433,6 +464,16 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
       toast({
         title: "Widget already exists",
         description: `${accessory.accessoryName} is already in your control center.`,
+      })
+      return
+    }
+
+    // Verify this accessory type is supported
+    if (!SUPPORTED_ACCESSORY_TYPES.includes(accessory.accessoryType)) {
+      toast({
+        title: "Unsupported accessory type",
+        description: `${accessory.accessoryType} widgets are not currently supported.`,
+        variant: "destructive",
       })
       return
     }
@@ -1149,6 +1190,7 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
         {showLibrary && (
           <div className="mb-6">
             <WidgetLibrary
+              accessories={supportedAccessories}
               existingWidgets={widgets}
               onAddWidget={handleAddWidget}
               onClose={() => setShowLibrary(false)}
