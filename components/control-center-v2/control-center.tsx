@@ -1071,7 +1071,7 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
         {widgets.length === 0 && (
           <div className="flex flex-col items-center justify-center p-8 bg-muted/30 rounded-lg border border-dashed">
             <div className="rounded-lg bg-black p-8 text-white text-center">
-              <p className="font-bold text-red-500">
+              <p className="font-bold" style={{ color: "hsl(var(--primary))" }}>
                 Lets add some widgets to the control center! Click on edit layout button to see the widgets you are able
                 to add based on your accessories added thus far!
               </p>
