@@ -30,6 +30,40 @@ export default function ControlCenterV2Page() {
         const data = await getUserData()
         setUserData(data)
 
+        // Log the user's device types
+        console.log("User data retrieved:", data)
+
+        const hubDetails = data.hubDetails || []
+        console.log("Hub details:", hubDetails)
+
+        // Log specific device types
+        const deviceTypes = hubDetails.map((device: any) => device.deviceType)
+        console.log("Device types:", deviceTypes)
+
+        // Log specific device types with more details
+        console.log("Devices by type:")
+        const hasHub = hubDetails.some((device: any) => device.deviceType === "hub")
+        const hasRelayHub = hubDetails.some((device: any) => device.deviceType === "relay_hub")
+        const hasTurnSignal = hubDetails.some((device: any) => device.deviceType === "turn_signal")
+
+        console.log("- Hub:", hasHub ? "Yes" : "No")
+        console.log("- Relay Hub:", hasRelayHub ? "Yes" : "No")
+        console.log("- Turn Signal Kit:", hasTurnSignal ? "Yes" : "No")
+
+        // If there are any devices, log them individually
+        if (hubDetails.length > 0) {
+          console.log("Individual devices:")
+          hubDetails.forEach((device: any, index: number) => {
+            console.log(`Device ${index + 1}:`, {
+              type: device.deviceType,
+              name: device.name || "Unnamed",
+              id: device.id || "No ID",
+            })
+          })
+        } else {
+          console.log("No devices found")
+        }
+
         // Check for last added device in localStorage
         const storedDevice = localStorage.getItem("lastAddedDevice")
         if (storedDevice) {
@@ -42,10 +76,14 @@ export default function ControlCenterV2Page() {
 
           if (hoursSinceAdded < 24) {
             setLastAddedDevice(parsedDevice)
+            console.log("Last added device:", parsedDevice)
           } else {
             // Clear old data
             localStorage.removeItem("lastAddedDevice")
+            console.log("Last added device expired (older than 24 hours)")
           }
+        } else {
+          console.log("No last added device found in localStorage")
         }
       } catch (error) {
         console.error("Error getting user data:", error)
