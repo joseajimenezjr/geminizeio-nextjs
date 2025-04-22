@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ArrowLeft, Check, Smartphone, QrCode, Bluetooth, Plug, Star, AlertCircle } from "lucide-react"
+import { ArrowLeft, Check, Smartphone, QrCode, Bluetooth, Plug, Star, AlertCircle, AlertTriangle } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -35,9 +35,15 @@ export function AccessorySetup({
   const supabase = createClientComponentClient()
   const router = useRouter()
   const isRelayAccessory = accessoryType === "relay_accessory"
+  const isTurnSignal = accessoryType === "turn_signal"
+  const isReverseLight = accessoryType === "reverse_light"
 
   // For wireless accessories
   const [wirelessStep, setWirelessStep] = useState(1)
+
+  // For turn signal accessories
+  const [turnSignalStep, setTurnSignalStep] = useState(1)
+  const [isTerminalsConfirmed, setIsTerminalsConfirmed] = useState(false)
 
   // Shared state
   const [deviceName, setDeviceName] = useState("")
@@ -111,13 +117,87 @@ export function AccessorySetup({
       }
     }
 
-    if (isRelayAccessory) {
+    if (isRelayAccessory || isTurnSignal || isReverseLight) {
       fetchProfileData()
     }
-  }, [supabase, isRelayAccessory])
+  }, [supabase, isRelayAccessory, isTurnSignal, isReverseLight])
 
   const handleNext = async () => {
-    if (isRelayAccessory) {
+    if (isTurnSignal) {
+      if (turnSignalStep < 3) {
+        setTurnSignalStep(turnSignalStep + 1)
+        return
+      }
+
+      // Final step for turn signal - save to database
+      setIsSubmitting(true)
+
+      try {
+        // Get current user session
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
+        if (!session) {
+          throw new Error("No active session found")
+        }
+
+        // Create new accessory object for turn signal
+        const newAccessory = {
+          id: `acc_${Date.now()}`,
+          createdAt: new Date().toISOString(),
+          isFavorite: isFavorite,
+          accessoryID: `D${String(Math.floor(Math.random() * 900) + 100)}`, // Random 3-digit number with D prefix
+          accessoryName: deviceName || "Turn Signal",
+          accessoryType: "turn_signal",
+          turnSignalStatus: false,
+        }
+
+        // Get current accessories
+        const { data: profileData, error: profileError } = await supabase
+          .from("Profiles")
+          .select("accessories")
+          .eq("id", session.user.id)
+          .single()
+
+        if (profileError) {
+          throw new Error(profileError.message)
+        }
+
+        // Update accessories array
+        const updatedAccessories = [...(profileData.accessories || []), newAccessory]
+
+        // Save to database
+        const { error: updateError } = await supabase
+          .from("Profiles")
+          .update({ accessories: updatedAccessories })
+          .eq("id", session.user.id)
+
+        if (updateError) {
+          throw new Error(updateError.message)
+        }
+
+        // Success
+        setIsSubmitting(false)
+        setIsSuccess(true)
+
+        // Complete the setup
+        setTimeout(() => {
+          // Refresh the dashboard to show the new accessory
+          router.refresh()
+
+          onComplete({
+            deviceName: deviceName || "Turn Signal",
+            deviceType: "turn_signal",
+            serviceName: "turn_signal",
+            isFavorite,
+          })
+        }, 1000)
+      } catch (err: any) {
+        console.error("Error saving turn signal:", err)
+        setError(err.message)
+        setIsSubmitting(false)
+      }
+    } else if (isRelayAccessory) {
       // No need to validate relay position as null is now allowed
 
       // Check if we're at the accessory limit
@@ -286,6 +366,19 @@ export function AccessorySetup({
       return "Configure Relay Accessory"
     }
 
+    if (isTurnSignal) {
+      switch (turnSignalStep) {
+        case 1:
+          return "Confirm Connections"
+        case 2:
+          return "Configure Turn Signal"
+        case 3:
+          return "Widget Information"
+        default:
+          return ""
+      }
+    }
+
     switch (wirelessStep) {
       case 1:
         return "Power On Your Accessory"
@@ -301,6 +394,19 @@ export function AccessorySetup({
   const getStepDescription = () => {
     if (isRelayAccessory) {
       return "Configure your relay accessory by setting its name, position, and preferences."
+    }
+
+    if (isTurnSignal) {
+      switch (turnSignalStep) {
+        case 1:
+          return "Please confirm that you have connected your turn signal kit correctly."
+        case 2:
+          return "Configure your turn signal settings."
+        case 3:
+          return "Learn about the widgets available for your turn signal kit."
+        default:
+          return ""
+      }
     }
 
     switch (wirelessStep) {
@@ -320,6 +426,19 @@ export function AccessorySetup({
       return <Plug className="h-8 w-8 text-primary" />
     }
 
+    if (isTurnSignal) {
+      switch (turnSignalStep) {
+        case 1:
+          return <AlertTriangle className="h-8 w-8 text-amber-500" />
+        case 2:
+          return <TurnRight className="h-8 w-8 text-amber-500" />
+        case 3:
+          return <Check className="h-8 w-8 text-green-500" />
+        default:
+          return null
+      }
+    }
+
     switch (wirelessStep) {
       case 1:
         return <Smartphone className="h-8 w-8" />
@@ -333,6 +452,14 @@ export function AccessorySetup({
   }
 
   const getAccessoryTypeLabel = () => {
+    if (accessoryType === "turn_signal") {
+      return "Turn Signal with Hazard Light Support"
+    }
+
+    if (accessoryType === "reverse_light") {
+      return "Reverse Light"
+    }
+
     if (accessoryType === "relay_accessory") {
       if (relayAccessoryType) {
         // Capitalize first letter and replace underscores with spaces
@@ -352,6 +479,24 @@ export function AccessorySetup({
     })),
   ]
 
+  // Import the TurnRight icon for the turn signal
+  const TurnRight = () => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M18 8L22 12L18 16" />
+      <path d="M2 12H22" />
+    </svg>
+  )
+
   return (
     <div className="space-y-3 p-1 max-w-xs mx-auto">
       <div className="flex items-center">
@@ -361,19 +506,11 @@ export function AccessorySetup({
         <h2 className="text-xl font-semibold flex-1">Add {getAccessoryTypeLabel()}</h2>
       </div>
 
-      {isRelayAccessory ? (
-        <div className="flex flex-col items-center py-2 space-y-1">
-          {getStepIcon()}
-          <h3 className="text-base font-medium">{getStepTitle()}</h3>
-          <p className="text-center text-muted-foreground text-sm">{getStepDescription()}</p>
-        </div>
-      ) : (
-        <div className="flex flex-col items-center py-4 space-y-2">
-          {getStepIcon()}
-          <h3 className="text-lg font-medium">{getStepTitle()}</h3>
-          <p className="text-center text-muted-foreground">{getStepDescription()}</p>
-        </div>
-      )}
+      <div className="flex flex-col items-center py-2 space-y-1">
+        {getStepIcon()}
+        <h3 className="text-base font-medium">{getStepTitle()}</h3>
+        <p className="text-center text-muted-foreground text-sm">{getStepDescription()}</p>
+      </div>
 
       {error && (
         <Alert variant="destructive" className="py-2">
@@ -382,8 +519,108 @@ export function AccessorySetup({
         </Alert>
       )}
 
-      {/* Different form fields based on accessory type */}
-      {isRelayAccessory ? (
+      {/* Different form fields based on accessory type and step */}
+      {isTurnSignal ? (
+        <div className="space-y-3">
+          {isLoading ? (
+            <div className="flex justify-center py-2">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            <>
+              {turnSignalStep === 1 && (
+                <div className="space-y-4">
+                  <Alert className="bg-amber-50 border-amber-200">
+                    <AlertTriangle className="h-4 w-4 text-amber-500" />
+                    <AlertDescription className="text-amber-800">
+                      Please confirm that you have connected your turn signal kit correctly:
+                    </AlertDescription>
+                  </Alert>
+
+                  <div className="space-y-2 text-sm">
+                    <p>• Left turn signals connected to the LEFT terminal</p>
+                    <p>• Right turn signals connected to the RIGHT terminal</p>
+                    <p>• Power connected to the POWER terminal</p>
+                    <p>• Ground connected to the GROUND terminal</p>
+                  </div>
+
+                  <div className="flex items-center space-x-2 py-1">
+                    <Switch
+                      id="terminals-confirmed"
+                      checked={isTerminalsConfirmed}
+                      onCheckedChange={setIsTerminalsConfirmed}
+                    />
+                    <Label htmlFor="terminals-confirmed" className="text-sm">
+                      I confirm all connections are correct
+                    </Label>
+                  </div>
+                </div>
+              )}
+
+              {turnSignalStep === 2 && (
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <label htmlFor="deviceName" className="text-sm font-medium">
+                      Turn Signal Name
+                    </label>
+                    <Input
+                      id="deviceName"
+                      placeholder="Turn Signal"
+                      value={deviceName}
+                      onChange={(e) => setDeviceName(e.target.value)}
+                      className="h-9 w-full"
+                    />
+                  </div>
+
+                  <div className="flex items-center space-x-2 py-1">
+                    <Switch id="favorite" checked={isFavorite} onCheckedChange={setIsFavorite} />
+                    <Label htmlFor="favorite" className="flex items-center text-sm">
+                      <Star className="h-3.5 w-3.5 mr-1.5 text-amber-400" />
+                      Add to Favorites
+                    </Label>
+                  </div>
+                </div>
+              )}
+
+              {turnSignalStep === 3 && (
+                <div className="space-y-4">
+                  <Alert className="bg-blue-50 border-blue-200">
+                    <AlertDescription className="text-blue-800">
+                      By adding this turn signal kit, you'll now have access to:
+                    </AlertDescription>
+                  </Alert>
+
+                  <div className="space-y-3 text-sm">
+                    <div className="flex items-start space-x-2">
+                      <div className="bg-amber-100 p-1.5 rounded-full mt-0.5">
+                        <TurnRight />
+                      </div>
+                      <div>
+                        <p className="font-medium">Turn Signal Widget</p>
+                        <p className="text-muted-foreground">Control your left and right turn signals</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start space-x-2">
+                      <div className="bg-red-100 p-1.5 rounded-full mt-0.5">
+                        <AlertTriangle className="h-5 w-5 text-red-500" />
+                      </div>
+                      <div>
+                        <p className="font-medium">Hazard Light Widget</p>
+                        <p className="text-muted-foreground">Toggle your hazard lights on and off</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-muted-foreground">
+                    You can add these widgets to your Control Center by editing your dashboard layout.
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      ) : isRelayAccessory ? (
         <div className="space-y-3">
           {isLoading ? (
             <div className="flex justify-center py-2">
@@ -475,11 +712,13 @@ export function AccessorySetup({
         <Button
           onClick={handleNext}
           disabled={
+            (isTurnSignal && turnSignalStep === 1 && !isTerminalsConfirmed) ||
+            (isTurnSignal && turnSignalStep === 2 && deviceName.trim() === "") ||
             (isRelayAccessory &&
               (deviceName.trim() === "" ||
                 (availablePositions.length === 0 && !positionOptions.some((opt) => opt.value === "null")) ||
                 isLoading)) ||
-            (!isRelayAccessory && wirelessStep === 3 && deviceName.trim() === "") ||
+            (!isRelayAccessory && !isTurnSignal && wirelessStep === 3 && deviceName.trim() === "") ||
             isSubmitting
           }
           size="sm"
@@ -494,6 +733,8 @@ export function AccessorySetup({
               <span className="mr-2">Accessory Added</span>
               <Check className="h-3 w-3" />
             </>
+          ) : isTurnSignal && turnSignalStep === 3 ? (
+            "Add Turn Signal"
           ) : isRelayAccessory ? (
             "Add Accessory"
           ) : (
