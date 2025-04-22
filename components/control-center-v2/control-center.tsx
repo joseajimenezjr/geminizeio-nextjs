@@ -66,10 +66,9 @@ const GRID_CONFIG = {
 interface ControlCenterV2Props {
   userData: any
   setUserData: React.Dispatch<React.SetStateAction<any>>
-  hasTurnSignalAccessory: boolean
 }
 
-export function ControlCenterV2({ userData, setUserData, hasTurnSignalAccessory }: ControlCenterV2Props) {
+export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props) {
   const { accessories, toggleAccessoryStatus, isLoading, updateAccessoryAttribute } = useAccessories()
   const { toast } = useToast()
   const [isEditing, setIsEditing] = useState(false)
@@ -676,17 +675,6 @@ export function ControlCenterV2({ userData, setUserData, hasTurnSignalAccessory 
           // Position in the center of the widget
           x: rect.left + rect.width / 2,
           y: rect.top + rect.height / 2,
-        })
-      } else {
-        // Fallback to mouse/touch position if element not found
-        const clientX = "touches" in e ? e.touches[0].clientX : e.clientX
-        const clientY = "touches" in e ? e.touches[0].clientY : e.clientY
-
-        setContextMenu({
-          visible: true,
-          widgetId,
-          x: clientX,
-          y: clientY,
         })
       }
     }, longPressThreshold)

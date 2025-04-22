@@ -91,9 +91,29 @@ export function WidgetGrid({
           />
         )
       case "turn-signal":
-        return <TurnSignalWidget />
+        return (
+          <TurnSignalWidget
+            isEditing={isEditMode}
+            onMouseDown={(e) => onMouseDown?.(e, widget.id)}
+            onMouseUp={() => onMouseUp?.(widget.id)}
+            onMouseLeave={() => onMouseLeave?.(widget.id)}
+            onTouchStart={(e) => onTouchStart?.(e, widget.id)}
+            onTouchEnd={() => onTouchEnd?.(widget.id)}
+            onTouchCancel={() => onTouchCancel?.(widget.id)}
+          />
+        )
       case "hazard-light":
-        return <HazardLightWidget />
+        return (
+          <HazardLightWidget
+            isEditing={isEditMode}
+            onMouseDown={(e) => onMouseDown?.(e, widget.id)}
+            onMouseUp={() => onMouseUp?.(widget.id)}
+            onMouseLeave={() => onMouseLeave?.(widget.id)}
+            onTouchStart={(e) => onTouchStart?.(e, widget.id)}
+            onTouchEnd={() => onTouchEnd?.(widget.id)}
+            onTouchCancel={() => onTouchCancel?.(widget.id)}
+          />
+        )
       default:
         return <div>Unknown widget type: {widget.type}</div>
     }
