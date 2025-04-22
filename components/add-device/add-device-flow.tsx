@@ -1,7 +1,5 @@
 "use client"
 
-import type React from "react"
-
 import { useState, useEffect } from "react"
 import { BottomSheet } from "@/components/ui/bottom-sheet"
 import { DeviceTypeSelector } from "@/components/add-device/device-type-selector"
@@ -13,18 +11,19 @@ import { AccessorySetup } from "@/components/add-device/accessory-setup"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { useAuthStore } from "@/contexts/auth-store"
 
 interface AddDeviceFlowProps {
   open: boolean
   onClose: () => void
   limitToHubDevices?: boolean
-  setUserData: React.Dispatch<React.SetStateAction<any>>
 }
 
-export function AddDeviceFlow({ open, onClose, limitToHubDevices = false, setUserData }: AddDeviceFlowProps) {
+export function AddDeviceFlow({ open, onClose, limitToHubDevices = false }: AddDeviceFlowProps) {
   const router = useRouter()
   const { toast } = useToast()
   const supabase = createClientComponentClient()
+  const { updateUserData } = useAuthStore()
 
   const [step, setStep] = useState<string>("select-type")
   const [selectedDeviceType, setSelectedDeviceType] = useState<string | null>(null)
@@ -258,19 +257,9 @@ export function AddDeviceFlow({ open, onClose, limitToHubDevices = false, setUse
       console.log("AddDeviceFlow: handleDeviceSetupComplete called")
 
       // Update the user data in the parent component
-      if (setUserData) {
-        setUserData((prevUserData: any) => {
-          // Create a deep copy of the previous user data
-          const updatedUserData = JSON.parse(JSON.stringify(prevUserData))
-
-          // Update the hubDetails array in the copied object
-          updatedUserData.hubDetails = updatedHubDetails
-
-          console.log("AddDeviceFlow: Updated userData:", updatedUserData)
-
-          return updatedUserData
-        })
-        console.log("AddDeviceFlow: setUserData called")
+      if (updateUserData) {
+        updateUserData()
+        console.log("AddDeviceFlow: updateUserData called")
       }
 
       // Close the flow after a short delay

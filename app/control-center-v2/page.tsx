@@ -2,57 +2,26 @@
 
 import { Button } from "@/components/ui/button"
 
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useEffect } from "react"
 import { ControlCenterV2 } from "@/components/control-center-v2/control-center"
 import { DashboardHeaderWrapper } from "@/components/dashboard/dashboard-header-wrapper"
 import { BottomNav } from "@/components/layout/bottom-nav"
 import { AutoConnectHandler } from "@/components/dashboard/auto-connect-handler"
-import { getUserData } from "@/app/actions/user-data"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { AddDeviceFlow } from "@/components/add-device/add-device-flow"
+import { useAuthStore } from "@/contexts/auth-store"
 
 export default function ControlCenterV2Page() {
-  const [userData, setUserData] = useState<any>(null)
+  const { userData, hasHubDevices, updateUserData } = useAuthStore()
   const [isLoading, setIsLoading] = useState(true)
   const [showAddDeviceFlow, setShowAddDeviceFlow] = useState(false)
   const [limitDeviceOptions, setLimitDeviceOptions] = useState(false)
 
-  const fetchData = useCallback(async () => {
-    setIsLoading(true)
-    try {
-      const data = await getUserData()
-      setUserData(data)
-      console.log("ControlCenterV2: Fetched userData:", data)
-    } catch (error) {
-      console.error("Error getting user data:", error)
-      setUserData(null)
-    } finally {
+  useEffect(() => {
+    if (userData) {
       setIsLoading(false)
     }
-  }, [])
-
-  useEffect(() => {
-    fetchData()
-  }, [fetchData])
-
-  // Recalculate hasHubDevices whenever userData changes
-  const hasHubDevices = useMemo(() => {
-    if (!userData?.hubDetails || !Array.isArray(userData.hubDetails)) {
-      console.log("ControlCenterV2: No hubDetails found or not an array")
-      return false
-    }
-
-    return userData.hubDetails.some(
-      (device: any) =>
-        device.deviceType === "hub" || device.deviceType === "relay_hub" || device.deviceType === "turn_signal",
-    )
-  }, [userData?.hubDetails])
-
-  // Log when userData changes
-  useEffect(() => {
-    console.log("ControlCenterV2: userData changed:", userData)
-    console.log("ControlCenterV2: Recalculating hasHubDevices")
-  }, [userData, hasHubDevices]) // Include hasHubDevices in the dependency array
+  }, [userData])
 
   const getAddDeviceButtonText = () => {
     return hasHubDevices ? "Add Accessory" : "Add Hub or Turn Signal Kit"
@@ -89,12 +58,7 @@ export default function ControlCenterV2Page() {
       <div className="container px-4 py-4 flex-1">
         {/* Add the AutoConnectHandler component */}
         <AutoConnectHandler />
-        <ControlCenterV2
-          userData={userData}
-          setUserData={setUserData}
-          vehicleName={vehicleName}
-          vehicleType={vehicleType}
-        />
+        <ControlCenterV2 userData={userData} vehicleName={vehicleName} vehicleType={vehicleType} />
         <Button
           onClick={() => {
             setLimitDeviceOptions(false)
@@ -110,7 +74,7 @@ export default function ControlCenterV2Page() {
         open={showAddDeviceFlow}
         onClose={() => setShowAddDeviceFlow(false)}
         limitToHubDevices={limitDeviceOptions}
-        setUserData={setUserData}
+        setUserData={updateUserData}
       />
 
       <BottomNav />
