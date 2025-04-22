@@ -7,8 +7,6 @@ export enum AccessoryType {
   GAUGE = "gauge",
   OBDII = "obd2", // Add the new OBD2 accessory type
   CHASELIGHT = "chaseLight",
-  RGBLLIGHT = "rgbLight",
-  SPOTLIGHTS = "spotLights",
 }
 
 export const accessoryTypeNames: Record<AccessoryType, string> = {
@@ -20,8 +18,6 @@ export const accessoryTypeNames: Record<AccessoryType, string> = {
   [AccessoryType.GAUGE]: "Gauge",
   [AccessoryType.OBDII]: "OBD2", // Add the name for OBD2
   [AccessoryType.CHASELIGHT]: "Chase Light",
-  [AccessoryType.RGBLLIGHT]: "RGB Light",
-  [AccessoryType.SPOTLIGHTS]: "Spot Lights",
 }
 
 export const accessoryTypeDescriptions: Record<AccessoryType, string> = {
@@ -33,8 +29,6 @@ export const accessoryTypeDescriptions: Record<AccessoryType, string> = {
   [AccessoryType.GAUGE]: "Gauge accessories like fuel gauges, temperature gauges, etc.",
   [AccessoryType.OBDII]: "OBD2 accessories like speedometers, RPM gauges, etc.", // Add description for OBD2
   [AccessoryType.CHASELIGHT]: "Chase Light accessories with strobe patterns",
-  [AccessoryType.RGBLLIGHT]: "RGB Light accessories that can change to any color",
-  [AccessoryType.SPOTLIGHTS]: "Accessories for the Spot Lights",
 }
 
 export const accessoryTypeIcons: Record<AccessoryType, string> = {
@@ -46,6 +40,4 @@ export const accessoryTypeIcons: Record<AccessoryType, string> = {
   [AccessoryType.GAUGE]: "gauge",
   [AccessoryType.OBDII]: "speedometer", // Add icon for OBD2
   [AccessoryType.CHASELIGHT]: "lightbulb",
-  [AccessoryType.RGBLLIGHT]: "lightbulb",
-  [AccessoryType.SPOTLIGHTS]: "lightbulb",
 }

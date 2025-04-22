@@ -91,7 +91,7 @@ export function AccessorySetup({
         // Calculate available positions
         const usedPositions = accessories
           .filter((acc: any) => acc.relayPosition !== undefined)
-          .map((acc) => acc.relayPosition)
+          .map((acc: any) => acc.relayPosition)
 
         // Generate positions based on accessoryLimit
         const allPositions = Array.from({ length: limit }, (_, i) => i + 1)
@@ -317,19 +317,30 @@ export function AccessorySetup({
 
   const getStepIcon = () => {
     if (isRelayAccessory) {
-      return <Plug className="h-5 w-5" />
+      return <Plug className="h-8 w-8 text-primary" />
     }
 
     switch (wirelessStep) {
       case 1:
-        return <Smartphone className="h-5 w-5" />
+        return <Smartphone className="h-8 w-8" />
       case 2:
-        return <QrCode className="h-5 w-5" />
+        return <QrCode className="h-8 w-8" />
       case 3:
-        return <Bluetooth className="h-5 w-5" />
+        return <Bluetooth className="h-8 w-8" />
       default:
         return null
     }
+  }
+
+  const getAccessoryTypeLabel = () => {
+    if (accessoryType === "relay_accessory") {
+      if (relayAccessoryType) {
+        // Capitalize first letter and replace underscores with spaces
+        return relayAccessoryType.charAt(0).toUpperCase() + relayAccessoryType.slice(1).replace(/_/g, " ")
+      }
+      return "Relay Accessory"
+    }
+    return "Wireless Accessory"
   }
 
   // Prepare position options for the dropdown
