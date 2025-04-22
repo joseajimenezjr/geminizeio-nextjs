@@ -26,7 +26,7 @@ export async function GET(request: Request) {
           {
             accessoryID: "D002",
             accessoryName: "Spot Lights",
-            accessoryType: "light",
+            accessoryType: "spotLights",
             accessoryConnectionStatus: false,
             isFavorite: false,
             relayPosition: "2",
