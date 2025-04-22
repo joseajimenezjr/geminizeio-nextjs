@@ -4,11 +4,8 @@ import type React from "react"
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import { Responsive, WidthProvider } from "react-grid-layout"
-import { Trash } from "lucide-react"
-import { ToggleWidget } from "./widgets/toggle-widget"
-import { GaugeWidget } from "./widgets/gauge-widget"
+import { Trash, Plus } from "lucide-react"
 import { SpeedometerWidget } from "./widgets/speedometer-widget"
-import { UtilityWidget } from "./widgets/utility-widget"
 import { useAccessories } from "@/contexts/device-context"
 import saveWidgetLayout from "@/app/actions/widget-layout"
 import { useToast } from "@/components/ui/use-toast"
@@ -18,14 +15,12 @@ import { StandaloneWinchWidget } from "./widgets/standalone-winch-widget"
 import { WeatherWidget } from "./widgets/weather-widget"
 import { SpeedDisplayWidget } from "./widgets/speed-display-widget"
 import { RPMDisplayWidget } from "./widgets/rpm-display-widget"
-import { ChaseLightWidget } from "./widgets/chase-light-widget"
-import { RGBLightWidget } from "./widgets/rgb-light-widget"
 import { BatteryWidget } from "./widgets/battery-widget"
 import { TemperatureWidget } from "./widgets/temperature-widget"
-import { TimerWidget } from "./widgets/timer-widget"
+import { Button } from "@/components/ui/button"
 
 // Add a style tag for the long-press visual indicator
-const longPressStyle = `
+const pulseAnimationStyle = `
  @keyframes pulse-animation {
    0% {
      box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.3);
@@ -74,7 +69,7 @@ export const WIDGET_SIZES = {
   chaseLight: { w: 1, h: 1 },
   rgbLight: { w: 1, h: 1 }, // Add size for RGB Light widget
   battery: { w: 1, h: 1 }, // Add size for Battery widget
-  temperature: { w: 1, h: 1 }, // Add size for Temperature widget
+  temperature: { w: 1, h: 1 }, // Add size for Temperature widge
 }
 
 // Grid configuration - 4 columns, infinite rows
@@ -975,220 +970,78 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
       )
     }
 
-    // For timer widget
-    if (widget.type === "timer") {
-      return (
-        <TimerWidget
-          title="Timer"
-          isEditing={isEditing}
-          onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
-          onMouseUp={() => handleWidgetMouseUp(widget.id)}
-          onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
-          onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
-          onTouchEnd={() => handleWidgetMouseUp(widget.id)}
-          onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
-        />
-      )
-    }
-
-    // For accessory-based widgets
-    const accessory = userData.accessories.find((a: any) => a.accessoryID === widget.accessoryId)
-    if (!accessory) return null
-
-    const isConnected = true // In a real implementation, check if the accessory is connected
-
-    // Use the local state for the current status instead of the accessory object
-    // This ensures we always have the most up-to-date status
-    const isOn = localAccessoryStatuses[widget.accessoryId] ?? accessory.accessoryConnectionStatus ?? false
-
-    switch (widget.type) {
-      case "light":
-        return (
-          <ToggleWidget
-            title={accessory.accessoryName}
-            accessoryType={accessory.accessoryType}
-            relayPosition={accessory.relayPosition}
-            isConnected={isConnected}
-            isOn={isOn}
-            isEditing={isEditing}
-            onToggle={() => handleToggleAccessory(widget.accessoryId, !isOn)}
-            accessoryId={accessory.accessoryID}
-            onUpdateUserData={handleLocalUserDataUpdate}
-            onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
-            onMouseUp={() => handleWidgetMouseUp(widget.id)}
-            onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
-            onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
-            onTouchEnd={() => handleWidgetMouseUp(widget.id)}
-            onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
-          />
-        )
-      case "utility":
-        return (
-          <UtilityWidget
-            title={accessory.accessoryName}
-            isConnected={isConnected}
-            isOn={isOn}
-            isEditing={isEditing}
-            onToggle={() => handleToggleAccessory(widget.accessoryId, !isOn)}
-            onLeftPress={() => handleUtilityLeftPress(widget.accessoryId)}
-            onRightPress={() => handleUtilityRightPress(widget.accessoryId)}
-            onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
-            onMouseUp={() => handleWidgetMouseUp(widget.id)}
-            onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
-            onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
-            onTouchEnd={() => handleWidgetMouseUp(widget.id)}
-            onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
-          />
-        )
-      case "gauge":
-        return (
-          <GaugeWidget
-            title={accessory.accessoryName}
-            value={75} // Example value
-            min={0}
-            max={100}
-            unit="%"
-            isEditing={isEditing}
-            onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
-            onMouseUp={() => handleWidgetMouseUp(widget.id)}
-            onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
-            onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
-            onTouchEnd={() => handleWidgetMouseUp(widget.id)}
-            onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
-          />
-        )
-      case "chaseLight":
-        return (
-          <ChaseLightWidget
-            title={accessory.accessoryName}
-            accessoryId={widget.accessoryId}
-            isConnected={isConnected}
-            isOn={isOn}
-            relayPosition={accessory.relayPosition}
-            isEditing={isEditing}
-            onToggle={() => handleToggleAccessory(widget.accessoryId, !isOn)}
-            onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
-            onMouseUp={() => handleWidgetMouseUp(widget.id)}
-            onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
-            onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
-            onTouchEnd={() => handleWidgetMouseUp(widget.id)}
-            onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
-          />
-        )
-      case "rgbLight":
-        return (
-          <RGBLightWidget
-            title={accessory.accessoryName}
-            accessoryId={widget.accessoryId}
-            isConnected={isConnected}
-            isOn={isOn}
-            relayPosition={accessory.relayPosition}
-            lastRGBColor={accessory.lastRGBColor || "#FF0000"}
-            isEditing={isEditing}
-            onToggle={() => handleToggleAccessory(widget.accessoryId, !isOn)}
-            onColorChange={(color) => handleRGBColorChange(widget.accessoryId, color)}
-            onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
-            onMouseUp={() => handleWidgetMouseUp(widget.id)}
-            onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
-            onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
-            onTouchEnd={() => handleWidgetMouseUp(widget.id)}
-            onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
-          />
-        )
-      case "temperature":
-        return (
-          <TemperatureWidget
-            title={accessory.accessoryName}
-            isConnected={isConnected}
-            isOn={isOn}
-            isEditing={isEditing}
-            onToggle={() => handleToggleAccessory(widget.accessoryId, !isOn)}
-            onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
-            onMouseUp={() => handleWidgetMouseUp(widget.id)}
-            onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
-            onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
-            onTouchEnd={() => handleWidgetMouseUp(widget.id)}
-            onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
-          />
-        )
-      default:
-        return (
+    return (
+      <div className="flex h-screen w-full flex-col bg-black text-white">
+        {/* Context Menu for Widget Actions */}
+        {contextMenu.visible && contextMenu.widgetId && (
           <div
-            className="flex items-center justify-center h-full"
-            onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
-            onMouseUp={() => handleWidgetMouseUp(widget.id)}
-            onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
-            onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
-            onTouchEnd={() => handleWidgetMouseUp(widget.id)}
-            onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
+            id="widget-context-menu"
+            className="fixed z-50 overflow-hidden rounded-md bg-popover text-popover-foreground shadow-md"
+            style={{
+              top: `${contextMenu.y}px`,
+              left: `${contextMenu.x}px`,
+              transform: "translate(-50%, -50%)",
+              minWidth: "200px",
+            }}
+            onClick={(e) => e.stopPropagation()}
           >
-            <p>Unknown widget type</p>
+            <div className="flex flex-col p-2">
+              <div className="mb-1 border-b px-2 py-1 text-sm font-medium">Widget Options</div>
+
+              {/* Remove option */}
+              <button
+                className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-destructive hover:text-destructive-foreground mt-1"
+                onClick={() => handleRemoveWidget(contextMenu.widgetId!)}
+              >
+                <Trash className="h-4 w-4" />
+                Remove Widget
+              </button>
+            </div>
           </div>
-        )
-    }
+        )}
+
+        {widgets.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full">
+            <h2 className="text-2xl font-bold mb-4">Welcome to a new way of managing your off-road accessories</h2>
+            <Button onClick={() => setAddDeviceOpen(true)} className="bg-primary text-primary-foreground">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Accessory
+            </Button>
+          </div>
+        ) : (
+          <ResponsiveGridLayout
+            className="layout"
+            layouts={layouts}
+            breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+            cols={{ lg: GRID_CONFIG.cols, md: GRID_CONFIG.cols, sm: GRID_CONFIG.cols, xs: 2, xxs: 1 }}
+            rowHeight={GRID_CONFIG.rowHeight}
+            isDraggable={isEditing}
+            isResizable={false}
+            preventCollision={false}
+            onLayoutChange={onLayoutChange}
+            margin={[16, 16]}
+            containerPadding={[0, 0]}
+            compactType="vertical"
+            autoSize={true}
+          >
+            {widgets.map((widget) => (
+              <div
+                key={widget.id}
+                id={widget.id}
+                className="widget-container relative h-full w-full overflow-hidden rounded-lg border bg-card shadow-sm"
+                onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
+                onMouseUp={() => handleWidgetMouseUp(widget.id)}
+                onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
+                onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
+                onTouchEnd={() => handleWidgetMouseUp(widget.id)}
+                onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
+              >
+                {renderWidget(widget)}
+              </div>
+            ))}
+          </ResponsiveGridLayout>
+        )}
+      </div>
+    )
   }
-
-  return (
-    <div className="flex h-screen w-full flex-col bg-black text-white">
-      {/* Context Menu for Widget Actions */}
-      {contextMenu.visible && contextMenu.widgetId && (
-        <div
-          id="widget-context-menu"
-          className="fixed z-50 overflow-hidden rounded-md bg-popover text-popover-foreground shadow-md"
-          style={{
-            top: `${contextMenu.y}px`,
-            left: `${contextMenu.x}px`,
-            transform: "translate(-50%, -50%)",
-            minWidth: "200px",
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex flex-col p-2">
-            <div className="mb-1 border-b px-2 py-1 text-sm font-medium">Widget Options</div>
-
-            {/* Remove option */}
-            <button
-              className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-destructive hover:text-destructive-foreground mt-1"
-              onClick={() => handleRemoveWidget(contextMenu.widgetId!)}
-            >
-              <Trash className="h-4 w-4" />
-              Remove Widget
-            </button>
-          </div>
-        </div>
-      )}
-
-      <ResponsiveGridLayout
-        className="layout"
-        layouts={layouts}
-        breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-        cols={{ lg: GRID_CONFIG.cols, md: GRID_CONFIG.cols, sm: GRID_CONFIG.cols, xs: 2, xxs: 1 }}
-        rowHeight={GRID_CONFIG.rowHeight}
-        isDraggable={isEditing}
-        isResizable={false}
-        preventCollision={false}
-        onLayoutChange={onLayoutChange}
-        margin={[16, 16]}
-        containerPadding={[0, 0]}
-        compactType="vertical"
-        autoSize={true}
-      >
-        {widgets.map((widget) => (
-          <div
-            key={widget.id}
-            id={widget.id}
-            className="widget-container relative h-full w-full overflow-hidden rounded-lg border bg-card shadow-sm"
-            onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
-            onMouseUp={() => handleWidgetMouseUp(widget.id)}
-            onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
-            onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
-            onTouchEnd={() => handleWidgetMouseUp(widget.id)}
-            onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
-          >
-            {renderWidget(widget)}
-          </div>
-        ))}
-      </ResponsiveGridLayout>
-    </div>
-  )
 }
