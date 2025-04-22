@@ -15,9 +15,10 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 interface AddDeviceFlowProps {
   open: boolean
   onClose: () => void
+  initialMode?: "hub-only" | "all" // Add initialMode prop
 }
 
-export function AddDeviceFlow({ open, onClose }: AddDeviceFlowProps) {
+export function AddDeviceFlow({ open, onClose, initialMode = "all" }: AddDeviceFlowProps) {
   const router = useRouter()
   const { toast } = useToast()
   const supabase = createClientComponentClient()
@@ -354,6 +355,9 @@ export function AddDeviceFlow({ open, onClose }: AddDeviceFlowProps) {
     }
   }
 
+  // Determine whether to show the accessory option based on initialMode and user's devices
+  const shouldShowAccessoryOption = initialMode === "all" && hasHubOrTurnSignal
+
   return (
     <BottomSheet
       open={open}
@@ -367,7 +371,7 @@ export function AddDeviceFlow({ open, onClose }: AddDeviceFlowProps) {
           onSelect={handleDeviceTypeSelect}
           isLoading={isLoading}
           errorMessage={errorMessage}
-          showAccessoryOption={hasHubOrTurnSignal}
+          showAccessoryOption={shouldShowAccessoryOption}
         />
       )}
 
