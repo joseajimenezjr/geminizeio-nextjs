@@ -255,6 +255,7 @@ export function AddDeviceFlow({ open, onClose, limitToHubDevices = false, setUse
         title: "Success",
         description: `${deviceDetails.deviceType.replace("_", " ")} added successfully`,
       })
+      console.log("AddDeviceFlow: handleDeviceSetupComplete called")
 
       // Update the user data in the parent component
       if (setUserData) {
@@ -269,6 +270,7 @@ export function AddDeviceFlow({ open, onClose, limitToHubDevices = false, setUse
 
           return updatedUserData
         })
+        console.log("AddDeviceFlow: setUserData called")
       }
 
       // Close the flow after a short delay

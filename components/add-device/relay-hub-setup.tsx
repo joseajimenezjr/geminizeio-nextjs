@@ -109,16 +109,16 @@ export function RelayHubSetup({ onClose, onBack, onComplete }: RelayHubSetupProp
               </div>
             </div>
 
-            <div className="w-full space-y-4 mb-8">
+            <div className="w-full space-y-4 mb-8 flex justify-center">
               <Button
-                className="w-full py-6 text-base bg-yellow-500 hover:bg-yellow-600 text-black"
+                className="py-3 text-base bg-yellow-500 hover:bg-yellow-600 text-black w-40"
                 onClick={handleNotYet}
               >
                 NOT YET
               </Button>
               <Button
                 variant="outline"
-                className="w-full py-6 text-base border-primary text-primary hover:bg-primary/10"
+                className="py-3 text-base border-primary text-primary hover:bg-primary/10 w-40"
                 onClick={handleYes}
               >
                 YES
