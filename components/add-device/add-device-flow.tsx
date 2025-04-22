@@ -30,6 +30,23 @@ export function AddDeviceFlow({ open, onClose }: AddDeviceFlowProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
+  // Reset all state when the modal is closed
+  const handleClose = () => {
+    // Call the parent's onClose function
+    onClose()
+
+    // Reset all state variables after a short delay to avoid visual glitches
+    setTimeout(() => {
+      setStep("select-type")
+      setSelectedDeviceType(null)
+      setSelectedAccessoryType(null)
+      setSelectedRelayAccessoryType(null)
+      setIsRelayHubAvailable(false)
+      setIsLoading(false)
+      setErrorMessage(null)
+    }, 300)
+  }
+
   useEffect(() => {
     if (open) {
       // Add a class to the body to hide the bottom navigation
@@ -123,7 +140,7 @@ export function AddDeviceFlow({ open, onClose }: AddDeviceFlowProps) {
           break
         default:
           // Fallback
-          onClose()
+          handleClose()
           router.push("/accessories/new")
       }
     }
@@ -236,7 +253,7 @@ export function AddDeviceFlow({ open, onClose }: AddDeviceFlowProps) {
 
       // Close the flow after a short delay
       setTimeout(() => {
-        onClose()
+        handleClose()
       }, 1500)
     } catch (error: any) {
       console.error("Error saving device details:", error)
@@ -263,7 +280,7 @@ export function AddDeviceFlow({ open, onClose }: AddDeviceFlowProps) {
   return (
     <BottomSheet
       open={open}
-      onClose={onClose}
+      onClose={handleClose}
       size={getSheetSize()}
       className="bg-background border-t border-border"
       showCloseButton={step === "select-type"}
@@ -281,16 +298,16 @@ export function AddDeviceFlow({ open, onClose }: AddDeviceFlowProps) {
       )}
 
       {step === "relay-hub-setup" && (
-        <RelayHubSetup onClose={onClose} onBack={handleBack} onComplete={handleDeviceSetupComplete} />
+        <RelayHubSetup onClose={handleClose} onBack={handleBack} onComplete={handleDeviceSetupComplete} />
       )}
 
       {step === "hub-setup" && (
-        <HubSetup onClose={onClose} onBack={handleBack} onComplete={handleDeviceSetupComplete} />
+        <HubSetup onClose={handleClose} onBack={handleBack} onComplete={handleDeviceSetupComplete} />
       )}
 
       {step === "accessory-setup" && (
         <AccessorySetup
-          onClose={onClose}
+          onClose={handleClose}
           onBack={handleBack}
           onComplete={handleDeviceSetupComplete}
           accessoryType={selectedAccessoryType || "wireless_accessory"}
