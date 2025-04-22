@@ -25,42 +25,41 @@ import { TemperatureWidget } from "./widgets/temperature-widget"
 import { TimerWidget } from "./widgets/timer-widget"
 import { Button } from "@/components/ui/button"
 import { AddDeviceFlow } from "@/components/add-device/add-device-flow"
-import { DashboardHeaderWrapper, LoadingSpinner } from "@/components"
 
 // Add a style tag for the long-press visual indicator
 const pulseAnimationStyle = `
- @keyframes pulse-animation {
-   0% {
-     box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.3);
-   }
-   70% {
-     box-shadow: 0 0 0 10px rgba(22, 163, 74, 0);
-   }
-   100% {
-     box-shadow: 0 0 0 0 rgba(22, 163, 74, 0);
-   }
- }
- 
- .widget-pulse {
-   animation: pulse-animation 1.5s ease-out;
- }
+@keyframes pulse-animation {
+  0% {
+    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.3);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(22, 163, 74, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0);
+  }
+}
 
- @keyframes continuous-flash {
-   0%, 100% {
-     opacity: 1;
-   }
-   50% {
-     opacity: 0.7;
-   }
- }
- 
- .continuous-flash {
-   animation: continuous-flash 1s infinite;
- }
- 
- .continuous-flash {
-   animation: continuous-flash 1s infinite;
- }
+.widget-pulse {
+  animation: pulse-animation 1.5s ease-out;
+}
+
+@keyframes continuous-flash {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.continuous-flash {
+  animation: continuous-flash 1s infinite;
+}
+
+.continuous-flash {
+  animation: continuous-flash 1s infinite;
+}
 `
 
 // Enable responsiveness with the WidthProvider
@@ -972,7 +971,7 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
           value={45}
           maxValue={120}
           unit="mph"
-          isEditing={isEditing}
+          isEditing
           onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
           onMouseUp={() => handleWidgetMouseUp(widget.id)}
           onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
@@ -1243,97 +1242,5 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
         limitToHubDevices={limitDeviceOptions}
       />
     </div>
-  )
-}
-
-import { useAuthStore } from "@/components"
-import { BottomNav } from "@/components/bottom-nav"
-import { Button } from "@/components/ui/button"
-import { AutoConnectHandler } from "@/components"
-
-export default function ControlCenterV2Page() {
-  const { userData, hasHubDevices, updateUserData } = useAuthStore()
-  const [isLoading, setIsLoading] = useState(true)
-  const [showAddDeviceFlow, setShowAddDeviceFlow] = useState(false)
-  const [limitDeviceOptions, setLimitDeviceOptions] = useState(false)
-
-  useEffect(() => {
-    if (userData) {
-      setIsLoading(false)
-    }
-  }, [userData])
-
-  const getAddDeviceButtonText = () => {
-    if (!hasHubDevices) {
-      return "Add Hub or Turn Signal Kit"
-    }
-
-    // Check if the user has a turn signal kit
-    const hasTurnSignalKit = userData?.hubDetails?.some((device: any) => device.deviceType === "turn_signal")
-
-    if (hasTurnSignalKit) {
-      return "Add Your Turn Signal Widget"
-    }
-
-    return "Add Your First Accessory Widget"
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    )
-  }
-
-  if (!userData) {
-    return (
-      <div className="container px-4 py-8">
-        <h1 className="text-2xl font-bold">Not authenticated</h1>
-        <p>Please log in to view this page.</p>
-      </div>
-    )
-  }
-
-  // Check both camelCase and snake_case property names to be safe
-  const vehicleName = userData.vehicleName || userData.vehicle_name || "My Vehicle"
-  const vehicleType = userData.vehicleType || userData.vehicle_type || "Vehicle"
-  const accessories = userData?.accessories || []
-  const accessoryLimit = userData?.accessoryLimit || 4
-  const showFavorites = userData?.settings?.showFavorites ?? true
-
-  return (
-    <main className="flex min-h-screen flex-col pb-16">
-      <DashboardHeaderWrapper vehicleName={vehicleName} vehicleType={vehicleType} showFavorites={showFavorites} />
-
-      <div className="container px-4 py-4 flex-1">
-        {/* Add the AutoConnectHandler component */}
-        <AutoConnectHandler />
-        <ControlCenterV2
-          userData={userData}
-          vehicleName={vehicleName}
-          vehicleType={vehicleType}
-          setUserData={updateUserData}
-        />
-        <Button
-          onClick={() => {
-            setLimitDeviceOptions(false)
-            setShowAddDeviceFlow(true)
-          }}
-          className="mt-4"
-        >
-          {getAddDeviceButtonText()}
-        </Button>
-      </div>
-
-      <AddDeviceFlow
-        open={showAddDeviceFlow}
-        onClose={() => setShowAddDeviceFlow(false)}
-        limitToHubDevices={limitDeviceOptions}
-        setUserData={updateUserData}
-      />
-
-      <BottomNav />
-    </main>
   )
 }

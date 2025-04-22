@@ -23,7 +23,7 @@ export function AddDeviceFlow({ open, onClose, limitToHubDevices = false }: AddD
   const router = useRouter()
   const { toast } = useToast()
   const supabase = createClientComponentClient()
-  const { userData, updateUserData } = useAuthStore()
+  const { updateUserData } = useAuthStore()
 
   const [step, setStep] = useState<string>("select-type")
   const [selectedDeviceType, setSelectedDeviceType] = useState<string | null>(null)
@@ -140,9 +140,6 @@ export function AddDeviceFlow({ open, onClose, limitToHubDevices = false }: AddD
           break
         case "hub":
           setStep("hub-setup")
-          break
-        case "turn-signal":
-          setStep("turn-signal-setup")
           break
         default:
           // Fallback
