@@ -21,20 +21,20 @@ import "react-resizable/css/styles.css"
 import { StandaloneWinchWidget } from "./widgets/standalone-winch-widget"
 import { WeatherWidget } from "./widgets/weather-widget"
 import { SpeedDisplayWidget } from "./widgets/speed-display-widget"
-import { RPMDisplayWidget } from "./widgets/rpm-display-widget"
-import { ChaseLightWidget } from "./widgets/chase-light-widget"
+import { RPMDisplayWidget } from "./rpm-display-widget"
+import { ChaseLightWidget } from "./chase-light-widget"
 import { RGBLightWidget } from "./widgets/rgb-light-widget"
 import { BatteryWidget } from "./widgets/battery-widget"
-import { TemperatureWidget } from "./widgets/temperature-widget"
+import { TemperatureWidget } from "./temperature-widget"
 import { TimerWidget } from "./widgets/timer-widget"
 
 // Add a style tag for the long-press visual indicator
 const longPressStyle = `
-  .long-press-active {
-    opacity: 0.7;
-    transform: scale(0.98);
-    transition: all 0.2s ease;
-  }
+ .long-press-active {
+   opacity: 0.7;
+   transform: scale(0.98);
+   transition: all 0.2s ease;
+ }
 `
 
 // Enable responsiveness with the WidthProvider
@@ -138,9 +138,14 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
 
   // Initialize layouts from user data or defaults
   useEffect(() => {
-    if (userData?.controlCenter?.widgets?.length > 0) {
-      initializeFromUserData()
+    if (userData) {
+      if (userData.controlCenter?.widgets?.length > 0) {
+        initializeFromUserData()
+      } else {
+        initializeDefaultLayout()
+      }
     } else {
+      // Initialize with default layout if userData is null
       initializeDefaultLayout()
     }
   }, [userData])
@@ -238,7 +243,7 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
   // Create default layout based on accessories
   const initializeDefaultLayout = () => {
     const defaultWidgets = []
-    let row = 0
+    const row = 0
     let col = 0
 
     // Add a speedometer widget by default
@@ -260,38 +265,7 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
     // Update position for next widget
     col = 3
 
-    // Add widgets for accessories
-    const accessoryWidgets = (userData?.accessories || []).slice(0, 6).map((accessory: any, index: number) => {
-      const widgetType = getWidgetTypeForAccessory(accessory.accessoryType)
-      const size = WIDGET_SIZES[widgetType]
-
-      // Check if we need to move to next row
-      if (col + size.w > GRID_CONFIG.cols) {
-        col = 0
-        row++
-      }
-
-      const position = { x: col, y: row }
-
-      // Update column for next widget
-      col += size.w
-
-      // If we've reached the end of the row, move to next row
-      if (col >= GRID_CONFIG.cols) {
-        col = 0
-        row++
-      }
-
-      return {
-        id: `widget-${accessory.accessoryID}`,
-        accessoryId: accessory.accessoryID,
-        type: widgetType,
-        position: position,
-        size: size,
-      }
-    })
-
-    setWidgets([...defaultWidgets, ...accessoryWidgets])
+    setWidgets(defaultWidgets)
 
     // Create layout objects for react-grid-layout
     const defaultLayouts = {
@@ -303,7 +277,7 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
     }
 
     // Create layouts for each breakpoint
-    ;[...defaultWidgets, ...accessoryWidgets].forEach((widget: any) => {
+    ;[...defaultWidgets].forEach((widget: any) => {
       const baseLayout = {
         i: widget.id,
         x: widget.position.x,
