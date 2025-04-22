@@ -13,6 +13,7 @@ export default function ControlCenterV2Page() {
   const [userData, setUserData] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [showAddDeviceFlow, setShowAddDeviceFlow] = useState(false)
+  const [limitDeviceOptions, setLimitDeviceOptions] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -66,12 +67,16 @@ export default function ControlCenterV2Page() {
         <ControlCenterV2
           userData={userData}
           setUserData={setUserData}
-          showAddDeviceFlow={showAddDeviceFlow}
-          setShowAddDeviceFlow={setShowAddDeviceFlow}
+          vehicleName={vehicleName}
+          vehicleType={vehicleType}
         />
       </div>
 
-      <AddDeviceFlow open={showAddDeviceFlow} onClose={() => setShowAddDeviceFlow(false)} />
+      <AddDeviceFlow
+        open={showAddDeviceFlow}
+        onClose={() => setShowAddDeviceFlow(false)}
+        limitToHubDevices={limitDeviceOptions}
+      />
 
       <BottomNav />
     </main>

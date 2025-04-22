@@ -15,9 +15,10 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 interface AddDeviceFlowProps {
   open: boolean
   onClose: () => void
+  limitToHubDevices?: boolean
 }
 
-export function AddDeviceFlow({ open, onClose }: AddDeviceFlowProps) {
+export function AddDeviceFlow({ open, onClose, limitToHubDevices = false }: AddDeviceFlowProps) {
   const router = useRouter()
   const { toast } = useToast()
   const supabase = createClientComponentClient()
@@ -286,7 +287,12 @@ export function AddDeviceFlow({ open, onClose }: AddDeviceFlowProps) {
       showCloseButton={step === "select-type"}
     >
       {step === "select-type" && (
-        <DeviceTypeSelector onSelect={handleDeviceTypeSelect} isLoading={isLoading} errorMessage={errorMessage} />
+        <DeviceTypeSelector
+          onSelect={handleDeviceTypeSelect}
+          isLoading={isLoading}
+          errorMessage={errorMessage}
+          limitToHubDevices={limitToHubDevices}
+        />
       )}
 
       {step === "select-accessory-type" && (

@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { Responsive, WidthProvider } from "react-grid-layout"
 import { Trash } from "lucide-react"
 import { ToggleWidget } from "./widgets/toggle-widget"
@@ -126,12 +126,25 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
   const [hasOBD2Accessory, setHasOBD2Accessory] = useState(false)
   const [addDeviceOpen, setAddDeviceOpen] = useState(false)
   const [showAddDeviceFlow, setShowAddDeviceFlow] = useState(false)
+  const [limitDeviceOptions, setLimitDeviceOptions] = useState(false)
 
   // Create a local state to track accessory statuses for immediate UI updates
   const [localAccessoryStatuses, setLocalAccessoryStatuses] = useState<Record<string, boolean>>({})
 
   // Add a state to track if the user has a temperature reader
   const [hasTemperatureReader, setHasTemperatureReader] = useState(false)
+
+  // Check if user has any hub devices
+  const hasHubDevices = useMemo(() => {
+    if (!userData?.hubDetails || !Array.isArray(userData.hubDetails)) {
+      return false
+    }
+
+    return userData.hubDetails.some(
+      (device: any) =>
+        device.deviceType === "hub" || device.deviceType === "relay_hub" || device.deviceType === "turn_signal",
+    )
+  }, [userData?.hubDetails])
 
   const TEMPERATURE_SERVICE_UUID = "869c10ef-71d9-4f55-92d6-859350c3b8f6"
 
@@ -201,6 +214,18 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
     },
     [setUserData],
   )
+
+  // Handle adding a hub device
+  const handleAddHubDevice = () => {
+    setLimitDeviceOptions(true)
+    setShowAddDeviceFlow(true)
+  }
+
+  // Handle adding any device
+  const handleAddAnyDevice = () => {
+    setLimitDeviceOptions(false)
+    setShowAddDeviceFlow(true)
+  }
 
   // Initialize from user's saved control center data
   const initializeFromUserData = () => {
@@ -1164,9 +1189,15 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
       {widgets.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-full">
           <h2 className="text-2xl font-bold mb-4">Welcome to a new way of managing your off-road accessories</h2>
-          <Button onClick={() => setShowAddDeviceFlow(true)} className="mt-4">
-            Add Your First Device
-          </Button>
+          {!hasHubDevices ? (
+            <Button onClick={handleAddHubDevice} className="mt-4">
+              Add Hub or Turn Signal Kit
+            </Button>
+          ) : (
+            <Button onClick={handleAddAnyDevice} className="mt-4">
+              Add Your First Device
+            </Button>
+          )}
         </div>
       ) : (
         <ResponsiveGridLayout
@@ -1201,7 +1232,11 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
           ))}
         </ResponsiveGridLayout>
       )}
-      <AddDeviceFlow open={showAddDeviceFlow} onClose={() => setShowAddDeviceFlow(false)} />
+      <AddDeviceFlow
+        open={showAddDeviceFlow}
+        onClose={() => setShowAddDeviceFlow(false)}
+        limitToHubDevices={limitDeviceOptions}
+      />
     </div>
   )
 }
