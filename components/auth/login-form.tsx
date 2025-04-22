@@ -55,7 +55,7 @@ export function LoginForm() {
   // Check for register parameter in URL
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const registerParam = searchParams.get("register")
+      const registerParam = searchParams.get("registration")
       setShowRegistration(registerParam === "true")
 
       // If register=true and mode=signup in the URL, show the signup form
