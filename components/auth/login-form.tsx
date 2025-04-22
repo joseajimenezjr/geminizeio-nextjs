@@ -10,10 +10,12 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { signUpUser } from "@/app/actions/auth"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface SignUpFormData {
   email: string
   password: string
+  confirmPassword: string
   firstName: string
   lastName: string
   phoneNumber: string
@@ -21,6 +23,14 @@ interface SignUpFormData {
   vehicleName: string
   vehicleYear: string
 }
+
+const vehicleTypes = [
+  { value: "SXS", label: "SXS" },
+  { value: "UTV", label: "UTV" },
+  { value: "ATV", label: "ATV" },
+  { value: "Jeep", label: "Jeep" },
+  { value: "Off-Road Vehicle", label: "Off-Road Vehicle" },
+]
 
 export function LoginForm() {
   const router = useRouter()
@@ -31,6 +41,7 @@ export function LoginForm() {
   const [signUpData, setSignUpData] = useState<SignUpFormData>({
     email: "",
     password: "",
+    confirmPassword: "",
     firstName: "",
     lastName: "",
     phoneNumber: "",
@@ -128,12 +139,37 @@ export function LoginForm() {
 
     try {
       // Validate required fields
-      const requiredFields = ["email", "password", "firstName", "lastName", "phoneNumber", "vehicleName"] as const
+      const requiredFields = [
+        "email",
+        "password",
+        "confirmPassword",
+        "firstName",
+        "lastName",
+        "phoneNumber",
+        "vehicleName",
+      ] as const
 
       for (const field of requiredFields) {
         if (!signUpData[field]) {
           throw new Error(`${field.replace(/([A-Z])/g, " $1").toLowerCase()} is required`)
         }
+      }
+
+      // Email validation
+      if (!isValidEmail(signUpData.email)) {
+        throw new Error("Please enter a valid email address.")
+      }
+
+      // Password validation
+      if (!isValidPassword(signUpData.password)) {
+        throw new Error(
+          "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.",
+        )
+      }
+
+      // Confirm password validation
+      if (signUpData.password !== signUpData.confirmPassword) {
+        throw new Error("Passwords do not match.")
       }
 
       // Update email in signUpData to match the email field
@@ -165,6 +201,7 @@ export function LoginForm() {
         setSignUpData({
           email: "",
           password: "",
+          confirmPassword: "",
           firstName: "",
           lastName: "",
           phoneNumber: "",
@@ -204,7 +241,7 @@ export function LoginForm() {
     }
   }
 
-  const handleSignUpInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSignUpInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setSignUpData((prev) => ({
       ...prev,
@@ -225,6 +262,18 @@ export function LoginForm() {
     // Clear any previous errors or messages
     setError(null)
     setMessage(null)
+  }
+
+  // Email validation function
+  const isValidEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(email) && !email.endsWith("none.com")
+  }
+
+  // Password validation function
+  const isValidPassword = (password: string) => {
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+{}[\]:;<>,.?~\\/-]).{8,}$/
+    return passwordRegex.test(password)
   }
 
   return (
@@ -329,6 +378,17 @@ export function LoginForm() {
                   required
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  value={signUpData.confirmPassword}
+                  onChange={handleSignUpInputChange}
+                  required
+                />
+              </div>
             </div>
 
             {/* Personal Information */}
@@ -385,13 +445,21 @@ export function LoginForm() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="vehicleType">Vehicle Type</Label>
-                <Input
-                  id="vehicleType"
-                  name="vehicleType"
-                  placeholder="Jeep Wrangler"
+                <Select
                   value={signUpData.vehicleType}
-                  onChange={handleSignUpInputChange}
-                />
+                  onValueChange={(value) => setSignUpData({ ...signUpData, vehicleType: value })}
+                >
+                  <SelectTrigger id="vehicleType" className="w-full">
+                    <SelectValue placeholder="Select vehicle type" />
+                  </SelectTrigger>
+                  <SelectContent position="popper" side="bottom">
+                    {vehicleTypes.map((type) => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="vehicleYear">Vehicle Year</Label>
