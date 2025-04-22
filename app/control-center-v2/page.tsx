@@ -20,6 +20,7 @@ export default function ControlCenterV2Page() {
     try {
       const data = await getUserData()
       setUserData(data)
+      console.log("ControlCenterV2: Fetched userData:", data)
     } catch (error) {
       console.error("Error getting user data:", error)
       setUserData(null)
@@ -31,6 +32,28 @@ export default function ControlCenterV2Page() {
   useEffect(() => {
     fetchData()
   }, [fetchData])
+
+  // Recalculate hasHubDevices whenever userData changes
+  const hasHubDevices = () => {
+    if (!userData?.hubDetails || !Array.isArray(userData.hubDetails)) {
+      console.log("ControlCenterV2: No hubDetails found or not an array")
+      return false
+    }
+
+    const hasHub = userData.hubDetails.some(
+      (device: any) =>
+        device.deviceType === "hub" || device.deviceType === "relay_hub" || device.deviceType === "turn_signal",
+    )
+    console.log("ControlCenterV2: hasHubDevices calculated:", hasHub)
+    return hasHub
+  }
+
+  // Log when userData changes
+  useEffect(() => {
+    console.log("ControlCenterV2: userData changed:", userData)
+    console.log("ControlCenterV2: Recalculating hasHubDevices")
+    hasHubDevices() // Call hasHubDevices to trigger recalculation
+  }, [userData])
 
   if (isLoading) {
     return (

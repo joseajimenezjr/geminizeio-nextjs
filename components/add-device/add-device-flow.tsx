@@ -265,6 +265,8 @@ export function AddDeviceFlow({ open, onClose, limitToHubDevices = false, setUse
           // Update the hubDetails array in the copied object
           updatedUserData.hubDetails = updatedHubDetails
 
+          console.log("AddDeviceFlow: Updated userData:", updatedUserData)
+
           return updatedUserData
         })
       }
