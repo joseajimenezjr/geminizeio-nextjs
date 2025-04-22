@@ -21,6 +21,7 @@ export default function ControlCenterV2Page() {
   const [isLoading, setIsLoading] = useState(true)
   const [showAddDeviceFlow, setShowAddDeviceFlow] = useState(false)
   const [lastAddedDevice, setLastAddedDevice] = useState<LastAddedDevice | null>(null)
+  const [addDeviceMode, setAddDeviceMode] = useState<"hub-only" | "all" | "accessory-only">("all")
 
   useEffect(() => {
     const fetchData = async () => {
@@ -57,7 +58,13 @@ export default function ControlCenterV2Page() {
     fetchData()
   }, [])
 
-  const handleAddDeviceClick = () => {
+  const handleAddHubClick = () => {
+    setAddDeviceMode("hub-only")
+    setShowAddDeviceFlow(true)
+  }
+
+  const handleAddAccessoryClick = () => {
+    setAddDeviceMode("accessory-only")
     setShowAddDeviceFlow(true)
   }
 
@@ -141,7 +148,7 @@ export default function ControlCenterV2Page() {
               Get started by adding a hub or turn signal kit to your vehicle to unlock the full potential of your
               control center.
             </p>
-            <Button size="lg" className="mt-4" onClick={handleAddDeviceClick}>
+            <Button size="lg" className="mt-4" onClick={handleAddHubClick}>
               Add hub or turn signal kit
             </Button>
           </div>
@@ -153,7 +160,7 @@ export default function ControlCenterV2Page() {
             <p className="text-muted-foreground max-w-md">
               Now add your accessories to your account to configure them in the control center.
             </p>
-            <Button size="lg" className="mt-4" onClick={handleAddDeviceClick}>
+            <Button size="lg" className="mt-4" onClick={handleAddAccessoryClick}>
               Add accessories
             </Button>
           </div>
@@ -165,7 +172,7 @@ export default function ControlCenterV2Page() {
       <BottomNav />
 
       {/* Add Device Flow */}
-      <AddDeviceFlow open={showAddDeviceFlow} onClose={handleCloseAddDeviceFlow} />
+      <AddDeviceFlow open={showAddDeviceFlow} onClose={handleCloseAddDeviceFlow} initialMode={addDeviceMode} />
     </main>
   )
 }

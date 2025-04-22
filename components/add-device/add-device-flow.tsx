@@ -15,7 +15,7 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 interface AddDeviceFlowProps {
   open: boolean
   onClose: () => void
-  initialMode?: "hub-only" | "all" // Add initialMode prop
+  initialMode?: "hub-only" | "all" | "accessory-only" // Updated to include accessory-only mode
 }
 
 export function AddDeviceFlow({ open, onClose, initialMode = "all" }: AddDeviceFlowProps) {
@@ -32,6 +32,22 @@ export function AddDeviceFlow({ open, onClose, initialMode = "all" }: AddDeviceF
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [hasHubOrTurnSignal, setHasHubOrTurnSignal] = useState<boolean>(false)
 
+  // Initialize the flow based on initialMode
+  useEffect(() => {
+    if (open) {
+      if (initialMode === "accessory-only") {
+        // Skip device type selection and go directly to accessory type selection
+        setSelectedDeviceType("accessory")
+        checkForHubs()
+      } else {
+        // For other modes, start with device type selection
+        setStep("select-type")
+        // Check if user has hub or turn signal when the flow opens
+        checkUserDevices()
+      }
+    }
+  }, [open, initialMode])
+
   // Reset all state when the flow is closed
   useEffect(() => {
     if (!open) {
@@ -43,9 +59,6 @@ export function AddDeviceFlow({ open, onClose, initialMode = "all" }: AddDeviceF
       setIsRelayHubAvailable(false)
       setIsLoading(false)
       setErrorMessage(null)
-    } else {
-      // Check if user has hub or turn signal when the flow opens
-      checkUserDevices()
     }
   }, [open])
 
@@ -98,6 +111,66 @@ export function AddDeviceFlow({ open, onClose, initialMode = "all" }: AddDeviceF
         description: error.message || "Failed to check for existing devices",
         variant: "destructive",
       })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Check for hubs and proceed to accessory selection
+  const checkForHubs = async () => {
+    setIsLoading(true)
+    setErrorMessage(null)
+
+    try {
+      // Get current user session
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (!session) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to add a device",
+          variant: "destructive",
+        })
+        setIsLoading(false)
+        return
+      }
+
+      // Get current profile data
+      const { data: profileData, error: profileError } = await supabase
+        .from("Profiles")
+        .select("hubDetails")
+        .eq("id", session.user.id)
+        .single()
+
+      if (profileError) {
+        throw profileError
+      }
+
+      // Check if user has any hub or relay hub configured
+      const hubDetails = profileData?.hubDetails || []
+      const hasHub = hubDetails.some((device: any) => device.deviceType === "hub" || device.deviceType === "relay_hub")
+
+      // Check specifically for relay hub
+      const hasRelayHub = hubDetails.some((device: any) => device.deviceType === "relay_hub")
+
+      if (!hasHub) {
+        setErrorMessage("You need to set up a Hub or Relay Hub before adding accessories.")
+        setStep("select-type") // Fall back to device selection if no hub is found
+        setIsLoading(false)
+        return
+      }
+
+      // Set whether a relay hub is available
+      setIsRelayHubAvailable(hasRelayHub)
+
+      // Move to accessory type selection
+      setStep("select-accessory-type")
+    } catch (error: any) {
+      console.error("Error checking for hubs:", error)
+      setErrorMessage(error.message || "Failed to check for existing hubs")
+      setStep("select-type") // Fall back to device selection on error
     } finally {
       setIsLoading(false)
     }
@@ -228,8 +301,13 @@ export function AddDeviceFlow({ open, onClose, initialMode = "all" }: AddDeviceF
     // Handle back button based on current step
     switch (step) {
       case "select-accessory-type":
-        setStep("select-type")
-        setSelectedDeviceType(null)
+        if (initialMode === "accessory-only") {
+          // If in accessory-only mode, close the flow instead of going back
+          onClose()
+        } else {
+          setStep("select-type")
+          setSelectedDeviceType(null)
+        }
         break
       case "select-relay-accessory-type":
         setStep("select-accessory-type")
@@ -245,8 +323,13 @@ export function AddDeviceFlow({ open, onClose, initialMode = "all" }: AddDeviceF
         }
         break
       default:
-        setStep("select-type")
-        setSelectedDeviceType(null)
+        if (initialMode === "accessory-only") {
+          // If in accessory-only mode, close the flow
+          onClose()
+        } else {
+          setStep("select-type")
+          setSelectedDeviceType(null)
+        }
     }
   }
 
@@ -364,7 +447,7 @@ export function AddDeviceFlow({ open, onClose, initialMode = "all" }: AddDeviceF
       onClose={onClose}
       size={getSheetSize()}
       className="bg-background border-t border-border"
-      showCloseButton={step === "select-type"}
+      showCloseButton={step === "select-type" || (step === "select-accessory-type" && initialMode === "accessory-only")}
     >
       {step === "select-type" && (
         <DeviceTypeSelector
