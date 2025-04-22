@@ -20,8 +20,6 @@ import "react-resizable/css/styles.css"
 import { WeatherWidget } from "./widgets/weather-widget"
 import { SpeedDisplayWidget } from "./widgets/speed-display-widget"
 import { RPMDisplayWidget } from "./widgets/rpm-display-widget"
-import { ChaseLightWidget } from "./widgets/chase-light-widget"
-import { RGBLightWidget } from "./widgets/rgb-light-widget"
 import { BatteryWidget } from "./widgets/battery-widget"
 import { TemperatureWidget } from "./widgets/temperature-widget"
 import { TimerWidget } from "./widgets/timer-widget"
@@ -273,7 +271,7 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
         return "rgbLight"
       case "battery":
         return "battery"
-      case "turn_signal":
+      case "turn-signal":
         return "turn-signal"
       default:
         return "light"
@@ -944,79 +942,6 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
             onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
           />
         )
-      case "chaseLight":
-        return (
-          <ChaseLightWidget
-            title={accessory.accessoryName}
-            accessoryId={widget.accessoryId}
-            isConnected={isConnected}
-            isOn={isOn}
-            relayPosition={accessory.relayPosition}
-            isEditing={isEditing}
-            onToggle={() => handleToggleAccessory(widget.accessoryId, !isOn)}
-            onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
-            onMouseUp={() => handleWidgetMouseUp(widget.id)}
-            onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
-            onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
-            onTouchEnd={() => handleWidgetMouseUp(widget.id)}
-            onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
-          />
-        )
-      case "rgbLight":
-        return (
-          <RGBLightWidget
-            title={accessory.accessoryName}
-            accessoryId={widget.accessoryId}
-            isConnected={isConnected}
-            isOn={isOn}
-            relayPosition={accessory.relayPosition}
-            lastRGBColor={accessory.lastRGBColor || "#FF0000"}
-            isEditing={isEditing}
-            onToggle={() => handleToggleAccessory(widget.accessoryId, !isOn)}
-            onColorChange={(color) => handleRGBColorChange(widget.accessoryId, color)}
-            onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
-            onMouseUp={() => handleWidgetMouseUp(widget.id)}
-            onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
-            onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
-            onTouchEnd={() => handleWidgetMouseUp(widget.id)}
-            onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
-          />
-        )
-      case "temperature":
-        return (
-          <TemperatureWidget
-            title={accessory.accessoryName}
-            isConnected={isConnected}
-            isOn={isOn}
-            isEditing={isEditing}
-            onToggle={() => handleToggleAccessory(widget.accessoryId, !isOn)}
-            onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
-            onMouseUp={() => handleWidgetMouseUp(widget.id)}
-            onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
-            onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
-            onTouchEnd={() => handleWidgetMouseUp(widget.id)}
-            onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
-          />
-        )
-      case "turn-signal":
-        return (
-          <ToggleWidget
-            title="Turn Lights"
-            accessoryType="turn_signal"
-            isConnected={isConnected}
-            isOn={isOn}
-            isEditing={isEditing}
-            onToggle={() => handleToggleAccessory(widget.accessoryId, !isOn)}
-            accessoryId={accessory.accessoryID}
-            onUpdateUserData={handleLocalUserDataUpdate}
-            onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
-            onMouseUp={() => handleWidgetMouseUp(widget.id)}
-            onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
-            onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
-            onTouchEnd={() => handleWidgetMouseUp(widget.id)}
-            onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
-          />
-        )
       default:
         return (
           <div
@@ -1197,7 +1122,10 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
 
         {widgets.length === 0 && (
           <div className="flex flex-col items-center justify-center p-8 bg-muted/30 rounded-lg border border-dashed">
-            <p className="text-muted-foreground mb-4">No widgets in your control center</p>
+            <p className="text-muted-foreground mb-4 font-bold">
+              Lets add some widgets to the control center! Click on edit layout button to see the widgets you are able
+              to add based on your accessories added thus far!
+            </p>
             {isEditing && (
               <div className="flex gap-2">
                 <Button
