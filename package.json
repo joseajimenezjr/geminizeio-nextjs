@@ -59,14 +59,10 @@
     "vaul": "^0.9.6",
     "zod": "^3.24.1",
     "@supabase/supabase-js": "latest",
-    "@emotion/react": "latest",
-    "@emotion/styled": "latest",
-    "@mui/material-pigment-css": "latest",
     "@supabase/auth-helpers-nextjs": "latest",
     "html5-qrcode": "latest",
     "react-grid-layout": "latest",
-    "react-resizable": "latest",
-    "@mui/material": "latest"
+    "react-resizable": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",

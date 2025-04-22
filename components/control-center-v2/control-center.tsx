@@ -4,11 +4,7 @@ import type React from "react"
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import { Responsive, WidthProvider } from "react-grid-layout"
-import { Button } from "@/components/ui/button"
-import { Plus, Save, Undo, Settings, Trash } from "lucide-react"
-import { WidgetLibrary } from "./widget-library"
-import { UtilityLibrary } from "./utility-library"
-import { OBDIILibrary } from "./obdii-library" // Import the new OBD2 library
+import { Trash } from "lucide-react"
 import { ToggleWidget } from "./widgets/toggle-widget"
 import { GaugeWidget } from "./widgets/gauge-widget"
 import { SpeedometerWidget } from "./widgets/speedometer-widget"
@@ -21,19 +17,42 @@ import "react-resizable/css/styles.css"
 import { StandaloneWinchWidget } from "./widgets/standalone-winch-widget"
 import { WeatherWidget } from "./widgets/weather-widget"
 import { SpeedDisplayWidget } from "./widgets/speed-display-widget"
-import { RPMDisplayWidget } from "./rpm-display-widget"
-import { ChaseLightWidget } from "./chase-light-widget"
+import { RPMDisplayWidget } from "./widgets/rpm-display-widget"
+import { ChaseLightWidget } from "./widgets/chase-light-widget"
 import { RGBLightWidget } from "./widgets/rgb-light-widget"
 import { BatteryWidget } from "./widgets/battery-widget"
-import { TemperatureWidget } from "./temperature-widget"
+import { TemperatureWidget } from "./widgets/temperature-widget"
 import { TimerWidget } from "./widgets/timer-widget"
 
 // Add a style tag for the long-press visual indicator
 const longPressStyle = `
- .long-press-active {
-   opacity: 0.7;
-   transform: scale(0.98);
-   transition: all 0.2s ease;
+ @keyframes pulse-animation {
+   0% {
+     box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.3);
+   }
+   70% {
+     box-shadow: 0 0 0 10px rgba(22, 163, 74, 0);
+   }
+   100% {
+     box-shadow: 0 0 0 0 rgba(22, 163, 74, 0);
+   }
+ }
+ 
+ .widget-pulse {
+   animation: pulse-animation 1.5s ease-out;
+ }
+
+ @keyframes continuous-flash {
+   0%, 100% {
+     opacity: 1;
+   }
+   50% {
+     opacity: 0.7;
+   }
+ }
+ 
+ .continuous-flash {
+   animation: continuous-flash 1s infinite;
  }
 `
 
@@ -103,6 +122,7 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
   const [showUtilityLibrary, setShowUtilityLibrary] = useState(false)
   const [showOBDIILibrary, setShowOBDIILibrary] = useState(false)
   const [hasOBD2Accessory, setHasOBD2Accessory] = useState(false)
+  const [addDeviceOpen, setAddDeviceOpen] = useState(false)
 
   // Create a local state to track accessory statuses for immediate UI updates
   const [localAccessoryStatuses, setLocalAccessoryStatuses] = useState<Record<string, boolean>>({})
@@ -138,15 +158,18 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
 
   // Initialize layouts from user data or defaults
   useEffect(() => {
-    if (userData) {
-      if (userData.controlCenter?.widgets?.length > 0) {
-        initializeFromUserData()
-      } else {
-        initializeDefaultLayout()
-      }
+    if (userData?.controlCenter?.widgets?.length > 0) {
+      initializeFromUserData()
     } else {
-      // Initialize with default layout if userData is null
-      initializeDefaultLayout()
+      // If no widgets are defined, initialize with an empty layout
+      setLayouts({
+        lg: [],
+        md: [],
+        sm: [],
+        xs: [],
+        xxs: [],
+      })
+      setWidgets([])
     }
   }, [userData])
 
@@ -244,26 +267,7 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
   const initializeDefaultLayout = () => {
     const defaultWidgets = []
     const row = 0
-    let col = 0
-
-    // Add a speedometer widget by default
-    defaultWidgets.push({
-      id: `widget-speedometer-default`,
-      type: "speedometer",
-      position: { x: 0, y: 0 },
-      size: { w: 2, h: 2 },
-    })
-
-    // Add a winch widget by default - now 1 column, 2 rows
-    defaultWidgets.push({
-      id: `widget-winch-default`,
-      type: "winch",
-      position: { x: 2, y: 0 }, // Position it next to the speedometer
-      size: { w: 1, h: 3 },
-    })
-
-    // Update position for next widget
-    col = 3
+    const col = 0
 
     setWidgets(defaultWidgets)
 
@@ -275,41 +279,6 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
       xs: [],
       xxs: [],
     }
-
-    // Create layouts for each breakpoint
-    ;[...defaultWidgets].forEach((widget: any) => {
-      const baseLayout = {
-        i: widget.id,
-        x: widget.position.x,
-        y: widget.position.y,
-        w: widget.size.w,
-        h: widget.size.h,
-        isResizable: false,
-      }
-
-      // Add to each breakpoint with appropriate adjustments
-      defaultLayouts.lg.push({ ...baseLayout })
-      defaultLayouts.md.push({ ...baseLayout })
-
-      // For smaller screens, adjust the layout
-      defaultLayouts.sm.push({
-        ...baseLayout,
-        w: Math.min(baseLayout.w, 2), // Max 2 columns on small screens
-      })
-
-      defaultLayouts.xs.push({
-        ...baseLayout,
-        ...baseLayout,
-        x: 0,
-        w: Math.min(baseLayout.w, 2), // Full width on extra small screens
-      })
-
-      defaultLayouts.xxs.push({
-        ...baseLayout,
-        x: 0,
-        w: 1, // Full width on tiny screens
-      })
-    })
 
     setLayouts(defaultLayouts)
   }
@@ -958,7 +927,6 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
           onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
           onTouchEnd={() => handleWidgetMouseUp(widget.id)}
           onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
-          temperatureServiceUUID={TEMPERATURE_SERVICE_UUID}
         />
       )
     }
@@ -1160,218 +1128,67 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
     }
   }
 
-  // Add the style tag to the component
-  useEffect(() => {
-    // Add the style tag to the head
-    const styleTag = document.createElement("style")
-    styleTag.innerHTML = longPressStyle
-    document.head.appendChild(styleTag)
-
-    return () => {
-      // Remove the style tag when the component unmounts
-      document.head.removeChild(styleTag)
-    }
-  }, [])
-
   return (
-    <div className="flex h-screen flex-col bg-black text-white">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-gray-800 p-4">
-        <div className="flex items-center gap-2">
-          <div>
-            <h1 className="text-xl font-bold">Control Center</h1>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {isEditing ? (
-            <>
-              <Button variant="outline" size="sm" onClick={handleCancelEditing} className="flex items-center gap-1">
-                <Undo className="h-4 w-4" />
-                Cancel
-              </Button>
-              <Button variant="default" size="sm" onClick={handleSaveLayout} className="flex items-center gap-1">
-                <Save className="h-4 w-4" />
-                Save Layout
-              </Button>
-            </>
-          ) : (
-            <Button variant="outline" size="sm" onClick={handleStartEditing} className="flex items-center gap-1">
-              <Settings className="h-4 w-4" />
-              Edit Layout
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 overflow-auto p-4">
-        {isEditing && (
-          <div className="bg-muted/50 p-3 rounded-lg flex justify-between items-center mb-6">
-            <p className="text-sm text-muted-foreground">
-              Drag widgets to rearrange them. Long-press any widget to remove it.
-            </p>
-            <div className="flex gap-2">
-              <Button
-                variant={showLibrary ? "default" : "outline"}
-                size="sm"
-                onClick={() => {
-                  setShowLibrary(!showLibrary)
-                  setShowUtilityLibrary(false)
-                  setShowOBDIILibrary(false)
-                }}
-                className="flex items-center gap-1"
-              >
-                <Plus className="h-4 w-4" />
-                Add Accessory
-              </Button>
-              <Button
-                variant={showUtilityLibrary ? "default" : "outline"}
-                size="sm"
-                onClick={() => {
-                  setShowUtilityLibrary(!showUtilityLibrary)
-                  setShowLibrary(false)
-                  setShowOBDIILibrary(false)
-                }}
-                className="flex items-center gap-1"
-              >
-                <Plus className="h-4 w-4" />
-                Add Utility
-              </Button>
-              {hasOBD2Accessory && (
-                <Button
-                  variant={showOBDIILibrary ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => {
-                    setShowOBDIILibrary(!showOBDIILibrary)
-                    setShowLibrary(false)
-                    setShowUtilityLibrary(false)
-                  }}
-                  className="flex items-center gap-1"
-                >
-                  <Plus className="h-4 w-4" />
-                  Add OBD2
-                </Button>
-              )}
-            </div>
-          </div>
-        )}
-
-        {showLibrary && (
-          <div className="mb-6">
-            <WidgetLibrary
-              accessories={userData.accessories}
-              existingWidgets={widgets}
-              onAddWidget={handleAddWidget}
-              onClose={() => setShowLibrary(false)}
-            />
-          </div>
-        )}
-
-        {showUtilityLibrary && (
-          <div className="mb-6">
-            <UtilityLibrary
-              existingWidgets={widgets}
-              onAddUtility={handleAddUtilityWidget}
-              onClose={() => setShowUtilityLibrary(false)}
-              hasTemperatureSensor={hasTemperatureReader}
-              temperatureServiceUUID={TEMPERATURE_SERVICE_UUID}
-            />
-          </div>
-        )}
-
-        {showOBDIILibrary && (
-          <div className="mb-6">
-            <OBDIILibrary
-              existingWidgets={widgets}
-              onAddOBDII={handleAddOBDIIWidget}
-              onClose={() => setShowOBDIILibrary(false)}
-            />
-          </div>
-        )}
-
-        <ResponsiveGridLayout
-          className="layout"
-          layouts={layouts}
-          breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-          cols={{ lg: GRID_CONFIG.cols, md: GRID_CONFIG.cols, sm: GRID_CONFIG.cols, xs: 2, xxs: 1 }}
-          rowHeight={GRID_CONFIG.rowHeight}
-          isDraggable={isEditing}
-          isResizable={false}
-          preventCollision={false}
-          onLayoutChange={onLayoutChange}
-          margin={[16, 16]}
-          containerPadding={[0, 0]}
-          compactType="vertical"
-          autoSize={true}
+    <div className="flex h-screen w-full flex-col bg-black text-white">
+      {/* Context Menu for Widget Actions */}
+      {contextMenu.visible && contextMenu.widgetId && (
+        <div
+          id="widget-context-menu"
+          className="fixed z-50 overflow-hidden rounded-md bg-popover text-popover-foreground shadow-md"
+          style={{
+            top: `${contextMenu.y}px`,
+            left: `${contextMenu.x}px`,
+            transform: "translate(-50%, -50%)",
+            minWidth: "200px",
+          }}
+          onClick={(e) => e.stopPropagation()}
         >
-          {widgets.map((widget) => (
-            <div
-              key={widget.id}
-              id={widget.id}
-              className="widget-container bg-card rounded-lg shadow-sm overflow-hidden border h-full relative"
-              onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
-              onMouseUp={() => handleWidgetMouseUp(widget.id)}
-              onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
-              onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
-              onTouchEnd={() => handleWidgetMouseUp(widget.id)}
-              onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
+          <div className="flex flex-col p-2">
+            <div className="mb-1 border-b px-2 py-1 text-sm font-medium">Widget Options</div>
+
+            {/* Remove option */}
+            <button
+              className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-destructive hover:text-destructive-foreground mt-1"
+              onClick={() => handleRemoveWidget(contextMenu.widgetId!)}
             >
-              {renderWidget(widget)}
-            </div>
-          ))}
-        </ResponsiveGridLayout>
-
-        {widgets.length === 0 && (
-          <div className="flex flex-col items-center justify-center p-8 bg-muted/30 rounded-lg border border-dashed">
-            <p className="text-muted-foreground mb-4">No widgets in your control center</p>
-            {isEditing && (
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowLibrary(true)}
-                  className="flex items-center gap-1"
-                >
-                  <Plus className="h-4 w-4" />
-                  Add Accessory Widget
-                </Button>
-                <Button variant="outline" size="sm" onClick={handleAddSpeedometer} className="flex items-center gap-1">
-                  <Plus className="h-4 w-4" />
-                  Add Speedometer
-                </Button>
-              </div>
-            )}
+              <Trash className="h-4 w-4" />
+              Remove Widget
+            </button>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Context Menu for Widget Actions */}
-        {contextMenu.visible && contextMenu.widgetId && (
+      <ResponsiveGridLayout
+        className="layout"
+        layouts={layouts}
+        breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+        cols={{ lg: GRID_CONFIG.cols, md: GRID_CONFIG.cols, sm: GRID_CONFIG.cols, xs: 2, xxs: 1 }}
+        rowHeight={GRID_CONFIG.rowHeight}
+        isDraggable={isEditing}
+        isResizable={false}
+        preventCollision={false}
+        onLayoutChange={onLayoutChange}
+        margin={[16, 16]}
+        containerPadding={[0, 0]}
+        compactType="vertical"
+        autoSize={true}
+      >
+        {widgets.map((widget) => (
           <div
-            id="widget-context-menu"
-            className="fixed bg-popover text-popover-foreground shadow-md rounded-md overflow-hidden z-50"
-            style={{
-              top: `${contextMenu.y}px`,
-              left: `${contextMenu.x}px`,
-              transform: "translate(-50%, -50%)",
-              minWidth: "200px",
-            }}
-            onClick={(e) => e.stopPropagation()}
+            key={widget.id}
+            id={widget.id}
+            className="widget-container relative h-full w-full overflow-hidden rounded-lg border bg-card shadow-sm"
+            onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
+            onMouseUp={() => handleWidgetMouseUp(widget.id)}
+            onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
+            onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
+            onTouchEnd={() => handleWidgetMouseUp(widget.id)}
+            onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
           >
-            <div className="p-2 flex flex-col">
-              <div className="px-2 py-1 text-sm font-medium border-b mb-1">Widget Options</div>
-
-              {/* Remove option */}
-              <button
-                className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-destructive hover:text-destructive-foreground flex items-center gap-2 mt-1"
-                onClick={() => handleRemoveWidget(contextMenu.widgetId!)}
-              >
-                <Trash className="h-4 w-4" />
-                Remove Widget
-              </button>
-            </div>
+            {renderWidget(widget)}
           </div>
-        )}
-      </div>
+        ))}
+      </ResponsiveGridLayout>
     </div>
   )
 }
