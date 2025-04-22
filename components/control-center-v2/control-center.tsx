@@ -8,17 +8,15 @@ import { Button } from "@/components/ui/button"
 import { Plus, Save, Undo, Settings, Trash } from "lucide-react"
 import { WidgetLibrary } from "./widget-library"
 import { UtilityLibrary } from "./utility-library"
-import { OBDIILibrary } from "./obdii-library" // Import the new OBD2 library
+import { OBDIILibrary } from "./obdii-library"
 import { ToggleWidget } from "./widgets/toggle-widget"
 import { GaugeWidget } from "./widgets/gauge-widget"
-import { SpeedometerWidget } from "./widgets/speedometer-widget"
 import { UtilityWidget } from "./widgets/utility-widget"
 import { useAccessories } from "@/contexts/device-context"
 import saveWidgetLayout from "@/app/actions/widget-layout"
 import { useToast } from "@/components/ui/use-toast"
 import "react-grid-layout/css/styles.css"
 import "react-resizable/css/styles.css"
-import { StandaloneWinchWidget } from "./widgets/standalone-winch-widget"
 import { WeatherWidget } from "./widgets/weather-widget"
 import { SpeedDisplayWidget } from "./widgets/speed-display-widget"
 import { RPMDisplayWidget } from "./widgets/rpm-display-widget"
@@ -53,9 +51,11 @@ export const WIDGET_SIZES = {
   "speed-display": { w: 1, h: 1 },
   "rpm-display": { w: 1, h: 1 },
   chaseLight: { w: 1, h: 1 },
-  rgbLight: { w: 1, h: 1 }, // Add size for RGB Light widget
-  battery: { w: 1, h: 1 }, // Add size for Battery widget
-  temperature: { w: 1, h: 1 }, // Add size for Temperature widget
+  rgbLight: { w: 1, h: 1 },
+  battery: { w: 1, h: 1 },
+  temperature: { w: 1, h: 1 },
+  "turn-signal": { w: 1, h: 1 },
+  "hazard-light": { w: 1, h: 1 },
 }
 
 // Grid configuration - 4 columns, infinite rows
@@ -66,13 +66,11 @@ const GRID_CONFIG = {
 }
 
 interface ControlCenterV2Props {
-  vehicleName: string
-  vehicleType: string
   userData: any
   setUserData: React.Dispatch<React.SetStateAction<any>>
 }
 
-export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserData }: ControlCenterV2Props) {
+export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props) {
   const { accessories, toggleAccessoryStatus, isLoading, updateAccessoryAttribute } = useAccessories()
   const { toast } = useToast()
   const [isEditing, setIsEditing] = useState(false)
@@ -138,10 +136,24 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
 
   // Initialize layouts from user data or defaults
   useEffect(() => {
-    if (userData?.controlCenter?.widgets?.length > 0) {
+    console.log("Initializing control center layout")
+    console.log("User data:", userData)
+    console.log("Control center data:", userData?.controlCenter)
+
+    // Check if user has saved widgets
+    const hasSavedWidgets =
+      userData?.controlCenter?.widgets &&
+      Array.isArray(userData.controlCenter.widgets) &&
+      userData.controlCenter.widgets.length > 0
+
+    console.log("Has saved widgets:", hasSavedWidgets)
+
+    if (hasSavedWidgets) {
+      console.log("Initializing from user data")
       initializeFromUserData()
     } else {
-      initializeDefaultLayout()
+      console.log("Initializing empty layout")
+      initializeEmptyLayout()
     }
   }, [userData])
 
@@ -173,20 +185,11 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
 
   // Initialize from user's saved control center data
   const initializeFromUserData = () => {
+    console.log("Loading user's saved widgets")
     const userWidgets = userData.controlCenter.widgets
+    console.log("User widgets:", userWidgets)
 
-    // Update any existing winch widgets to the new size
-    const updatedWidgets = userWidgets.map((widget) => {
-      if (widget.type === "winch") {
-        return {
-          ...widget,
-          size: WIDGET_SIZES.winch,
-        }
-      }
-      return widget
-    })
-
-    setWidgets(updatedWidgets)
+    setWidgets(userWidgets)
 
     // Create layout objects for react-grid-layout
     const userLayouts = {
@@ -198,7 +201,7 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
     }
 
     // Create layouts for each breakpoint
-    updatedWidgets.forEach((widget: any) => {
+    userWidgets.forEach((widget: any) => {
       const baseLayout = {
         i: widget.id,
         x: widget.position.x,
@@ -220,7 +223,6 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
 
       userLayouts.xs.push({
         ...baseLayout,
-        ...baseLayout,
         x: 0,
         w: Math.min(baseLayout.w, 2), // Full width on extra small screens
       })
@@ -235,66 +237,13 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
     setLayouts(userLayouts)
   }
 
-  // Create default layout based on accessories
-  const initializeDefaultLayout = () => {
-    const defaultWidgets = []
-    let row = 0
-    let col = 0
+  // Initialize with an empty layout - no default widgets
+  const initializeEmptyLayout = () => {
+    console.log("Setting up empty layout - no default widgets")
+    setWidgets([])
 
-    // Add a speedometer widget by default
-    defaultWidgets.push({
-      id: `widget-speedometer-default`,
-      type: "speedometer",
-      position: { x: 0, y: 0 },
-      size: { w: 2, h: 2 },
-    })
-
-    // Add a winch widget by default - now 1 column, 2 rows
-    defaultWidgets.push({
-      id: `widget-winch-default`,
-      type: "winch",
-      position: { x: 2, y: 0 }, // Position it next to the speedometer
-      size: { w: 1, h: 3 },
-    })
-
-    // Update position for next widget
-    col = 3
-
-    // Add widgets for accessories
-    const accessoryWidgets = (userData?.accessories || []).slice(0, 6).map((accessory: any, index: number) => {
-      const widgetType = getWidgetTypeForAccessory(accessory.accessoryType)
-      const size = WIDGET_SIZES[widgetType]
-
-      // Check if we need to move to next row
-      if (col + size.w > GRID_CONFIG.cols) {
-        col = 0
-        row++
-      }
-
-      const position = { x: col, y: row }
-
-      // Update column for next widget
-      col += size.w
-
-      // If we've reached the end of the row, move to next row
-      if (col >= GRID_CONFIG.cols) {
-        col = 0
-        row++
-      }
-
-      return {
-        id: `widget-${accessory.accessoryID}`,
-        accessoryId: accessory.accessoryID,
-        type: widgetType,
-        position: position,
-        size: size,
-      }
-    })
-
-    setWidgets([...defaultWidgets, ...accessoryWidgets])
-
-    // Create layout objects for react-grid-layout
-    const defaultLayouts = {
+    // Create empty layout objects for react-grid-layout
+    const emptyLayouts = {
       lg: [],
       md: [],
       sm: [],
@@ -302,42 +251,7 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
       xxs: [],
     }
 
-    // Create layouts for each breakpoint
-    ;[...defaultWidgets, ...accessoryWidgets].forEach((widget: any) => {
-      const baseLayout = {
-        i: widget.id,
-        x: widget.position.x,
-        y: widget.position.y,
-        w: widget.size.w,
-        h: widget.size.h,
-        isResizable: false,
-      }
-
-      // Add to each breakpoint with appropriate adjustments
-      defaultLayouts.lg.push({ ...baseLayout })
-      defaultLayouts.md.push({ ...baseLayout })
-
-      // For smaller screens, adjust the layout
-      defaultLayouts.sm.push({
-        ...baseLayout,
-        w: Math.min(baseLayout.w, 2), // Max 2 columns on small screens
-      })
-
-      defaultLayouts.xs.push({
-        ...baseLayout,
-        ...baseLayout,
-        x: 0,
-        w: Math.min(baseLayout.w, 2), // Full width on extra small screens
-      })
-
-      defaultLayouts.xxs.push({
-        ...baseLayout,
-        x: 0,
-        w: 1, // Full width on tiny screens
-      })
-    })
-
-    setLayouts(defaultLayouts)
+    setLayouts(emptyLayouts)
   }
 
   // Helper functions to determine widget type and size
@@ -353,14 +267,14 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
         return "temperature"
       case "temp_reader":
         return "temperature"
-      case "winch":
-        return "winch"
       case "chaseLight":
         return "chaseLight"
       case "rgbLight":
         return "rgbLight"
       case "battery":
         return "battery"
+      case "turn_signal":
+        return "turn-signal"
       default:
         return "light"
     }
@@ -518,63 +432,6 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
       id: `widget-${Date.now()}`,
       accessoryId: accessoryId,
       type: widgetType,
-      position: position,
-      size: size,
-    }
-
-    setWidgets([...widgets, newWidget])
-
-    // Add to layouts
-    const newLayouts = { ...layouts }
-    Object.keys(newLayouts).forEach((breakpoint) => {
-      let layoutW = size.w
-      let layoutX = position.x
-
-      // Adjust for smaller screens
-      if (breakpoint === "sm") {
-        layoutW = Math.min(size.w, 2)
-      } else if (breakpoint === "xs") {
-        layoutX = 0
-        layoutW = Math.min(size.w, 2)
-      } else if (breakpoint === "xxs") {
-        layoutX = 0
-        layoutW = 1
-      }
-
-      newLayouts[breakpoint] = [
-        ...newLayouts[breakpoint],
-        {
-          i: newWidget.id,
-          x: layoutX,
-          y: position.y,
-          w: layoutW,
-          h: size.h,
-          isResizable: false,
-        },
-      ]
-    })
-
-    setLayouts(newLayouts)
-  }
-
-  // Add a speedometer widget
-  const handleAddSpeedometer = () => {
-    // Check if a speedometer already exists
-    const existingSpeedometer = widgets.find((w) => w.type === "speedometer")
-    if (existingSpeedometer) {
-      toast({
-        title: "Speedometer already exists",
-        description: "You already have a speedometer widget in your control center.",
-      })
-      return
-    }
-
-    const size = WIDGET_SIZES.speedometer
-    const position = findSuitablePosition(size)
-
-    const newWidget = {
-      id: `widget-speedometer-${Date.now()}`,
-      type: "speedometer",
       position: position,
       size: size,
     }
@@ -989,34 +846,6 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
       )
     }
 
-    // For speedometer widget (doesn't need an accessory)
-    if (widget.type === "speedometer") {
-      return (
-        <SpeedometerWidget
-          title="Vehicle Speed"
-          value={45}
-          maxValue={120}
-          unit="mph"
-          isEditing={isEditing}
-          onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
-          onMouseUp={() => handleWidgetMouseUp(widget.id)}
-          onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
-          onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
-          onTouchEnd={() => handleWidgetMouseUp(widget.id)}
-          onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
-        />
-      )
-    }
-
-    // For winch widget (special case)
-    if (widget.type === "winch") {
-      return (
-        <div className="h-full w-full">
-          <StandaloneWinchWidget title="Winch" />
-        </div>
-      )
-    }
-
     // For weather widget
     if (widget.type === "weather") {
       return (
@@ -1161,6 +990,25 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
             isOn={isOn}
             isEditing={isEditing}
             onToggle={() => handleToggleAccessory(widget.accessoryId, !isOn)}
+            onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
+            onMouseUp={() => handleWidgetMouseUp(widget.id)}
+            onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
+            onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
+            onTouchEnd={() => handleWidgetMouseUp(widget.id)}
+            onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
+          />
+        )
+      case "turn-signal":
+        return (
+          <ToggleWidget
+            title="Turn Lights"
+            accessoryType="turn_signal"
+            isConnected={isConnected}
+            isOn={isOn}
+            isEditing={isEditing}
+            onToggle={() => handleToggleAccessory(widget.accessoryId, !isOn)}
+            accessoryId={accessory.accessoryID}
+            onUpdateUserData={handleLocalUserDataUpdate}
             onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
             onMouseUp={() => handleWidgetMouseUp(widget.id)}
             onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
@@ -1360,10 +1208,6 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
                 >
                   <Plus className="h-4 w-4" />
                   Add Accessory Widget
-                </Button>
-                <Button variant="outline" size="sm" onClick={handleAddSpeedometer} className="flex items-center gap-1">
-                  <Plus className="h-4 w-4" />
-                  Add Speedometer
                 </Button>
               </div>
             )}
