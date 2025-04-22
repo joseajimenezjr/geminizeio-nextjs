@@ -30,6 +30,20 @@ export function AddDeviceFlow({ open, onClose }: AddDeviceFlowProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
+  // Reset all state when the flow is closed
+  useEffect(() => {
+    if (!open) {
+      // Reset all state variables to their initial values
+      setStep("select-type")
+      setSelectedDeviceType(null)
+      setSelectedAccessoryType(null)
+      setSelectedRelayAccessoryType(null)
+      setIsRelayHubAvailable(false)
+      setIsLoading(false)
+      setErrorMessage(null)
+    }
+  }, [open])
+
   useEffect(() => {
     if (open) {
       // Add a class to the body to hide the bottom navigation
