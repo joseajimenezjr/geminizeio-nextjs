@@ -22,6 +22,7 @@ export default function ControlCenterV2Page() {
   const [showAddDeviceFlow, setShowAddDeviceFlow] = useState(false)
   const [lastAddedDevice, setLastAddedDevice] = useState<LastAddedDevice | null>(null)
   const [addDeviceMode, setAddDeviceMode] = useState<"hub-only" | "all" | "accessory-only">("all")
+  const [hasTurnSignalAccessory, setHasTurnSignalAccessory] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -44,11 +45,11 @@ export default function ControlCenterV2Page() {
         console.log("Devices by type:")
         const hasHub = hubDetails.some((device: any) => device.deviceType === "hub")
         const hasRelayHub = hubDetails.some((device: any) => device.deviceType === "relay_hub")
-        const hasTurnSignal = hubDetails.some((device: any) => device.deviceType === "turn_signal")
+        const hasTurnSignalKit = hubDetails.some((device: any) => device.deviceType === "turn_signal")
 
         console.log("- Hub:", hasHub ? "Yes" : "No")
         console.log("- Relay Hub:", hasRelayHub ? "Yes" : "No")
-        console.log("- Turn Signal Kit:", hasTurnSignal ? "Yes" : "No")
+        console.log("- Turn Signal Kit:", hasTurnSignalKit ? "Yes" : "No")
 
         // If there are any devices, log them individually
         if (hubDetails.length > 0) {
@@ -90,6 +91,10 @@ export default function ControlCenterV2Page() {
         } else {
           console.log("No last added device found in localStorage")
         }
+
+        // Check if user has a turn_signal accessory
+        const hasTurnSignal = accessories.some((accessory: any) => accessory.accessoryType === "turn-signal")
+        setHasTurnSignalAccessory(hasTurnSignal)
       } catch (error) {
         console.error("Error getting user data:", error)
         setUserData(null)
@@ -227,7 +232,11 @@ export default function ControlCenterV2Page() {
         )}
 
         {(screenToShow === "control-center" || (screenToShow === "add-accessory" && !lastAddedDevice)) && (
-          <ControlCenterV2 userData={userData} setUserData={setUserData} />
+          <ControlCenterV2
+            userData={userData}
+            setUserData={setUserData}
+            hasTurnSignalAccessory={hasTurnSignalAccessory}
+          />
         )}
       </div>
 
