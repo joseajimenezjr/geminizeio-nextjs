@@ -7,6 +7,8 @@ import { BottomNav } from "@/components/layout/bottom-nav"
 import { AutoConnectHandler } from "@/components/dashboard/auto-connect-handler"
 import { getUserData } from "@/app/actions/user-data"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
 
 export default function ControlCenterV2Page() {
   const [userData, setUserData] = useState<any>(null)
@@ -50,6 +52,13 @@ export default function ControlCenterV2Page() {
   const vehicleName = userData.vehicleName || userData.vehicle_name || "My Vehicle"
   const vehicleType = userData.vehicleType || userData.vehicle_type || "Vehicle"
 
+  // Check if user has any hub or turn signal devices
+  const hubDetails = userData.hubDetails || []
+  const hasHubOrTurnSignal = hubDetails.some(
+    (device: any) =>
+      device.deviceType === "relay_hub" || device.deviceType === "hub" || device.deviceType === "turn_signal",
+  )
+
   return (
     <main className="flex min-h-screen flex-col pb-16">
       <DashboardHeaderWrapper
@@ -61,7 +70,23 @@ export default function ControlCenterV2Page() {
       <div className="container px-4 py-4 flex-1">
         {/* Add the AutoConnectHandler component */}
         <AutoConnectHandler />
-        <ControlCenterV2 userData={userData} setUserData={setUserData} />
+
+        {!hasHubOrTurnSignal ? (
+          <div className="flex flex-col items-center justify-center h-full text-center space-y-6 py-12">
+            <h2 className="text-2xl font-bold">Welcome to a new way of managing your off-road accessories</h2>
+            <p className="text-muted-foreground max-w-md">
+              Get started by adding a hub or turn signal kit to your vehicle to unlock the full potential of your
+              control center.
+            </p>
+            <Link href="/add-hub">
+              <Button size="lg" className="mt-4">
+                Add hub or turn signal kit
+              </Button>
+            </Link>
+          </div>
+        ) : (
+          <ControlCenterV2 userData={userData} setUserData={setUserData} />
+        )}
       </div>
 
       <BottomNav />
