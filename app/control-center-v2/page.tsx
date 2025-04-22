@@ -64,6 +64,11 @@ export default function ControlCenterV2Page() {
           console.log("No devices found")
         }
 
+        // Log accessories
+        const accessories = data.accessories || []
+        console.log("Accessories:", accessories)
+        console.log("Number of accessories:", accessories.length)
+
         // Check for last added device in localStorage
         const storedDevice = localStorage.getItem("lastAddedDevice")
         if (storedDevice) {
@@ -167,6 +172,21 @@ export default function ControlCenterV2Page() {
       device.deviceType === "hub" || device.deviceType === "relay_hub" || device.deviceType === "turn_signal",
   )
 
+  // Check if user has any accessories
+  const accessories = userData.accessories || []
+  const hasAccessories = accessories.length > 0
+
+  // Determine which screen to show
+  let screenToShow: "add-hub" | "add-accessory" | "control-center" = "add-hub"
+
+  if (hasHubOrTurnSignal) {
+    if (hasAccessories) {
+      screenToShow = "control-center"
+    } else {
+      screenToShow = "add-accessory"
+    }
+  }
+
   return (
     <main className="flex min-h-screen flex-col pb-16">
       <DashboardHeaderWrapper
@@ -179,7 +199,7 @@ export default function ControlCenterV2Page() {
         {/* Add the AutoConnectHandler component */}
         <AutoConnectHandler />
 
-        {!hasHubOrTurnSignal ? (
+        {screenToShow === "add-hub" && (
           <div className="flex flex-col items-center justify-center h-full text-center space-y-6 py-12">
             <h2 className="text-2xl font-bold">Welcome to a new way of managing your off-road accessories</h2>
             <p className="text-muted-foreground max-w-md">
@@ -190,7 +210,9 @@ export default function ControlCenterV2Page() {
               Add hub or turn signal kit
             </Button>
           </div>
-        ) : lastAddedDevice ? (
+        )}
+
+        {screenToShow === "add-accessory" && lastAddedDevice && (
           <div className="flex flex-col items-center justify-center h-full text-center space-y-6 py-12">
             <h2 className="text-2xl font-bold">
               Congratulations! You added your {getDeviceTypeDisplayName(lastAddedDevice.type)}
@@ -202,7 +224,9 @@ export default function ControlCenterV2Page() {
               Add accessories
             </Button>
           </div>
-        ) : (
+        )}
+
+        {(screenToShow === "control-center" || (screenToShow === "add-accessory" && !lastAddedDevice)) && (
           <ControlCenterV2 userData={userData} setUserData={setUserData} />
         )}
       </div>
