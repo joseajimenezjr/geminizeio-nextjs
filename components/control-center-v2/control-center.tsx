@@ -1213,7 +1213,10 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
 
         {widgets.length === 0 && (
           <div className="flex flex-col items-center justify-center p-8 bg-muted/30 rounded-lg border border-dashed">
-            <p className="text-muted-foreground mb-4">No widgets in your control center</p>
+            <p className="text-center text-primary mb-4 px-4">
+              Lets add some widgets to the control center! Click on edit layout button to see the widgets you are able
+              to add based on your accessories added thus far!
+            </p>
             {isEditing && (
               <div className="flex gap-2">
                 <Button
