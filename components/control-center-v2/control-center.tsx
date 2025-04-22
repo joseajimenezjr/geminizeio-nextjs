@@ -21,16 +21,14 @@ import { RPMDisplayWidget } from "./widgets/rpm-display-widget"
 import { BatteryWidget } from "./widgets/battery-widget"
 import { TemperatureWidget } from "./widgets/temperature-widget"
 import { TimerWidget } from "./widgets/timer-widget"
-import { TurnSignalWidget } from "./widgets/turn-signal-widget"
-import { HazardLightWidget } from "./widgets/hazard-light-widget"
 
 // Add a style tag for the long-press visual indicator
 const longPressStyle = `
-.long-press-active {
-  opacity: 0.7;
-  transform: scale(0.98);
-  transition: all 0.2s ease;
-}
+ .long-press-active {
+   opacity: 0.7;
+   transform: scale(0.98);
+   transition: all 0.2s ease;
+ }
 `
 
 // Enable responsiveness with the WidthProvider
@@ -66,10 +64,9 @@ const GRID_CONFIG = {
 interface ControlCenterV2Props {
   userData: any
   setUserData: React.Dispatch<React.SetStateAction<any>>
-  hasTurnSignalAccessory: boolean
 }
 
-export function ControlCenterV2({ userData, setUserData, hasTurnSignalAccessory }: ControlCenterV2Props) {
+export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props) {
   const { accessories, toggleAccessoryStatus, isLoading, updateAccessoryAttribute } = useAccessories()
   const { toast } = useToast()
   const [isEditing, setIsEditing] = useState(false)
@@ -274,8 +271,6 @@ export function ControlCenterV2({ userData, setUserData, hasTurnSignalAccessory 
         return "battery"
       case "turn-signal":
         return "turn-signal"
-      case "hazard-light":
-        return "hazard-light"
       default:
         return "light"
     }
@@ -936,32 +931,6 @@ export function ControlCenterV2({ userData, setUserData, hasTurnSignalAccessory 
             min={0}
             max={100}
             unit="%"
-            isEditing={isEditing}
-            onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
-            onMouseUp={() => handleWidgetMouseUp(widget.id)}
-            onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
-            onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
-            onTouchEnd={() => handleWidgetMouseUp(widget.id)}
-            onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
-          />
-        )
-      case "turn-signal":
-        return (
-          <TurnSignalWidget
-            title={accessory.accessoryName}
-            isEditing={isEditing}
-            onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
-            onMouseUp={() => handleWidgetMouseUp(widget.id)}
-            onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
-            onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
-            onTouchEnd={() => handleWidgetMouseUp(widget.id)}
-            onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
-          />
-        )
-      case "hazard-light":
-        return (
-          <HazardLightWidget
-            title={accessory.accessoryName}
             isEditing={isEditing}
             onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
             onMouseUp={() => handleWidgetMouseUp(widget.id)}
