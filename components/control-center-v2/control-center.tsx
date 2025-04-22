@@ -7,6 +7,8 @@ import { Responsive, WidthProvider } from "react-grid-layout"
 import { Button } from "@/components/ui/button"
 import { Plus, Save, Undo, Settings, Trash } from "lucide-react"
 import { WidgetLibrary } from "./widget-library"
+import { UtilityLibrary } from "./utility-library"
+import { OBDIILibrary } from "./obdii-library"
 import { ToggleWidget } from "./widgets/toggle-widget"
 import { GaugeWidget } from "./widgets/gauge-widget"
 import { UtilityWidget } from "./widgets/utility-widget"
@@ -18,17 +20,19 @@ import "react-resizable/css/styles.css"
 import { WeatherWidget } from "./widgets/weather-widget"
 import { SpeedDisplayWidget } from "./widgets/speed-display-widget"
 import { RPMDisplayWidget } from "./widgets/rpm-display-widget"
+import { ChaseLightWidget } from "./widgets/chase-light-widget"
+import { RGBLightWidget } from "./widgets/rgb-light-widget"
 import { BatteryWidget } from "./widgets/battery-widget"
 import { TemperatureWidget } from "./widgets/temperature-widget"
 import { TimerWidget } from "./widgets/timer-widget"
 
 // Add a style tag for the long-press visual indicator
 const longPressStyle = `
- .long-press-active {
-   opacity: 0.7;
-   transform: scale(0.98);
-   transition: all 0.2s ease;
- }
+  .long-press-active {
+    opacity: 0.7;
+    transform: scale(0.98);
+    transition: all 0.2s ease;
+  }
 `
 
 // Enable responsiveness with the WidthProvider
@@ -269,7 +273,7 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
         return "rgbLight"
       case "battery":
         return "battery"
-      case "turn-signal":
+      case "turn_signal":
         return "turn-signal"
       default:
         return "light"
@@ -940,6 +944,79 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
             onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
           />
         )
+      case "chaseLight":
+        return (
+          <ChaseLightWidget
+            title={accessory.accessoryName}
+            accessoryId={widget.accessoryId}
+            isConnected={isConnected}
+            isOn={isOn}
+            relayPosition={accessory.relayPosition}
+            isEditing={isEditing}
+            onToggle={() => handleToggleAccessory(widget.accessoryId, !isOn)}
+            onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
+            onMouseUp={() => handleWidgetMouseUp(widget.id)}
+            onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
+            onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
+            onTouchEnd={() => handleWidgetMouseUp(widget.id)}
+            onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
+          />
+        )
+      case "rgbLight":
+        return (
+          <RGBLightWidget
+            title={accessory.accessoryName}
+            accessoryId={widget.accessoryId}
+            isConnected={isConnected}
+            isOn={isOn}
+            relayPosition={accessory.relayPosition}
+            lastRGBColor={accessory.lastRGBColor || "#FF0000"}
+            isEditing={isEditing}
+            onToggle={() => handleToggleAccessory(widget.accessoryId, !isOn)}
+            onColorChange={(color) => handleRGBColorChange(widget.accessoryId, color)}
+            onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
+            onMouseUp={() => handleWidgetMouseUp(widget.id)}
+            onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
+            onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
+            onTouchEnd={() => handleWidgetMouseUp(widget.id)}
+            onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
+          />
+        )
+      case "temperature":
+        return (
+          <TemperatureWidget
+            title={accessory.accessoryName}
+            isConnected={isConnected}
+            isOn={isOn}
+            isEditing={isEditing}
+            onToggle={() => handleToggleAccessory(widget.accessoryId, !isOn)}
+            onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
+            onMouseUp={() => handleWidgetMouseUp(widget.id)}
+            onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
+            onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
+            onTouchEnd={() => handleWidgetMouseUp(widget.id)}
+            onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
+          />
+        )
+      case "turn-signal":
+        return (
+          <ToggleWidget
+            title="Turn Lights"
+            accessoryType="turn_signal"
+            isConnected={isConnected}
+            isOn={isOn}
+            isEditing={isEditing}
+            onToggle={() => handleToggleAccessory(widget.accessoryId, !isOn)}
+            accessoryId={accessory.accessoryID}
+            onUpdateUserData={handleLocalUserDataUpdate}
+            onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
+            onMouseUp={() => handleWidgetMouseUp(widget.id)}
+            onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
+            onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
+            onTouchEnd={() => handleWidgetMouseUp(widget.id)}
+            onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
+          />
+        )
       default:
         return (
           <div
@@ -1021,6 +1098,34 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
                 <Plus className="h-4 w-4" />
                 Add Accessory
               </Button>
+              <Button
+                variant={showUtilityLibrary ? "default" : "outline"}
+                size="sm"
+                onClick={() => {
+                  setShowUtilityLibrary(!showUtilityLibrary)
+                  setShowLibrary(false)
+                  setShowOBDIILibrary(false)
+                }}
+                className="flex items-center gap-1"
+              >
+                <Plus className="h-4 w-4" />
+                Add Utility
+              </Button>
+              {hasOBD2Accessory && (
+                <Button
+                  variant={showOBDIILibrary ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setShowOBDIILibrary(!showOBDIILibrary)
+                    setShowLibrary(false)
+                    setShowUtilityLibrary(false)
+                  }}
+                  className="flex items-center gap-1"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add OBD2
+                </Button>
+              )}
             </div>
           </div>
         )}
@@ -1036,12 +1141,34 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
           </div>
         )}
 
+        {showUtilityLibrary && (
+          <div className="mb-6">
+            <UtilityLibrary
+              existingWidgets={widgets}
+              onAddUtility={handleAddUtilityWidget}
+              onClose={() => setShowUtilityLibrary(false)}
+              hasTemperatureSensor={hasTemperatureReader}
+              temperatureServiceUUID={TEMPERATURE_SERVICE_UUID}
+            />
+          </div>
+        )}
+
+        {showOBDIILibrary && (
+          <div className="mb-6">
+            <OBDIILibrary
+              existingWidgets={widgets}
+              onAddOBDII={handleAddOBDIIWidget}
+              onClose={() => setShowOBDIILibrary(false)}
+            />
+          </div>
+        )}
+
         <ResponsiveGridLayout
           className="layout"
           layouts={layouts}
           breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-          cols={{ lg: 4, md: 4, sm: 4, xs: 2, xxs: 1 }}
-          rowHeight={150}
+          cols={{ lg: GRID_CONFIG.cols, md: GRID_CONFIG.cols, sm: GRID_CONFIG.cols, xs: 2, xxs: 1 }}
+          rowHeight={GRID_CONFIG.rowHeight}
           isDraggable={isEditing}
           isResizable={false}
           preventCollision={false}
@@ -1070,12 +1197,7 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
 
         {widgets.length === 0 && (
           <div className="flex flex-col items-center justify-center p-8 bg-muted/30 rounded-lg border border-dashed">
-            <div className="rounded-lg bg-black p-8 text-white text-center">
-              <p className="font-bold" style={{ color: "hsl(var(--primary))" }}>
-                Lets add some widgets to the control center! Click on edit layout button to see the widgets you are able
-                to add based on your accessories added thus far!
-              </p>
-            </div>
+            <p className="text-muted-foreground mb-4">No widgets in your control center</p>
             {isEditing && (
               <div className="flex gap-2">
                 <Button
