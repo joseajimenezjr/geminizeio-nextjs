@@ -7,12 +7,13 @@ import { BottomNav } from "@/components/layout/bottom-nav"
 import { AutoConnectHandler } from "@/components/dashboard/auto-connect-handler"
 import { getUserData } from "@/app/actions/user-data"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { AddDeviceFlow } from "@/components/add-device/add-device-flow"
 
 export default function ControlCenterV2Page() {
   const [userData, setUserData] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [showAddDeviceFlow, setShowAddDeviceFlow] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -30,6 +31,22 @@ export default function ControlCenterV2Page() {
 
     fetchData()
   }, [])
+
+  const handleAddDeviceClick = () => {
+    setShowAddDeviceFlow(true)
+  }
+
+  const handleCloseAddDeviceFlow = () => {
+    setShowAddDeviceFlow(false)
+    // Refresh user data after adding a device
+    getUserData()
+      .then((data) => {
+        setUserData(data)
+      })
+      .catch((error) => {
+        console.error("Error refreshing user data:", error)
+      })
+  }
 
   if (isLoading) {
     return (
@@ -78,11 +95,9 @@ export default function ControlCenterV2Page() {
               Get started by adding a hub or turn signal kit to your vehicle to unlock the full potential of your
               control center.
             </p>
-            <Link href="/add-hub">
-              <Button size="lg" className="mt-4">
-                Add hub or turn signal kit
-              </Button>
-            </Link>
+            <Button size="lg" className="mt-4" onClick={handleAddDeviceClick}>
+              Add hub or turn signal kit
+            </Button>
           </div>
         ) : (
           <ControlCenterV2 userData={userData} setUserData={setUserData} />
@@ -90,6 +105,9 @@ export default function ControlCenterV2Page() {
       </div>
 
       <BottomNav />
+
+      {/* Add Device Flow */}
+      <AddDeviceFlow open={showAddDeviceFlow} onClose={handleCloseAddDeviceFlow} />
     </main>
   )
 }
