@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { ControlCenterV2 } from "@/components/control-center-v2/control-center"
 import { DashboardHeaderWrapper } from "@/components/dashboard/dashboard-header-wrapper"
 import { BottomNav } from "@/components/layout/bottom-nav"
@@ -15,22 +15,22 @@ export default function ControlCenterV2Page() {
   const [showAddDeviceFlow, setShowAddDeviceFlow] = useState(false)
   const [limitDeviceOptions, setLimitDeviceOptions] = useState(false)
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true)
-      try {
-        const data = await getUserData()
-        setUserData(data)
-      } catch (error) {
-        console.error("Error getting user data:", error)
-        setUserData(null)
-      } finally {
-        setIsLoading(false)
-      }
+  const fetchData = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const data = await getUserData()
+      setUserData(data)
+    } catch (error) {
+      console.error("Error getting user data:", error)
+      setUserData(null)
+    } finally {
+      setIsLoading(false)
     }
-
-    fetchData()
   }, [])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
   if (isLoading) {
     return (
