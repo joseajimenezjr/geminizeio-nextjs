@@ -33,8 +33,8 @@ export function AccessoryTypeSelector({
     accessoryTypes = [
       {
         id: "turn_signal",
-        title: "Turn Signal",
-        description: "Add a turn signal to your vehicle",
+        title: "Turn Signal with Hazard Light Support",
+        description: "Add a turn signal with hazard functionality to your vehicle",
         icon: TurnRight,
         color: "text-amber-500",
         bgColor: "bg-amber-500/10",
