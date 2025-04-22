@@ -38,6 +38,7 @@ export function LoginForm() {
   const supabase = createClientComponentClient()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
   const [signUpData, setSignUpData] = useState<SignUpFormData>({
     email: "",
     password: "",
@@ -53,6 +54,9 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [debugInfo, setDebugInfo] = useState<string | null>(null)
+  const [passwordError, setPasswordError] = useState<string | null>(null)
+  const [confirmPasswordError, setConfirmPasswordError] = useState<string | null>(null)
+  const [passwordMatch, setPasswordMatch] = useState<boolean>(false)
 
   // State to track if we're in registration mode
   const [isRegistering, setIsRegistering] = useState(false)
@@ -276,6 +280,22 @@ export function LoginForm() {
     return passwordRegex.test(password)
   }
 
+  // Confirm password validation function
+  useEffect(() => {
+    if (signUpData.confirmPassword) {
+      if (signUpData.password !== signUpData.confirmPassword) {
+        setConfirmPasswordError("Passwords do not match.")
+        setPasswordMatch(false)
+      } else {
+        setConfirmPasswordError(null)
+        setPasswordMatch(true)
+      }
+    } else {
+      setConfirmPasswordError(null)
+      setPasswordMatch(false)
+    }
+  }, [signUpData.password, signUpData.confirmPassword])
+
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader className="text-center">
@@ -373,10 +393,12 @@ export function LoginForm() {
                   id="password"
                   name="password"
                   type="password"
+                  placeholder="Password"
                   value={signUpData.password}
                   onChange={handleSignUpInputChange}
                   required
                 />
+                {passwordError && <p className="text-xs text-red-500">{passwordError}</p>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirm Password</Label>
@@ -384,10 +406,22 @@ export function LoginForm() {
                   id="confirmPassword"
                   name="confirmPassword"
                   type="password"
+                  placeholder="Confirm Password"
                   value={signUpData.confirmPassword}
                   onChange={handleSignUpInputChange}
+                  onBlur={() => {
+                    if (signUpData.password !== signUpData.confirmPassword) {
+                      setConfirmPasswordError("Passwords do not match.")
+                      setPasswordMatch(false)
+                    } else {
+                      setConfirmPasswordError(null)
+                      setPasswordMatch(true)
+                    }
+                  }}
                   required
                 />
+                {confirmPasswordError && <p className="text-xs text-red-500">{confirmPasswordError}</p>}
+                {passwordMatch && <p className="text-xs text-green-500">Passwords match!</p>}
               </div>
             </div>
 
@@ -490,7 +524,7 @@ export function LoginForm() {
             )}
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full" disabled={loading || !passwordMatch}>
               {loading ? "Creating Account..." : "Create Account"}
             </Button>
             <div className="text-center text-sm flex flex-col">
