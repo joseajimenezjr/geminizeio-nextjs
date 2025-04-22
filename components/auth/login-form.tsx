@@ -280,6 +280,30 @@ export function LoginForm() {
     return passwordRegex.test(password)
   }
 
+  // Password requirements state
+  const [passwordRequirements, setPasswordRequirements] = useState({
+    length: false,
+    uppercase: false,
+    lowercase: false,
+    number: false,
+    special: false,
+  })
+
+  // Password validation function
+  useEffect(() => {
+    const checkPasswordRequirements = (password: string) => {
+      setPasswordRequirements({
+        length: password.length >= 8,
+        uppercase: /[A-Z]/.test(password),
+        lowercase: /[a-z]/.test(password),
+        number: /\d/.test(password),
+        special: /[!@#$%^&*()_+{}[\]:;<>,.?~\\/-]/.test(password),
+      })
+    }
+
+    checkPasswordRequirements(signUpData.password)
+  }, [signUpData.password])
+
   // Confirm password validation function
   useEffect(() => {
     if (signUpData.confirmPassword) {
@@ -398,6 +422,19 @@ export function LoginForm() {
                   onChange={handleSignUpInputChange}
                   required
                 />
+                <ul className="mt-2 ml-4 text-xs text-muted-foreground list-disc">
+                  <li className={passwordRequirements.length ? "text-green-500" : ""}>At least 8 characters long</li>
+                  <li className={passwordRequirements.uppercase ? "text-green-500" : ""}>
+                    At least one uppercase letter
+                  </li>
+                  <li className={passwordRequirements.lowercase ? "text-green-500" : ""}>
+                    At least one lowercase letter
+                  </li>
+                  <li className={passwordRequirements.number ? "text-green-500" : ""}>At least one number</li>
+                  <li className={passwordRequirements.special ? "text-green-500" : ""}>
+                    At least one special character
+                  </li>
+                </ul>
                 {passwordError && <p className="text-xs text-red-500">{passwordError}</p>}
               </div>
               <div className="space-y-2">
