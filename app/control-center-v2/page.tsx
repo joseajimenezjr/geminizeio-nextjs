@@ -7,10 +7,12 @@ import { BottomNav } from "@/components/layout/bottom-nav"
 import { AutoConnectHandler } from "@/components/dashboard/auto-connect-handler"
 import { getUserData } from "@/app/actions/user-data"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
+import { AddDeviceFlow } from "@/components/add-device/add-device-flow"
 
 export default function ControlCenterV2Page() {
   const [userData, setUserData] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [showAddDeviceFlow, setShowAddDeviceFlow] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -61,8 +63,15 @@ export default function ControlCenterV2Page() {
       <div className="container px-4 py-4 flex-1">
         {/* Add the AutoConnectHandler component */}
         <AutoConnectHandler />
-        <ControlCenterV2 userData={userData} setUserData={setUserData} />
+        <ControlCenterV2
+          userData={userData}
+          setUserData={setUserData}
+          showAddDeviceFlow={showAddDeviceFlow}
+          setShowAddDeviceFlow={setShowAddDeviceFlow}
+        />
       </div>
+
+      <AddDeviceFlow open={showAddDeviceFlow} onClose={() => setShowAddDeviceFlow(false)} />
 
       <BottomNav />
     </main>

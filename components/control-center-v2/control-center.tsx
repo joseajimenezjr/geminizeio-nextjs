@@ -24,7 +24,7 @@ import { BatteryWidget } from "./widgets/battery-widget"
 import { TemperatureWidget } from "./widgets/temperature-widget"
 import { TimerWidget } from "./widgets/timer-widget"
 import { Button } from "@/components/ui/button"
-import { Plus } from "lucide-react"
+import { AddDeviceFlow } from "@/components/add-device/add-device-flow"
 
 // Add a style tag for the long-press visual indicator
 const pulseAnimationStyle = `
@@ -125,6 +125,7 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
   const [showOBDIILibrary, setShowOBDIILibrary] = useState(false)
   const [hasOBD2Accessory, setHasOBD2Accessory] = useState(false)
   const [addDeviceOpen, setAddDeviceOpen] = useState(false)
+  const [showAddDeviceFlow, setShowAddDeviceFlow] = useState(false)
 
   // Create a local state to track accessory statuses for immediate UI updates
   const [localAccessoryStatuses, setLocalAccessoryStatuses] = useState<Record<string, boolean>>({})
@@ -1163,9 +1164,8 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
       {widgets.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-full">
           <h2 className="text-2xl font-bold mb-4">Welcome to a new way of managing your off-road accessories</h2>
-          <Button onClick={() => setAddDeviceOpen(true)} className="bg-primary text-primary-foreground">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Accessory
+          <Button onClick={() => setShowAddDeviceFlow(true)} className="mt-4">
+            Add Your First Device
           </Button>
         </div>
       ) : (
@@ -1201,6 +1201,7 @@ export function ControlCenterV2({ vehicleName, vehicleType, userData, setUserDat
           ))}
         </ResponsiveGridLayout>
       )}
+      <AddDeviceFlow open={showAddDeviceFlow} onClose={() => setShowAddDeviceFlow(false)} />
     </div>
   )
 }
