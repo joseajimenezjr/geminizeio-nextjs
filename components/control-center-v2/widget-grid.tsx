@@ -7,6 +7,8 @@ import { SpeedDisplayWidget } from "./widgets/speed-display-widget"
 import { RPMDisplayWidget } from "./widgets/rpm-display-widget"
 import { BatteryWidget } from "./widgets/battery-widget"
 import { TemperatureWidget } from "./widgets/temperature-widget"
+import { TurnSignalWidget } from "./widgets/turn-signal-widget"
+import { HazardLightWidget } from "./widgets/hazard-light-widget"
 
 interface WidgetGridProps {
   widgets: any[]
@@ -88,6 +90,10 @@ export function WidgetGrid({
             onTouchCancel={() => onTouchCancel?.(widget.id)}
           />
         )
+      case "turn-signal":
+        return <TurnSignalWidget />
+      case "hazard-light":
+        return <HazardLightWidget />
       default:
         return <div>Unknown widget type: {widget.type}</div>
     }
