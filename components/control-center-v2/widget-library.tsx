@@ -6,8 +6,7 @@ import {
   Gauge,
   GaugeIcon as Speedometer,
   CloudLightningIcon as ChaseLightIcon,
-  Navigation,
-  AlertTriangle,
+  Palette,
 } from "lucide-react"
 import { X } from "lucide-react"
 
@@ -31,36 +30,6 @@ export function WidgetLibrary({ accessories, existingWidgets, onAddWidget, onClo
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {accessories.map((accessory) => {
             const hasWidget = existingWidgets.some((widget) => widget.accessoryId === accessory.accessoryID)
-            const isTurnSignal = accessory.accessoryType === "turn-signal"
-            const isHazardLight = accessory.accessoryType === "hazard-light"
-
-            let icon = null
-            switch (accessory.accessoryType) {
-              case "light":
-                icon = <Lightbulb className="h-8 w-8 mb-2" />
-                break
-              case "utility":
-                icon = <Wrench className="h-8 w-8 mb-2" />
-                break
-              case "gauge":
-                icon = <Gauge className="h-8 w-8 mb-2" />
-                break
-              case "obd2":
-                icon = <Speedometer className="h-8 w-8 mb-2" />
-                break
-              case "chaseLight":
-                icon = <ChaseLightIcon className="h-8 w-8 mb-2" />
-                break
-              case "turn-signal":
-                icon = <Navigation className="h-8 w-8 mb-2" />
-                break
-              case "hazard-light":
-                icon = <AlertTriangle className="h-8 w-8 mb-2" />
-                break
-              default:
-                icon = <Lightbulb className="h-8 w-8 mb-2" />
-                break
-            }
 
             return (
               <div
@@ -75,7 +44,12 @@ export function WidgetLibrary({ accessories, existingWidgets, onAddWidget, onClo
                   }
                 }}
               >
-                {icon}
+                {accessory.accessoryType === "light" && <Lightbulb className="h-8 w-8 mb-2" />}
+                {accessory.accessoryType === "utility" && <Wrench className="h-8 w-8 mb-2" />}
+                {accessory.accessoryType === "gauge" && <Gauge className="h-8 w-8 mb-2" />}
+                {accessory.accessoryType === "obd2" && <Speedometer className="h-8 w-8 mb-2" />}
+                {accessory.accessoryType === "chaseLight" && <ChaseLightIcon className="h-8 w-8 mb-2" />}
+                {accessory.accessoryType === "rgbLight" && <Palette className="h-8 w-8 mb-2" />}
                 <div className="font-medium">{accessory.accessoryName}</div>
                 <div className="text-xs text-muted-foreground">{accessory.accessoryType}</div>
                 {hasWidget && <div className="text-xs text-amber-500 mt-1">Already added</div>}
