@@ -76,6 +76,7 @@ export default function ControlCenterV2Page() {
         open={showAddDeviceFlow}
         onClose={() => setShowAddDeviceFlow(false)}
         limitToHubDevices={limitDeviceOptions}
+        setUserData={setUserData}
       />
 
       <BottomNav />

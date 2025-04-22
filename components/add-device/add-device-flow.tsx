@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect } from "react"
 import { BottomSheet } from "@/components/ui/bottom-sheet"
 import { DeviceTypeSelector } from "@/components/add-device/device-type-selector"
@@ -16,9 +18,10 @@ interface AddDeviceFlowProps {
   open: boolean
   onClose: () => void
   limitToHubDevices?: boolean
+  setUserData: React.Dispatch<React.SetStateAction<any>>
 }
 
-export function AddDeviceFlow({ open, onClose, limitToHubDevices = false }: AddDeviceFlowProps) {
+export function AddDeviceFlow({ open, onClose, limitToHubDevices = false, setUserData }: AddDeviceFlowProps) {
   const router = useRouter()
   const { toast } = useToast()
   const supabase = createClientComponentClient()
@@ -238,10 +241,11 @@ export function AddDeviceFlow({ open, onClose, limitToHubDevices = false }: AddD
       const updatedHubDetails = [...hubDetails, enhancedDeviceDetails]
 
       // Update the profile with the new hubDetails array
-      const { error: updateError } = await supabase
+      const { data: updateData, error: updateError } = await supabase
         .from("Profiles")
         .update({ hubDetails: updatedHubDetails })
         .eq("id", session.user.id)
+        .select()
 
       if (updateError) {
         throw updateError
@@ -251,6 +255,19 @@ export function AddDeviceFlow({ open, onClose, limitToHubDevices = false }: AddD
         title: "Success",
         description: `${deviceDetails.deviceType.replace("_", " ")} added successfully`,
       })
+
+      // Update the user data in the parent component
+      if (setUserData) {
+        setUserData((prevUserData: any) => {
+          // Create a deep copy of the previous user data
+          const updatedUserData = JSON.parse(JSON.stringify(prevUserData))
+
+          // Update the hubDetails array in the copied object
+          updatedUserData.hubDetails = updatedHubDetails
+
+          return updatedUserData
+        })
+      }
 
       // Close the flow after a short delay
       setTimeout(() => {
