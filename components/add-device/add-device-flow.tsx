@@ -28,6 +28,7 @@ export function AddDeviceFlow({ open, onClose, initialMode = "all" }: AddDeviceF
   const [selectedAccessoryType, setSelectedAccessoryType] = useState<string | null>(null)
   const [selectedRelayAccessoryType, setSelectedRelayAccessoryType] = useState<string | null>(null)
   const [isRelayHubAvailable, setIsRelayHubAvailable] = useState<boolean>(false)
+  const [isTurnSignalKitAvailable, setIsTurnSignalKitAvailable] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [hasHubOrTurnSignal, setHasHubOrTurnSignal] = useState<boolean>(false)
@@ -57,6 +58,7 @@ export function AddDeviceFlow({ open, onClose, initialMode = "all" }: AddDeviceF
       setSelectedAccessoryType(null)
       setSelectedRelayAccessoryType(null)
       setIsRelayHubAvailable(false)
+      setIsTurnSignalKitAvailable(false)
       setIsLoading(false)
       setErrorMessage(null)
     }
@@ -99,11 +101,13 @@ export function AddDeviceFlow({ open, onClose, initialMode = "all" }: AddDeviceF
           device.deviceType === "hub" || device.deviceType === "relay_hub" || device.deviceType === "turn_signal",
       )
 
-      // Check specifically for relay hub
+      // Check specifically for relay hub and turn signal kit
       const hasRelayHub = hubDetails.some((device: any) => device.deviceType === "relay_hub")
+      const hasTurnSignalKit = hubDetails.some((device: any) => device.deviceType === "turn_signal")
 
       setHasHubOrTurnSignal(hasRequiredDevice)
       setIsRelayHubAvailable(hasRelayHub)
+      setIsTurnSignalKitAvailable(hasTurnSignalKit)
     } catch (error: any) {
       console.error("Error checking for devices:", error)
       toast({
@@ -150,20 +154,25 @@ export function AddDeviceFlow({ open, onClose, initialMode = "all" }: AddDeviceF
 
       // Check if user has any hub or relay hub configured
       const hubDetails = profileData?.hubDetails || []
-      const hasHub = hubDetails.some((device: any) => device.deviceType === "hub" || device.deviceType === "relay_hub")
+      const hasHub = hubDetails.some(
+        (device: any) =>
+          device.deviceType === "hub" || device.deviceType === "relay_hub" || device.deviceType === "turn_signal",
+      )
 
-      // Check specifically for relay hub
+      // Check specifically for relay hub and turn signal kit
       const hasRelayHub = hubDetails.some((device: any) => device.deviceType === "relay_hub")
+      const hasTurnSignalKit = hubDetails.some((device: any) => device.deviceType === "turn_signal")
 
       if (!hasHub) {
-        setErrorMessage("You need to set up a Hub or Relay Hub before adding accessories.")
+        setErrorMessage("You need to set up a Hub, Relay Hub, or Turn Signal Kit before adding accessories.")
         setStep("select-type") // Fall back to device selection if no hub is found
         setIsLoading(false)
         return
       }
 
-      // Set whether a relay hub is available
+      // Set whether a relay hub or turn signal kit is available
       setIsRelayHubAvailable(hasRelayHub)
+      setIsTurnSignalKitAvailable(hasTurnSignalKit)
 
       // Move to accessory type selection
       setStep("select-accessory-type")
@@ -235,20 +244,23 @@ export function AddDeviceFlow({ open, onClose, initialMode = "all" }: AddDeviceF
         // Check if user has any hub or relay hub configured
         const hubDetails = profileData?.hubDetails || []
         const hasHub = hubDetails.some(
-          (device: any) => device.deviceType === "hub" || device.deviceType === "relay_hub",
+          (device: any) =>
+            device.deviceType === "hub" || device.deviceType === "relay_hub" || device.deviceType === "turn_signal",
         )
 
-        // Check specifically for relay hub
+        // Check specifically for relay hub and turn signal kit
         const hasRelayHub = hubDetails.some((device: any) => device.deviceType === "relay_hub")
+        const hasTurnSignalKit = hubDetails.some((device: any) => device.deviceType === "turn_signal")
 
         if (!hasHub) {
-          setErrorMessage("You need to set up a Hub or Relay Hub before adding accessories.")
+          setErrorMessage("You need to set up a Hub, Relay Hub, or Turn Signal Kit before adding accessories.")
           setIsLoading(false)
           return
         }
 
-        // Set whether a relay hub is available
+        // Set whether a relay hub or turn signal kit is available
         setIsRelayHubAvailable(hasRelayHub)
+        setIsTurnSignalKitAvailable(hasTurnSignalKit)
 
         // Move to accessory type selection
         setStep("select-accessory-type")
@@ -459,7 +471,11 @@ export function AddDeviceFlow({ open, onClose, initialMode = "all" }: AddDeviceF
       )}
 
       {step === "select-accessory-type" && (
-        <AccessoryTypeSelector onSelect={handleAccessoryTypeSelect} isRelayHubAvailable={isRelayHubAvailable} />
+        <AccessoryTypeSelector
+          onSelect={handleAccessoryTypeSelect}
+          isRelayHubAvailable={isRelayHubAvailable}
+          isTurnSignalKitAvailable={isTurnSignalKitAvailable}
+        />
       )}
 
       {step === "select-relay-accessory-type" && (

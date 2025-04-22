@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { Wifi, Cable } from "lucide-react"
+import { Wifi, Cable, MoveRightIcon as TurnRight, LampWallDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface AccessoryTypeOption {
@@ -17,39 +17,70 @@ interface AccessoryTypeOption {
 interface AccessoryTypeSelectorProps {
   onSelect: (accessoryType: string) => void
   isRelayHubAvailable: boolean
+  isTurnSignalKitAvailable?: boolean
 }
 
-export function AccessoryTypeSelector({ onSelect, isRelayHubAvailable }: AccessoryTypeSelectorProps) {
-  // Define the accessory types based on whether a relay hub is available
-  const accessoryTypes: AccessoryTypeOption[] = isRelayHubAvailable
-    ? [
-        {
-          id: "relay_accessory",
-          title: "Relay Accessory",
-          description: "Add an accessory that connects through your Relay Hub",
-          icon: Cable,
-          color: "text-purple-500",
-          bgColor: "bg-purple-500/10",
-        },
-        {
-          id: "wireless_accessory",
-          title: "Wireless Accessory",
-          description: "Add an accessory that connects wirelessly to your Hub",
-          icon: Wifi,
-          color: "text-blue-500",
-          bgColor: "bg-blue-500/10",
-        },
-      ]
-    : [
-        {
-          id: "wireless_accessory",
-          title: "Wireless Accessory",
-          description: "Add an accessory that connects wirelessly to your Hub",
-          icon: Wifi,
-          color: "text-blue-500",
-          bgColor: "bg-blue-500/10",
-        },
-      ]
+export function AccessoryTypeSelector({
+  onSelect,
+  isRelayHubAvailable,
+  isTurnSignalKitAvailable = false,
+}: AccessoryTypeSelectorProps) {
+  // Define the accessory types based on what devices the user has
+  let accessoryTypes: AccessoryTypeOption[] = []
+
+  if (isTurnSignalKitAvailable) {
+    // If user has a turn signal kit, show turn signal and reverse light options
+    accessoryTypes = [
+      {
+        id: "turn_signal",
+        title: "Turn Signal",
+        description: "Add a turn signal to your vehicle",
+        icon: TurnRight,
+        color: "text-amber-500",
+        bgColor: "bg-amber-500/10",
+      },
+      {
+        id: "reverse_light",
+        title: "Reverse Light",
+        description: "Add a reverse light to your vehicle",
+        icon: LampWallDown,
+        color: "text-white",
+        bgColor: "bg-gray-500/10",
+      },
+    ]
+  } else if (isRelayHubAvailable) {
+    // If user has a relay hub, show relay and wireless accessory options
+    accessoryTypes = [
+      {
+        id: "relay_accessory",
+        title: "Relay Accessory",
+        description: "Add an accessory that connects through your Relay Hub",
+        icon: Cable,
+        color: "text-purple-500",
+        bgColor: "bg-purple-500/10",
+      },
+      {
+        id: "wireless_accessory",
+        title: "Wireless Accessory",
+        description: "Add an accessory that connects wirelessly to your Hub",
+        icon: Wifi,
+        color: "text-blue-500",
+        bgColor: "bg-blue-500/10",
+      },
+    ]
+  } else {
+    // If user only has a regular hub, just show wireless accessory option
+    accessoryTypes = [
+      {
+        id: "wireless_accessory",
+        title: "Wireless Accessory",
+        description: "Add an accessory that connects wirelessly to your Hub",
+        icon: Wifi,
+        color: "text-blue-500",
+        bgColor: "bg-blue-500/10",
+      },
+    ]
+  }
 
   return (
     <div className="space-y-4">
