@@ -186,55 +186,71 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
   // Initialize from user's saved control center data
   const initializeFromUserData = () => {
     console.log("Loading user's saved widgets")
-    const userWidgets = userData.controlCenter.widgets
+
+    // Only use widgets that were explicitly saved by the user
+    // Make sure we're not creating widgets for accessories automatically
+    const userWidgets = userData.controlCenter?.widgets || []
     console.log("User widgets:", userWidgets)
 
-    setWidgets(userWidgets)
+    // Only set widgets if they exist and are in the correct format
+    if (Array.isArray(userWidgets) && userWidgets.length > 0) {
+      setWidgets(userWidgets)
 
-    // Create layout objects for react-grid-layout
-    const userLayouts = {
-      lg: [],
-      md: [],
-      sm: [],
-      xs: [],
-      xxs: [],
-    }
-
-    // Create layouts for each breakpoint
-    userWidgets.forEach((widget: any) => {
-      const baseLayout = {
-        i: widget.id,
-        x: widget.position.x,
-        y: widget.position.y,
-        w: widget.size.w,
-        h: widget.size.h,
-        isResizable: false,
+      // Create layout objects for react-grid-layout
+      const userLayouts = {
+        lg: [],
+        md: [],
+        sm: [],
+        xs: [],
+        xxs: [],
       }
 
-      // Add to each breakpoint with appropriate adjustments
-      userLayouts.lg.push({ ...baseLayout })
-      userLayouts.md.push({ ...baseLayout })
+      // Create layouts for each breakpoint
+      userWidgets.forEach((widget: any) => {
+        // Skip any malformed widgets
+        if (!widget.id || !widget.position || !widget.size) {
+          console.warn("Skipping malformed widget:", widget)
+          return
+        }
 
-      // For smaller screens, adjust the layout
-      userLayouts.sm.push({
-        ...baseLayout,
-        w: Math.min(baseLayout.w, 2), // Max 2 columns on small screens
+        const baseLayout = {
+          i: widget.id,
+          x: widget.position.x,
+          y: widget.position.y,
+          w: widget.size.w,
+          h: widget.size.h,
+          isResizable: false,
+        }
+
+        // Add to each breakpoint with appropriate adjustments
+        userLayouts.lg.push({ ...baseLayout })
+        userLayouts.md.push({ ...baseLayout })
+
+        // For smaller screens, adjust the layout
+        userLayouts.sm.push({
+          ...baseLayout,
+          w: Math.min(baseLayout.w, 2), // Max 2 columns on small screens
+        })
+
+        userLayouts.xs.push({
+          ...baseLayout,
+          x: 0,
+          w: Math.min(baseLayout.w, 2), // Full width on extra small screens
+        })
+
+        userLayouts.xxs.push({
+          ...baseLayout,
+          x: 0,
+          w: 1, // Full width on tiny screens
+        })
       })
 
-      userLayouts.xs.push({
-        ...baseLayout,
-        x: 0,
-        w: Math.min(baseLayout.w, 2), // Full width on extra small screens
-      })
-
-      userLayouts.xxs.push({
-        ...baseLayout,
-        x: 0,
-        w: 1, // Full width on tiny screens
-      })
-    })
-
-    setLayouts(userLayouts)
+      setLayouts(userLayouts)
+    } else {
+      // If no valid widgets, initialize with empty arrays
+      console.log("No valid widgets found in user data, initializing empty layout")
+      initializeEmptyLayout()
+    }
   }
 
   // Initialize with an empty layout - no default widgets
