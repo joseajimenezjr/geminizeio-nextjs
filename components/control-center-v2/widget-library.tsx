@@ -51,7 +51,28 @@ export function WidgetLibrary({ accessories, existingWidgets, onAddWidget, onClo
                 {accessory.accessoryType === "chaseLight" && <ChaseLightIcon className="h-8 w-8 mb-2" />}
                 {accessory.accessoryType === "rgbLight" && <Palette className="h-8 w-8 mb-2" />}
                 <div className="font-medium">{accessory.accessoryName}</div>
-                <div className="text-xs text-muted-foreground">{accessory.accessoryType}</div>
+                <div className="text-xs text-muted-foreground">
+                  {accessory.accessoryType === "light" && "Toggle Light"}
+                  {accessory.accessoryType === "utility" && "Utility"}
+                  {accessory.accessoryType === "gauge" && "Gauge"}
+                  {accessory.accessoryType === "obd2" && "OBDII"}
+                  {accessory.accessoryType === "chaseLight" && "Multi Toggle Light"}
+                  {accessory.accessoryType === "rgbLight" && "RGB Lights with Toggle"}
+                  {accessory.accessoryType === "turnSignal" && "Turn Signal Lights"}
+                  {accessory.accessoryType === "temp_reader" && "Temperature Reader"}
+                  {accessory.accessoryType === "winch" && "Winch"}
+                  {![
+                    "light",
+                    "utility",
+                    "gauge",
+                    "obd2",
+                    "chaseLight",
+                    "rgbLight",
+                    "turnSignal",
+                    "temp_reader",
+                    "winch",
+                  ].includes(accessory.accessoryType) && accessory.accessoryType}
+                </div>
                 {hasWidget && <div className="text-xs text-amber-500 mt-1">Already added</div>}
               </div>
             )
