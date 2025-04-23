@@ -280,7 +280,7 @@ export function AddDeviceFlow({ open, onClose, initialMode = "all" }: AddDeviceF
         case "hub":
           setStep("hub-setup")
           break
-        case "turn-signal":
+        case "turnSignal":
           setStep("turn-signal-setup")
           break
         default:
