@@ -1049,7 +1049,7 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
       case "turn-signal":
         return (
           <TurnSignalWidget
-            title={accessory.accessoryName}
+            title="Turn Signals"
             accessoryId={widget.accessoryID}
             onLeft={() => {}}
             onRight={() => {}}
