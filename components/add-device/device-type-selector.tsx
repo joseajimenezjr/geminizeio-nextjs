@@ -48,7 +48,7 @@ export function DeviceTypeSelector({
       bgColor: "bg-green-500/10",
     },
     {
-      id: "turn-signal",
+      id: "turnSignal",
       title: "Turn Signal Kit",
       description: "Add a turn signal kit for your vehicle",
       icon: Zap,
