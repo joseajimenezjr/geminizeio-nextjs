@@ -35,7 +35,7 @@ export function AccessorySetup({
   const supabase = createClientComponentClient()
   const router = useRouter()
   const isRelayAccessory = accessoryType === "relay_accessory"
-  const isTurnSignal = accessoryType === "turnignal"
+  const isTurnSignal = accessoryType === "turnSignal" || accessoryType === "turnSignal"
   const isReverseLight = accessoryType === "reverse_light"
 
   // For wireless accessories
@@ -148,7 +148,7 @@ export function AccessorySetup({
           isFavorite: isFavorite,
           accessoryID: `D${String(Math.floor(Math.random() * 900) + 100)}`, // Random 3-digit number with D prefix
           accessoryName: deviceName || "Turn Signal",
-          accessoryType: "turn_signal",
+          accessoryType: "turnSignal",
           turnSignalStatus: false,
         }
 
@@ -187,8 +187,8 @@ export function AccessorySetup({
 
           onComplete({
             deviceName: deviceName || "Turn Signal",
-            deviceType: "turn_signal",
-            serviceName: "turn_signal",
+            deviceType: "turnSignal",
+            serviceName: "turnSignal",
             isFavorite,
           })
         }, 1000)
@@ -452,7 +452,7 @@ export function AccessorySetup({
   }
 
   const getAccessoryTypeLabel = () => {
-    if (accessoryType === "turn_signal") {
+    if (accessoryType === "turnSignal") {
       return "Turn Signal with Hazard Light Support"
     }
 
