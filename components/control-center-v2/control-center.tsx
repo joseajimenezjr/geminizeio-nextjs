@@ -55,7 +55,7 @@ export const WIDGET_SIZES = {
   rgbLight: { w: 1, h: 1 },
   battery: { w: 1, h: 1 },
   temperature: { w: 1, h: 1 },
-  "turn-signal": { w: 1, h: 1 },
+  "turnSignal": { w: 1, h: 1 },
   "hazard-light": { w: 1, h: 1 },
 }
 
@@ -69,7 +69,7 @@ const SUPPORTED_ACCESSORY_TYPES = [
   "battery",
   "temperature",
   "obd2",
-  "turn_signal", // Add the new TURN_SIGNAL accessory type
+  "turnSignal", // Add the new TURNSIGNAL accessory type
 ]
 
 // Grid configuration - 4 columns, infinite rows
@@ -321,8 +321,8 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
         return "rgbLight"
       case "battery":
         return "battery"
-      case "turn_signal":
-        return "turn-signal"
+      case "turnSignal":
+        return "turnSignal"
       default:
         return "light"
     }
@@ -1046,7 +1046,7 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
             onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
           />
         )
-      case "turn-signal":
+      case "turnSignal":
         return (
           <TurnSignalWidget
             title="Turn Signals"
