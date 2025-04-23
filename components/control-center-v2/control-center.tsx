@@ -1050,9 +1050,10 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
         return (
           <TurnSignalWidget
             title="Turn Signals"
-            accessoryId={widget.accessoryID}
+            accessoryId={widget.accessoryId}
             onLeft={() => {}}
             onRight={() => {}}
+            onHazard={() => {}}
           />
         )
       default:
