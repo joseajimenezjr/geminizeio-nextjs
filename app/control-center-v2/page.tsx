@@ -44,7 +44,7 @@ export default function ControlCenterV2Page() {
         console.log("Devices by type:")
         const hasHub = hubDetails.some((device: any) => device.deviceType === "hub")
         const hasRelayHub = hubDetails.some((device: any) => device.deviceType === "relay_hub")
-        const hasTurnSignal = hubDetails.some((device: any) => device.deviceType === "turn_signal")
+        const hasTurnSignal = hubDetails.some((device: any) => device.deviceType === "turnSignal")
 
         console.log("- Hub:", hasHub ? "Yes" : "No")
         console.log("- Relay Hub:", hasRelayHub ? "Yes" : "No")
@@ -137,7 +137,7 @@ export default function ControlCenterV2Page() {
         return "Hub"
       case "relay_hub":
         return "Relay Hub"
-      case "turn_signal":
+      case "turnSignal":
         return "Turn Signal Kit"
       default:
         return type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())
@@ -169,7 +169,7 @@ export default function ControlCenterV2Page() {
   const hubDetails = userData.hubDetails || []
   const hasHubOrTurnSignal = hubDetails.some(
     (device: any) =>
-      device.deviceType === "hub" || device.deviceType === "relay_hub" || device.deviceType === "turn_signal",
+      device.deviceType === "hub" || device.deviceType === "relay_hub" || device.deviceType === "turnSignal",
   )
 
   // Check if user has any accessories

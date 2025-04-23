@@ -7,7 +7,7 @@ export enum AccessoryType {
   GAUGE = "gauge",
   OBDII = "obd2",
   CHASELIGHT = "chaseLight",
-  TURN_SIGNAL = "turn_signal", // Add the new TURN_SIGNAL accessory type
+  TURNSIGNAL = "turnSignal", // Add the new TURN_SIGNAL accessory type
 }
 
 export const accessoryTypeNames: Record<AccessoryType, string> = {
@@ -19,7 +19,7 @@ export const accessoryTypeNames: Record<AccessoryType, string> = {
   [AccessoryType.GAUGE]: "Gauge",
   [AccessoryType.OBDII]: "OBD2",
   [AccessoryType.CHASELIGHT]: "Chase Light",
-  [AccessoryType.TURN_SIGNAL]: "Turn Signal", // Add the name for TURN_SIGNAL
+  [AccessoryType.TURNSIGNAL]: "Turn Signal", // Add the name for TURN_SIGNAL
 }
 
 export const accessoryTypeDescriptions: Record<AccessoryType, string> = {
@@ -31,7 +31,7 @@ export const accessoryTypeDescriptions: Record<AccessoryType, string> = {
   [AccessoryType.GAUGE]: "Gauge accessories like fuel gauges, temperature gauges, etc.",
   [AccessoryType.OBDII]: "OBD2 accessories like speedometers, RPM gauges, etc.", // Add description for OBD2
   [AccessoryType.CHASELIGHT]: "Chase Light accessories with strobe patterns",
-  [AccessoryType.TURN_SIGNAL]: "Turn Signal accessories with left and right indicators", // Add description for TURN_SIGNAL
+  [AccessoryType.TURNSIGNAL]: "Turn Signal accessories with left and right indicators", // Add description for TURN_SIGNAL
 }
 
 export const accessoryTypeIcons: Record<AccessoryType, string> = {
@@ -43,5 +43,5 @@ export const accessoryTypeIcons: Record<AccessoryType, string> = {
   [AccessoryType.GAUGE]: "gauge",
   [AccessoryType.OBDII]: "speedometer", // Add icon for OBD2
   [AccessoryType.CHASELIGHT]: "lightbulb",
-  [AccessoryType.TURN_SIGNAL]: "arrow-right", // Add icon for TURN_SIGNAL
+  [AccessoryType.TURNSIGNAL]: "arrow-right", // Add icon for TURN_SIGNAL
 }

@@ -116,7 +116,7 @@ export function WidgetGrid({
             onTouchCancel={() => onTouchCancel?.(widget.id)}
           />
         )
-      case "turn_signal":
+      case "turnSignal":
         return (
           <TurnSignalWidget title="Turn Signal" accessoryId={widget.accessoryId} onLeft={() => {}} onRight={() => {}} />
         )

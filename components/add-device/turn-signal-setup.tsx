@@ -19,7 +19,7 @@ interface TurnSignalSetupProps {
 export function TurnSignalSetup({ onClose, onBack, onComplete }: TurnSignalSetupProps) {
   const [step, setStep] = useState("wiring-check")
   const [scannedUUID, setScannedUUID] = useState<string | null>(null)
-  const deviceType = "turn_signal"
+  const deviceType = "turnSignal"
 
   const handleNotYet = () => {
     // Navigate to wiring instructions

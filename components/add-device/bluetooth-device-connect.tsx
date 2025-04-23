@@ -33,7 +33,7 @@ export function BluetoothDeviceConnect({
         return "geminize_hub_"
       case "accessory":
         return "geminize_accessory_"
-      case "turn_signal":
+      case "turnSignal":
         return "geminize_turn_signal_kit_"
       default:
         return "geminize_"

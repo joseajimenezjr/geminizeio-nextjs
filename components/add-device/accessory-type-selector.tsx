@@ -32,7 +32,7 @@ export function AccessoryTypeSelector({
     // If user has a turn signal kit, show turn signal and reverse light options
     accessoryTypes = [
       {
-        id: "turn_signal",
+        id: "turnSignal",
         title: "Turn Signal with Hazard Light Support",
         description: "Add a turn signal with hazard functionality to your vehicle",
         icon: TurnRight,
