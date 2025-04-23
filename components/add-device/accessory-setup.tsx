@@ -35,7 +35,7 @@ export function AccessorySetup({
   const supabase = createClientComponentClient()
   const router = useRouter()
   const isRelayAccessory = accessoryType === "relay_accessory"
-  const isTurnSignal = accessoryType === "turn_signal"
+  const isTurnSignal = accessoryType === "turnignal"
   const isReverseLight = accessoryType === "reverse_light"
 
   // For wireless accessories
