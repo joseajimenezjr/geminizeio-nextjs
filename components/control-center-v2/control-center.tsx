@@ -1046,7 +1046,7 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
             onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
           />
         )
-      case "turn_signal":
+      case "turn-signal":
         return (
           <TurnSignalWidget
             title="Turn Signals"

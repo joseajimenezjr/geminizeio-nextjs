@@ -11,7 +11,6 @@ import { AccessorySetup } from "@/components/add-device/accessory-setup"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { TurnSignalSetup } from "@/components/add-device/turn-signal-setup"
 
 interface AddDeviceFlowProps {
   open: boolean
@@ -281,7 +280,8 @@ export function AddDeviceFlow({ open, onClose, initialMode = "all" }: AddDeviceF
           setStep("hub-setup")
           break
         case "turn-signal":
-          setStep("turn-signal-setup")
+          // Handle turn signal setup - for now, use hub setup as placeholder
+          setStep("hub-setup")
           break
         default:
           // Fallback
@@ -498,9 +498,6 @@ export function AddDeviceFlow({ open, onClose, initialMode = "all" }: AddDeviceF
           accessoryType={selectedAccessoryType || "wireless_accessory"}
           relayAccessoryType={selectedRelayAccessoryType}
         />
-      )}
-      {step === "turn-signal-setup" && (
-        <TurnSignalSetup onClose={onClose} onBack={handleBack} onComplete={handleDeviceSetupComplete} />
       )}
     </BottomSheet>
   )
