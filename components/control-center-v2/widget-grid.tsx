@@ -7,6 +7,10 @@ import { SpeedDisplayWidget } from "./widgets/speed-display-widget"
 import { RPMDisplayWidget } from "./widgets/rpm-display-widget"
 import { BatteryWidget } from "./widgets/battery-widget"
 import { TemperatureWidget } from "./widgets/temperature-widget"
+import { ChaseLightWidget } from "./widgets/chase-light-widget"
+import { RGBLightWidget } from "./widgets/rgb-light-widget"
+import { TurnSignalWidget } from "./widgets/turn-signal-widget" // Import the new TurnSignalWidget
+import { UtilityWidget } from "./widgets/utility-widget"
 
 interface WidgetGridProps {
   widgets: any[]
@@ -79,6 +83,46 @@ export function WidgetGrid({
       case "temperature":
         return (
           <TemperatureWidget
+            isEditing={isEditMode}
+            onMouseDown={(e) => onMouseDown?.(e, widget.id)}
+            onMouseUp={() => onMouseUp?.(widget.id)}
+            onMouseLeave={() => onMouseLeave?.(widget.id)}
+            onTouchStart={(e) => onTouchStart?.(e, widget.id)}
+            onTouchEnd={() => onTouchEnd?.(widget.id)}
+            onTouchCancel={() => onTouchCancel?.(widget.id)}
+          />
+        )
+      case "chaseLight":
+        return (
+          <ChaseLightWidget
+            isEditing={isEditMode}
+            onMouseDown={(e) => onMouseDown?.(e, widget.id)}
+            onMouseUp={() => onMouseUp?.(widget.id)}
+            onMouseLeave={() => onMouseLeave?.(widget.id)}
+            onTouchStart={(e) => onTouchStart?.(e, widget.id)}
+            onTouchEnd={() => onTouchEnd?.(widget.id)}
+            onTouchCancel={() => onTouchCancel?.(widget.id)}
+          />
+        )
+      case "rgbLight":
+        return (
+          <RGBLightWidget
+            isEditing={isEditMode}
+            onMouseDown={(e) => onMouseDown?.(e, widget.id)}
+            onMouseUp={() => onMouseUp?.(widget.id)}
+            onMouseLeave={() => onMouseLeave?.(widget.id)}
+            onTouchStart={(e) => onTouchStart?.(e, widget.id)}
+            onTouchEnd={() => onTouchEnd?.(widget.id)}
+            onTouchCancel={() => onTouchCancel?.(widget.id)}
+          />
+        )
+      case "turn_signal":
+        return (
+          <TurnSignalWidget title="Turn Signal" accessoryId={widget.accessoryId} onLeft={() => {}} onRight={() => {}} />
+        )
+      case "utility":
+        return (
+          <UtilityWidget
             isEditing={isEditMode}
             onMouseDown={(e) => onMouseDown?.(e, widget.id)}
             onMouseUp={() => onMouseUp?.(widget.id)}

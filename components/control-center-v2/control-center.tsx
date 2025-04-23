@@ -25,6 +25,7 @@ import { RGBLightWidget } from "./widgets/rgb-light-widget"
 import { BatteryWidget } from "./widgets/battery-widget"
 import { TemperatureWidget } from "./widgets/temperature-widget"
 import { TimerWidget } from "./widgets/timer-widget"
+import { TurnSignalWidget } from "./widgets/turn-signal-widget" // Import the new TurnSignalWidget
 
 // Add a style tag for the long-press visual indicator
 const longPressStyle = `
@@ -68,7 +69,7 @@ const SUPPORTED_ACCESSORY_TYPES = [
   "battery",
   "temperature",
   "obd2",
-  // Note: "turn_signal" is not included if it doesn't have a proper implementation
+  "turn_signal", // Add the new TURN_SIGNAL accessory type
 ]
 
 // Grid configuration - 4 columns, infinite rows
@@ -455,7 +456,7 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
 
   // Add a new widget
   const handleAddWidget = (widgetType: string, accessoryId: string) => {
-    const accessory = userData.accessories.find((a: any) => a.accessoryID === accessoryId)
+    const accessory = supportedAccessories.find((a: any) => a.accessoryID === accessoryId)
     if (!accessory) return
 
     // Check if this accessory already has a widget
@@ -464,16 +465,6 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
       toast({
         title: "Widget already exists",
         description: `${accessory.accessoryName} is already in your control center.`,
-      })
-      return
-    }
-
-    // Verify this accessory type is supported
-    if (!SUPPORTED_ACCESSORY_TYPES.includes(accessory.accessoryType)) {
-      toast({
-        title: "Unsupported accessory type",
-        description: `${accessory.accessoryType} widgets are not currently supported.`,
-        variant: "destructive",
       })
       return
     }
@@ -1057,21 +1048,11 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
         )
       case "turn-signal":
         return (
-          <ToggleWidget
-            title="Turn Lights"
-            accessoryType="turn_signal"
-            isConnected={isConnected}
-            isOn={isOn}
-            isEditing={isEditing}
-            onToggle={() => handleToggleAccessory(widget.accessoryId, !isOn)}
-            accessoryId={accessory.accessoryID}
-            onUpdateUserData={handleLocalUserDataUpdate}
-            onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
-            onMouseUp={() => handleWidgetMouseUp(widget.id)}
-            onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
-            onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
-            onTouchEnd={() => handleWidgetMouseUp(widget.id)}
-            onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
+          <TurnSignalWidget
+            title={accessory.accessoryName}
+            accessoryId={widget.accessoryID}
+            onLeft={() => {}}
+            onRight={() => {}}
           />
         )
       default:
