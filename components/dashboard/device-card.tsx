@@ -1,11 +1,13 @@
 "use client"
 
-import { useState } from "react"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Bluetooth, Settings } from "lucide-react"
+import { Bluetooth, Settings, BluetoothOff } from "lucide-react"
 import { useBluetooth } from "@/contexts/bluetooth-context"
 import { toast } from "@/components/ui/use-toast"
+import { cn } from "@/lib/utils"
+import { useState, useRef } from "react"
+import { Check } from "lucide-react"
 
 interface DeviceCardProps {
   device: {
@@ -20,8 +22,18 @@ interface DeviceCardProps {
 }
 
 export function DeviceCard({ device }: DeviceCardProps) {
-  const { isConnected, device: connectedDevice, connectByUUID, isConnecting } = useBluetooth()
+  const {
+    isConnected,
+    isConnecting,
+    bluetoothStatus,
+    connectToDevice,
+    disconnectDevice,
+    sendCommand,
+    connectedDevice,
+  } = useBluetooth()
   const [connecting, setConnecting] = useState(false)
+  const connectButtonRef = useRef<HTMLButtonElement>(null)
+  const hubDevice = { deviceName: "Example Hub" } // Example value, replace with actual data source
 
   // Format the device type for display
   const formatDeviceType = (type: string) => {
@@ -40,6 +52,8 @@ export function DeviceCard({ device }: DeviceCardProps) {
         return "geminize_hub_"
       case "accessory":
         return "geminize_accessory_"
+      case "turn_signal":
+        return "geminize_turn_signal_kit_"
       default:
         return "geminize_"
     }
@@ -54,14 +68,14 @@ export function DeviceCard({ device }: DeviceCardProps) {
   }
 
   // Connect to this device
-  const handleConnect = async () => {
+  const handleConnectClick = async () => {
     if (isThisDeviceConnected() || !device.deviceUUID) {
       return // Already connected or no UUID
     }
 
     setConnecting(true)
     try {
-      const success = await connectByUUID(device.deviceUUID, getDeviceNamePrefix())
+      const success = await connectToDevice(device.deviceUUID, getDeviceNamePrefix())
 
       if (!success) {
         toast({
@@ -83,44 +97,70 @@ export function DeviceCard({ device }: DeviceCardProps) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          {device.accessoryName}
-          {isThisDeviceConnected() && (
-            <span className="text-xs bg-green-500 text-white px-2 py-0.5 rounded-full">Connected</span>
-          )}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        <div className="text-sm text-muted-foreground">
-          <span className="font-medium">Type:</span> {formatDeviceType(device.accessoryType)}
+    <Card
+      className={cn(
+        "transition-all duration-300 bg-gradient-to-br border-none shadow-md overflow-hidden h-full",
+        isConnected
+          ? "from-green-500/10 to-green-600/5 border-green-500/20"
+          : !bluetoothStatus.available
+            ? "from-amber-50/30 to-amber-100/10 dark:from-amber-950/10 dark:to-amber-900/5"
+            : isConnecting
+              ? "from-background to-muted/30"
+              : "from-yellow-500/20 to-yellow-600/10 border-yellow-500/20 animate-pulse-very-slow",
+      )}
+    >
+      <CardContent className="p-4 flex items-center justify-between h-full">
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-1">BLUETOOTH CONNECTION</p>
+          <p className="text-2xl font-bold flex items-center gap-2">
+            {isConnected ? (
+              <>
+                <span className="text-green-500">Connected</span>
+                <Check className="h-5 w-5 text-green-500" />
+              </>
+            ) : (
+              <span className={isConnecting ? "" : "text-yellow-500"}>Not Connected</span>
+            )}
+          </p>
+          <p className="text-sm text-muted-foreground mt-1">Device: {hubDevice?.deviceName || "Not specified"}</p>
         </div>
-        <div className="text-sm text-muted-foreground">
-          <span className="font-medium">Location:</span> {device.location}
+        <div className="flex flex-col gap-2">
+          <Button
+            ref={connectButtonRef}
+            variant={isConnected ? "outline" : "default"}
+            size="sm"
+            onClick={handleConnectClick}
+            disabled={isConnecting}
+            className={cn(
+              "min-w-[130px]",
+              isConnected ? "border-green-300" : "bg-yellow-500 hover:bg-yellow-600 text-black",
+            )}
+          >
+            {isConnecting ? (
+              <>
+                <Bluetooth className="h-4 w-4 mr-2 animate-pulse" />
+                Connecting...
+              </>
+            ) : isConnected ? (
+              <>
+                <BluetoothOff className="h-4 w-4 mr-2" />
+                Disconnect
+              </>
+            ) : (
+              <>
+                <Bluetooth className="h-4 w-4 mr-2" />
+                Connect
+              </>
+            )}
+          </Button>
+          <Button variant="outline" size="sm">
+            <Settings className="h-4 w-4 mr-2" />
+            Settings
+          </Button>
         </div>
       </CardContent>
-      <CardFooter className="flex justify-between">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleConnect}
-          disabled={isThisDeviceConnected() || connecting || isConnecting || !device.deviceUUID}
-        >
-          <Bluetooth className="h-4 w-4 mr-2" />
-          {isThisDeviceConnected()
-            ? "Connected"
-            : connecting || isConnecting
-              ? "Connecting..."
-              : device.deviceUUID
-                ? "Connect"
-                : "No UUID"}
-        </Button>
-        <Button variant="outline" size="sm">
-          <Settings className="h-4 w-4 mr-2" />
-          Settings
-        </Button>
-      </CardFooter>
     </Card>
   )
 }
+
+export default DeviceCard
