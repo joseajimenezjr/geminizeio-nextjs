@@ -1,169 +1,115 @@
 "use client"
 
-import type React from "react"
 import { useState } from "react"
-import { Shuffle } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { useAccessories } from "@/contexts/device-context"
-import { LightbulbIcon } from "lucide-react"
-import { useBluetoothContext } from "@/contexts/bluetooth-context"
-import { useToast } from "@/hooks/use-toast"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { ArrowLeft, ArrowRight, Pause, Play, RotateCcw } from "lucide-react"
 
 interface ChaseLightWidgetProps {
-  title: string
-  accessoryId: string
-  isConnected: boolean
-  isOn: boolean
-  relayPosition?: string | number
-  isEditing?: boolean
-  onToggle: () => void
-  onMouseDown?: (e: React.MouseEvent | React.TouchEvent) => void
-  onMouseUp?: () => void
-  onMouseLeave?: () => void
-  onTouchStart?: (e: React.TouchEvent) => void
-  onTouchEnd?: () => void
-  onTouchCancel?: () => void
+  id: string
+  title?: string
+  accessoryId?: string
 }
 
-export function ChaseLightWidget({
-  title,
-  accessoryId,
-  isConnected,
-  isOn,
-  relayPosition,
-  isEditing = false,
-  onToggle,
-  onMouseDown,
-  onMouseUp,
-  onMouseLeave,
-  onTouchStart,
-  onTouchEnd,
-  onTouchCancel,
-}: ChaseLightWidgetProps) {
-  const [selectedPattern, setSelectedPattern] = useState("pattern1")
-  const [shuffleActive, setShuffleActive] = useState(false)
-  const { toggleAccessoryStatus, accessories } = useAccessories()
-  const { isConnected: isBtConnected, sendCommand } = useBluetoothContext()
-  const { toast } = useToast()
+export function ChaseLightWidget({ id, title = "Chase Light", accessoryId }: ChaseLightWidgetProps) {
+  const [pattern, setPattern] = useState<"left" | "right" | "hazard" | "off">("off")
+  const [isRunning, setIsRunning] = useState(false)
 
-  // Find the accessory data from the context to get the relay position
-  const accessoryData = accessories.find((acc) => acc.accessoryID === accessoryId)
-  const accessoryRelayPosition = accessoryData?.relayPosition
+  // Simulate sending commands to the device
+  const sendCommand = async (command: string) => {
+    console.log(`Sending command to chase light: ${command}`)
+    // In a real implementation, this would send a command to the device
+    // await fetch(`/api/accessories/${accessoryId}/command`, {
+    //   method: "POST",
+    //   headers: { "Content-Type": "application/json" },
+    //   body: JSON.stringify({ command }),
+    // })
+  }
 
-  const handlePatternChange = async () => {
-    // Only proceed if Bluetooth is connected
-    if (!isBtConnected) {
-      toast({
-        title: "Bluetooth Error",
-        description: "Not connected to a Bluetooth device",
-        variant: "destructive",
-      })
-      return
-    }
+  const handlePatternChange = (newPattern: "left" | "right" | "hazard" | "off") => {
+    setPattern(newPattern)
 
-    try {
-      // Send the raw value 2 to the Bluetooth device
-      const success = await sendCommand(2)
-
-      if (success) {
-        console.log(`Sent shuffle command (value 2) to device ${accessoryId}`)
-
-        // Update the pattern state
-        setSelectedPattern((prev) => {
-          const newPattern = `pattern${Math.floor(Math.random() * 3) + 1}`
-          console.log(`Selected pattern ${newPattern} for device ${accessoryId}`)
-          return newPattern
-        })
-
-        // Activate the yellow flash effect
-        setShuffleActive(true)
-
-        // Turn off after 1 second
-        setTimeout(() => {
-          setShuffleActive(false)
-        }, 1000)
-      } else {
-        console.error("Failed to send shuffle command")
-        toast({
-          title: "Command Failed",
-          description: "Failed to send shuffle command",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
-      console.error("Error sending shuffle command:", error)
-      toast({
-        title: "Error",
-        description: "Error sending shuffle command",
-        variant: "destructive",
-      })
+    if (newPattern === "off") {
+      setIsRunning(false)
+      sendCommand("stop")
+    } else {
+      setIsRunning(true)
+      sendCommand(newPattern)
     }
   }
 
-  // Format relay position for display using the same approach as ToggleWidget
-  const formatRelayPosition = () => {
-    // Use the relay position from context if available, otherwise use the prop
-    const positionToFormat = accessoryRelayPosition || relayPosition
+  const toggleRunning = () => {
+    const newRunningState = !isRunning
+    setIsRunning(newRunningState)
 
-    if (positionToFormat === undefined || positionToFormat === null) return null
-
-    // If it's already a number, just return "Relay X"
-    if (typeof positionToFormat === "number") {
-      return `Relay ${positionToFormat}`
+    if (newRunningState && pattern !== "off") {
+      sendCommand(pattern)
+    } else {
+      sendCommand("stop")
     }
-
-    // If it's a string, try to extract the number
-    if (typeof positionToFormat === "string") {
-      // If it's already in the format "Relay X", return as is
-      if (positionToFormat.toLowerCase().startsWith("relay")) {
-        return positionToFormat
-      }
-
-      // Otherwise, try to extract a number
-      const matches = positionToFormat.match(/\d+/)
-      if (matches) {
-        return `Relay ${matches[0]}`
-      }
-
-      // If no number found but string is not empty, return the string
-      if (positionToFormat.trim()) {
-        return `Relay ${positionToFormat}`
-      }
-    }
-
-    return null
   }
 
-  const relayPositionDisplay = formatRelayPosition()
+  const resetPattern = () => {
+    setPattern("off")
+    setIsRunning(false)
+    sendCommand("stop")
+  }
 
   return (
-    <div className="flex flex-col h-full w-full bg-black rounded-xl text-white p-4 select-none">
-      {/* Widget Header - Title in center, relay position on right */}
-      <div className="relative mb-6">
-        <div className="absolute top-0 right-0 text-gray-400 text-lg">{relayPositionDisplay}</div>
-        <div className="text-2xl font-bold text-center mt-4">{title}</div>
-      </div>
+    <Card className="bg-black text-white rounded-lg shadow-lg">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-2xl font-bold text-center">{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-2 gap-4 mb-2">
+          <Button
+            size="lg"
+            className={`w-20 h-20 ${
+              pattern === "left" && isRunning ? "bg-amber-500 text-black" : "bg-gray-700 border border-gray-600"
+            }`}
+            onClick={() => handlePatternChange("left")}
+          >
+            <ArrowLeft className="h-10 w-10" />
+          </Button>
 
-      {/* Widget Content - Buttons with consistent size */}
-      <div className="flex-1 flex items-center justify-center gap-6">
-        {/* Toggle button */}
-        <button
-          className="w-20 h-20 rounded-full flex items-center justify-center bg-gray-900 border-2 border-gray-700"
-          onClick={onToggle}
-          disabled={isEditing || !isConnected}
-        >
-          <LightbulbIcon className={cn("h-12 w-12", isOn ? "text-white" : "text-gray-500")} />
-        </button>
+          <Button
+            size="lg"
+            className={`w-20 h-20 ${
+              pattern === "right" && isRunning ? "bg-amber-500 text-black" : "bg-gray-700 border border-gray-600"
+            }`}
+            onClick={() => handlePatternChange("right")}
+          >
+            <ArrowRight className="h-10 w-10" />
+          </Button>
 
-        {/* Shuffle button */}
-        <button
-          className="w-20 h-20 rounded-full flex items-center justify-center bg-gray-900 border-2 border-gray-700"
-          onClick={handlePatternChange}
-          disabled={isEditing || !isConnected}
+          <Button
+            size="lg"
+            className={`w-20 h-20 ${
+              pattern === "hazard" && isRunning ? "bg-amber-500 text-black" : "bg-gray-700 border border-gray-600"
+            }`}
+            onClick={() => handlePatternChange("hazard")}
+          >
+            <div className="flex items-center justify-center">
+              <ArrowLeft className="h-6 w-6 mr-1" />
+              <ArrowRight className="h-6 w-6 ml-1" />
+            </div>
+          </Button>
+
+          <Button size="lg" className="w-20 h-20 bg-gray-700 border border-gray-600" onClick={resetPattern}>
+            <RotateCcw className="h-10 w-10" />
+          </Button>
+        </div>
+
+        <Button
+          size="lg"
+          className={`w-full mt-2 ${isRunning ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"}`}
+          onClick={toggleRunning}
+          disabled={pattern === "off"}
         >
-          <Shuffle className={cn("h-12 w-12", shuffleActive ? "text-yellow-400" : "text-gray-500")} />
-        </button>
-      </div>
-    </div>
+          {isRunning ? <Pause className="mr-2 h-5 w-5" /> : <Play className="mr-2 h-5 w-5" />}
+          {isRunning ? "Stop" : "Start"}
+        </Button>
+      </CardContent>
+    </Card>
   )
 }
