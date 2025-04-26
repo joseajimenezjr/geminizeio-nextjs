@@ -132,7 +132,7 @@ export function RGBLightWidget({
       {/* Content container - centered vertically */}
       <div className="flex flex-col items-center justify-center h-full">
         {/* Title with larger text */}
-        <div className="text-xl font-bold text-center mb-2">{title}</div>
+        <div className="text-xl font-bold text-center mb3">{title}</div>
 
         {/* Widget Content - Buttons with consistent size */}
         <div className="flex items-center justify-center gap-6">
