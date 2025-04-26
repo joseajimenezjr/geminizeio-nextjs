@@ -125,7 +125,7 @@ export function RGBLightWidget({
   return (
     <div className="flex flex-col h-full w-full p-2 select-none">
       {/* Widget Header - Centered title with relay position on right */}
-      <div className="relative mb-3">
+      <div className="relative mb-2">
         <div className="absolute top-0 right-0 text-xs text-muted-foreground px-1.5 py-0.5 rounded">
           {relayPositionDisplay}
         </div>
