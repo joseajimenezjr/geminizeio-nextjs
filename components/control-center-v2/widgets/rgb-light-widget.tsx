@@ -148,7 +148,7 @@ export function RGBLightWidget({
         {/* Color Wheel Button */}
         <button
           className={cn(
-            "w-24 h-24 rounded-full flex items-center justify-center relative",
+            "w-20 h-24 rounded-full flex items-center justify-center relative",
             "bg-gray-900 border-4",
             isOn ? "border-white" : "border-gray-700",
           )}
