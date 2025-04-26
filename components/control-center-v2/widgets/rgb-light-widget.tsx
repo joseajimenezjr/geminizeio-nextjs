@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { Lightbulb } from "lucide-react"
+import { LightbulbIcon } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { useAccessories } from "@/contexts/device-context"
