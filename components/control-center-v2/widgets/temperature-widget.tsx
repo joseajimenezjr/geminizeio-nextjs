@@ -190,7 +190,7 @@ export function TemperatureWidget({
 
         {/* Title with black background */}
         <div className="bg-black px-4 py-1 mb-1">
-          <h3 className="text-xl font-bold text-white">{title}</h3>
+          <h3 className="text-xl font-bold text-center mb-3">{title}</h3>
         </div>
 
         {/* Thermometer icon */}
