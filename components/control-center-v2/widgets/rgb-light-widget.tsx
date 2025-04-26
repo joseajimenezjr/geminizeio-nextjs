@@ -138,14 +138,17 @@ export function RGBLightWidget({
         <div className="flex items-center justify-center gap-6">
           {/* Light Toggle Button */}
           <button
-            className={cn(
-              "w-20 h-20 rounded-full border-4 transition-all flex items-center justify-center bg-muted/50 border-muted-foreground/20 text-muted-foreground",
-            )}
-            onClick={onToggle}
-            disabled={isEditing || !isConnected}
-          >
-            <LightbulbIcon className="h-10 w-10" />
-          </button>
+          className={cn(
+            "w-20 h-20 rounded-full border-4 transition-all flex items-center justify-center",
+            isOn
+              ? "bg-green-500 border-green-700 text-white"
+              : "bg-muted/50 border-muted-foreground/20 text-muted-foreground",
+          )}
+          onClick={onToggle}
+          disabled={isEditing || !isConnected}
+        >
+          <LightbulbIcon className="h-10 w-10" />
+        </button>
 
           {/* Color Wheel Button */}
           <button
