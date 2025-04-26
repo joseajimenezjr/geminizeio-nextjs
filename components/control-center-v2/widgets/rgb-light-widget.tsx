@@ -125,10 +125,10 @@ export function RGBLightWidget({
   return (
     <div className="flex flex-col h-full w-full bg-black rounded-xl text-white p-4 select-none">
       {/* Relay position indicator */}
-      <div className="absolute top-2 right-2 text-gray-400 text-lg">{relayPositionDisplay}</div>
-
+      <div className="absolute top-2 right-2 text-xs text-muted-foreground px-1.5 py-0.5 rounded">{relayPositionDisplay}</div>
+    <div className="container" style="padding-top: 30px;">
       {/* Title with larger text and no background */}
-      <div className="text-2xl font-bold text-center mt-2">{title}</div>
+      <div className="text-xl font-bold text-center mt-2">{title}</div>
 
       {/* Widget Content - Buttons with consistent size */}
       <div className="flex-1 flex items-center justify-center gap-6">
@@ -150,7 +150,7 @@ export function RGBLightWidget({
           <div className="w-12 h-12 rounded-full" style={{ backgroundColor: currentColor }} />
         </button>
       </div>
-
+    </div>
       {/* Color Picker Dialog */}
       <Dialog open={colorPickerOpen} onOpenChange={setColorPickerOpen}>
         <DialogContent className="sm:max-w-md">
