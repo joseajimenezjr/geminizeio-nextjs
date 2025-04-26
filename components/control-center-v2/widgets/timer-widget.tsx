@@ -441,7 +441,7 @@ export function TimerWidget({
           </div>
         ) : (
           <div className="flex flex-col items-center">
-            <Clock className="h-12 w-12 mb-1 text-primary" />
+            <Clock className="h-24 w-24 mb-2 text-red-600" />
             <div className="text-sm text-center mt-1">Tap to start timer!</div>
             {bestTime !== null && (
               <div className="flex items-center mt-1 text-xs">
