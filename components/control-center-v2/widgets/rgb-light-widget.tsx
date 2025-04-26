@@ -52,7 +52,7 @@ export function RGBLightWidget({
   isOn,
   relayPosition,
   isEditing = false,
-  lastRGBColor = "#FF0000", // Default to red if no color is provided
+  lastRGBColor = "#0000FF", // Default to blue if no color is provided
   onToggle,
   onColorChange,
   onMouseDown,
@@ -123,43 +123,39 @@ export function RGBLightWidget({
   }
 
   return (
-    <div className="flex flex-col h-full w-full p-2 select-none">
-      {/* Widget Header - Centered title with relay position on right */}
-      <div className="relative mb-3">
-        <div className="absolute top-0 right-0 text-xs text-muted-foreground px-1.5 py-0.5 rounded">
-          {relayPositionDisplay}
-        </div>
-        <div className="text-xl font-semibold text-center">{title}</div>
+    <div className="flex flex-col h-full w-full bg-black rounded-xl text-white p-4 select-none">
+      {/* Widget Header - Title in center, relay position on right */}
+      <div className="relative mb-6">
+        <div className="absolute top-0 right-0 text-gray-400 text-lg">{relayPositionDisplay}</div>
+        <div className="text-3xl font-bold text-center mt-4">{title}</div>
       </div>
 
       {/* Widget Content - Buttons with consistent size */}
-      <div className="flex-1 flex items-center justify-center gap-3">
+      <div className="flex-1 flex items-center justify-center gap-6">
         {/* Light Toggle Button */}
         <button
           className={cn(
-            "w-20 h-20 rounded-full flex items-center justify-center transition-colors border-4",
-            isOn
-              ? "bg-green-500 border-green-600 text-white"
-              : "bg-muted/50 border-muted-foreground/20 text-muted-foreground",
+            "w-24 h-24 rounded-full flex items-center justify-center transition-colors",
+            "bg-gray-900 border-4 border-gray-700",
+            isOn && "border-white",
           )}
           onClick={onToggle}
           disabled={isEditing || !isConnected}
         >
-          <Lightbulb className="h-10 w-10" />
+          <Lightbulb className={cn("h-12 w-12", isOn ? "text-white" : "text-gray-500")} />
         </button>
 
         {/* Color Wheel Button */}
         <button
-          className="w-20 h-20 rounded-full flex items-center justify-center relative overflow-hidden border-4 border-muted-foreground/20"
+          className={cn(
+            "w-24 h-24 rounded-full flex items-center justify-center relative",
+            "bg-gray-900 border-4",
+            isOn ? "border-white" : "border-gray-700",
+          )}
           onClick={() => setColorPickerOpen(true)}
           disabled={isEditing || !isConnected}
         >
-          <div
-            className="absolute inset-0 flex items-center justify-center"
-            style={{ backgroundColor: isOn ? "transparent" : "rgba(0, 0, 0, 0.7)" }}
-          >
-            <div className="w-7 h-7 rounded-full border-2 border-white" style={{ backgroundColor: currentColor }} />
-          </div>
+          <div className="w-12 h-12 rounded-full border-2 border-white" style={{ backgroundColor: currentColor }} />
         </button>
       </div>
 
