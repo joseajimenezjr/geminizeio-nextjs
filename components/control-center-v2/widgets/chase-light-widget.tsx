@@ -139,7 +139,7 @@ export function ChaseLightWidget({
   return (
     <div
       className={cn(
-        "relative flex flex-col items-center w-full h-full p-4 transition-colors rounded-lg bg-card",
+        "relative flex flex-col items-center justify-between w-full h-full p-4 transition-colors rounded-lg bg-card",
         isEditing ? "cursor-move" : isConnected ? "cursor-default" : "cursor-not-allowed opacity-70",
       )}
       onMouseDown={onMouseDown}
@@ -156,10 +156,10 @@ export function ChaseLightWidget({
         </div>
       )}
 
-      {/* Title with larger text */}
-      <div className="text-3xl font-semibold mt-12 mb-12 text-center">{title}</div>
+      {/* Title with larger text and positioned closer to buttons */}
+      <div className="text-2xl font-semibold mb-4 mt-8 text-center">{title}</div>
 
-      <div className="flex gap-6 mt-auto mb-12">
+      <div className="flex gap-6 mb-8">
         {/* Toggle button */}
         <button
           className={cn(
