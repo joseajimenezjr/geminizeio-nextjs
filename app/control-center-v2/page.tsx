@@ -195,7 +195,7 @@ export default function ControlCenterV2Page() {
         showFavorites={userData.settings?.showFavorites ?? true}
       />
 
-      <div className="container px-4 py-4 flex-1">
+      <div className="w-full px-4 py-4 flex-1">
         {/* Add the AutoConnectHandler component */}
         <AutoConnectHandler />
 

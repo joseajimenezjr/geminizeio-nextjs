@@ -9,5 +9,9 @@ interface DashboardHeaderWrapperProps {
 }
 
 export function DashboardHeaderWrapper({ vehicleName, vehicleType, showFavorites }: DashboardHeaderWrapperProps) {
-  return <DashboardHeader vehicleName={vehicleName} vehicleType={vehicleType} showFavorites={showFavorites} />
+  return (
+    <div className="w-full px-4">
+      <DashboardHeader vehicleName={vehicleName} vehicleType={vehicleType} showFavorites={showFavorites} />
+    </div>
+  )
 }
