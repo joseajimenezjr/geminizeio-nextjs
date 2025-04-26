@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { Thermometer } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 import { useBluetoothContext } from "@/contexts/bluetooth-context"
 
 interface TemperatureWidgetProps {
@@ -184,28 +184,33 @@ export function TemperatureWidget({
       onTouchEnd={onTouchEnd}
       onTouchCancel={onTouchCancel}
     >
-      <CardHeader className="p-3 pb-0">
-        <CardTitle className="flex items-center justify-between text-sm font-medium">
-          <span>{title}</span>
-          {!bluetoothConnected && <span className="text-xs text-muted-foreground">Disconnected</span>}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col items-center justify-center p-3">
-        <div className="flex flex-col items-center">
-          <Thermometer className={`h-8 w-8 mb-1 ${getTemperatureColor()} cursor-pointer`} onClick={toggleUnit} />
-          <div className="flex items-baseline">
-            <span className={`text-3xl font-bold ${getTemperatureColor()}`}>{displayTemperature()}</span>
-            <span className={`ml-1 text-lg ${getTemperatureColor()}`}>°{unit}</span>
-          </div>
-          <div className="mt-1 text-xs text-muted-foreground">
-            {bluetoothConnected
-              ? temperature === null
-                ? "Waiting for data..."
-                : formatLastUpdated()
-              : "Tap to reconnect"}
-          </div>
+      <div className="relative h-full w-full flex flex-col items-center justify-center p-4">
+        {/* Disconnected status in top right */}
+        {!bluetoothConnected && <div className="absolute top-2 right-2 text-sm text-gray-400">Disconnected</div>}
+
+        {/* Title with black background */}
+        <div className="bg-black px-4 py-1 mb-4">
+          <h3 className="text-xl font-bold text-white">{title}</h3>
         </div>
-      </CardContent>
+
+        {/* Thermometer icon */}
+        <Thermometer className={`h-12 w-12 mb-2 ${getTemperatureColor()} cursor-pointer`} onClick={toggleUnit} />
+
+        {/* Temperature display */}
+        <div className="flex items-baseline mb-2">
+          <span className={`text-2xl font-bold ${getTemperatureColor()}`}>{displayTemperature()}</span>
+          <span className={`ml-1 text-lg ${getTemperatureColor()}`}>°{unit}</span>
+        </div>
+
+        {/* Status message */}
+        <div className="text-sm text-gray-400">
+          {bluetoothConnected
+            ? temperature === null
+              ? "Waiting for data..."
+              : formatLastUpdated()
+            : "Tap to reconnect"}
+        </div>
+      </div>
     </Card>
   )
 }
