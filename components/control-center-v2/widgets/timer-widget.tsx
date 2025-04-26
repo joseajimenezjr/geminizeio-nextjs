@@ -425,7 +425,7 @@ export function TimerWidget({
           <Star className="h-5 w-5" />
         </div>
 
-        <div className="text-sm font-medium mb-1">{title}</div>
+        <div className="text-xl font-medium mb-4">{title}</div>
 
         {isRunning ? (
           <div className="text-3xl font-bold tabular-nums">{formatTime(time)}</div>
@@ -441,8 +441,8 @@ export function TimerWidget({
           </div>
         ) : (
           <div className="flex flex-col items-center">
-            <div className="text-sm text-center mb-1">Tap to start timer!</div>
             <Clock className="h-12 w-12 mb-1 text-primary" />
+            <div className="text-sm text-center mt-1">Tap to start timer!</div>
             {bestTime !== null && (
               <div className="flex items-center mt-1 text-xs">
                 <Trophy className="h-3 w-3 mr-1 text-yellow-500" />
