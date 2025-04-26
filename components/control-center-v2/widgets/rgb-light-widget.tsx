@@ -125,9 +125,9 @@ export function RGBLightWidget({
   return (
     <div className="flex flex-col h-full w-full bg-black rounded-xl text-white p-4 select-none">
       {/* Widget Header - Title in center, relay position on right */}
-      <div className="relative mb-6">
+      <div className="relative mb-2">
         <div className="absolute top-0 right-0 text-gray-400 text-lg">{relayPositionDisplay}</div>
-        <div className="text-2xl font-bold text-center mt-4">{title}</div>
+        <div className="text-2xl font-bold text-center mt-2">{title}</div>
       </div>
 
       {/* Widget Content - Buttons with consistent size */}
