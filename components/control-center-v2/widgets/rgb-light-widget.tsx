@@ -144,7 +144,7 @@ export function RGBLightWidget({
             onClick={onToggle}
             disabled={isEditing || !isConnected}
           >
-            <Lightbulb className={cn("h-12 w-12", isOn ? "text-white" : "text-gray-500")} />
+            <LightbulbIcon className="h-10 w-10" />
           </button>
 
           {/* Color Wheel Button */}
