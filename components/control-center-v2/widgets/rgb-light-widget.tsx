@@ -127,7 +127,7 @@ export function RGBLightWidget({
       {/* Widget Header - Title in center, relay position on right */}
       <div className="relative mb-6">
         <div className="absolute top-0 right-0 text-gray-400 text-lg">{relayPositionDisplay}</div>
-        <div className="text-3xl font-bold text-center mt-4">{title}</div>
+        <div className="text-2xl font-bold text-center mt-4">{title}</div>
       </div>
 
       {/* Widget Content - Buttons with consistent size */}
@@ -135,7 +135,7 @@ export function RGBLightWidget({
         {/* Light Toggle Button */}
         <button
           className={cn(
-            "w-24 h-24 rounded-full flex items-center justify-center transition-colors",
+            "w-20 h-20 rounded-full flex items-center justify-center transition-colors",
             "bg-gray-900 border-4 border-gray-700",
             isOn && "border-white",
           )}
