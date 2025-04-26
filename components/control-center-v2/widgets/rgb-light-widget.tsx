@@ -135,8 +135,7 @@ export function RGBLightWidget({
         {/* Light Toggle Button */}
         <button
           className={cn(
-            "w-20 h-20 rounded-full flex items-center justify-center transition-colors",
-            "bg-muted/50 border-4 border-gray-700",
+            "w-20 h-20 rounded-full border-4 transition-all flex items-center justify-center bg-muted/50 border-muted-foreground/20 text-muted-foreground",
             isOn && "border-white",
           )}
           onClick={onToggle}
@@ -148,8 +147,7 @@ export function RGBLightWidget({
         {/* Color Wheel Button */}
         <button
           className={cn(
-            "w-20 h-20 rounded-full flex items-center justify-center relative",
-            "bg-muted/50 border-4",
+            "w-20 h-20 rounded-full border-4 transition-all flex items-center justify-center bg-muted/50 border-muted-foreground/20 text-muted-foreground",
             isOn ? "border-white" : "border-gray-700",
           )}
           onClick={() => setColorPickerOpen(true)}
