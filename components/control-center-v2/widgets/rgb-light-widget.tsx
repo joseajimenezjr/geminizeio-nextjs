@@ -127,17 +127,14 @@ export function RGBLightWidget({
       {/* Widget Header - Title in center, relay position on right */}
       <div className="relative mb-6">
         <div className="absolute top-0 right-0 text-gray-400 text-lg">{relayPositionDisplay}</div>
-        <div className="text-2xl font-bold text-center mt-4">{title}</div>
+        <div className="text-3xl font-bold text-center mt-4">{title}</div>
       </div>
 
       {/* Widget Content - Buttons with consistent size */}
       <div className="flex-1 flex items-center justify-center gap-6">
         {/* Light Toggle Button */}
         <button
-          className={cn(
-            "w-20 h-20 rounded-full border-4 transition-all flex items-center justify-center bg-muted/50 border-muted-foreground/20 text-muted-foreground",
-            isOn && "border-white",
-          )}
+          className="w-24 h-24 rounded-full flex items-center justify-center bg-gray-900 border-2 border-gray-700"
           onClick={onToggle}
           disabled={isEditing || !isConnected}
         >
@@ -146,14 +143,14 @@ export function RGBLightWidget({
 
         {/* Color Wheel Button */}
         <button
-          className={cn(
-            "w-20 h-20 rounded-full border-4 transition-all flex items-center justify-center bg-muted/50 border-muted-foreground/20 text-muted-foreground",
-            isOn ? "border-white" : "border-gray-700",
-          )}
+          className="w-24 h-24 rounded-full flex items-center justify-center bg-gray-900 border-2 border-gray-700"
           onClick={() => setColorPickerOpen(true)}
           disabled={isEditing || !isConnected}
         >
-          <div className="w-12 h-12 rounded-full border-2 border-white" style={{ backgroundColor: currentColor }} />
+          <div
+            className={cn("w-12 h-12 rounded-full", isOn && "border-2 border-white")}
+            style={{ backgroundColor: currentColor }}
+          />
         </button>
       </div>
 
