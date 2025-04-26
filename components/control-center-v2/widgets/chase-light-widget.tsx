@@ -137,55 +137,31 @@ export function ChaseLightWidget({
   const relayPositionDisplay = formatRelayPosition()
 
   return (
-    <div
-      className={cn(
-        "relative flex flex-col items-center justify-between w-full h-full p-4 transition-colors rounded-lg bg-card",
-        isEditing ? "cursor-move" : isConnected ? "cursor-default" : "cursor-not-allowed opacity-70",
-      )}
-      onMouseDown={onMouseDown}
-      onMouseUp={onMouseUp}
-      onMouseLeave={onMouseLeave}
-      onTouchStart={onTouchStart}
-      onTouchEnd={onTouchEnd}
-      onTouchCancel={onTouchCancel}
-    >
-      {/* Relay position indicator */}
-      {relayPositionDisplay && (
-        <div className="absolute top-2 right-2 text-xs text-muted-foreground px-1.5 py-0.5 rounded">
-          {relayPositionDisplay}
-        </div>
-      )}
+    <div className="flex flex-col h-full w-full bg-black rounded-xl text-white p-4 select-none">
+      {/* Widget Header - Title in center, relay position on right */}
+      <div className="relative mb-6">
+        <div className="absolute top-0 right-0 text-gray-400 text-lg">{relayPositionDisplay}</div>
+        <div className="text-2xl font-bold text-center mt-4">{title}</div>
+      </div>
 
-      {/* Title with larger text and positioned closer to buttons */}
-      <div className="text-2xl font-semibold mb-4 mt-8 text-center">{title}</div>
-
-      <div className="flex gap-6 mb-8">
+      {/* Widget Content - Buttons with consistent size */}
+      <div className="flex-1 flex items-center justify-center gap-6">
         {/* Toggle button */}
         <button
-          className={cn(
-            "w-20 h-20 rounded-full border-4 transition-all flex items-center justify-center",
-            isOn
-              ? "bg-green-500 border-green-700 text-white"
-              : "bg-muted/50 border-muted-foreground/20 text-muted-foreground",
-          )}
+          className="w-20 h-20 rounded-full flex items-center justify-center bg-gray-900 border-2 border-gray-700"
           onClick={onToggle}
           disabled={isEditing || !isConnected}
         >
-          <LightbulbIcon className="h-10 w-10" />
+          <LightbulbIcon className={cn("h-12 w-12", isOn ? "text-white" : "text-gray-500")} />
         </button>
 
         {/* Shuffle button */}
         <button
-          className={cn(
-            "w-20 h-20 rounded-full border-4 transition-all flex items-center justify-center",
-            shuffleActive
-              ? "bg-yellow-400 border-yellow-500 text-white"
-              : "bg-muted/50 border-muted-foreground/20 text-muted-foreground",
-          )}
+          className="w-20 h-20 rounded-full flex items-center justify-center bg-gray-900 border-2 border-gray-700"
           onClick={handlePatternChange}
           disabled={isEditing || !isConnected}
         >
-          <Shuffle className="h-10 w-10" />
+          <Shuffle className={cn("h-12 w-12", shuffleActive ? "text-yellow-400" : "text-gray-500")} />
         </button>
       </div>
     </div>
