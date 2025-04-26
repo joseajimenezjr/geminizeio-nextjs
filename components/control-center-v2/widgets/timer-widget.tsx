@@ -425,7 +425,7 @@ export function TimerWidget({
           <Star className="h-5 w-5" />
         </div>
 
-        <div className="text-xl font-medium mb-4">{title}</div>
+        <div className="text-xl font-medium mb-5">{title}</div>
 
         {isRunning ? (
           <div className="text-3xl font-bold tabular-nums">{formatTime(time)}</div>

@@ -186,10 +186,10 @@ export function TemperatureWidget({
     >
       <div className="relative h-full w-full flex flex-col items-center justify-center p-4">
         {/* Disconnected status in top right */}
-        {!bluetoothConnected && <div className="absolute top-2 right-2 text-xs text-gray-400">Disconnected</div>}
+        {!bluetoothConnected && <div className="absolute top-2 right-2 text- text-gray-400">Disconnected</div>}
 
         {/* Title with black background */}
-        <div className="bg-black px-4 py-1 mb-4">
+        <div className="bg-black px-4 py-1 mb-5">
           <h3 className="text-xl font-bold text-white">{title}</h3>
         </div>
 
