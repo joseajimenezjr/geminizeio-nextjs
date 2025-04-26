@@ -133,7 +133,7 @@ export function RGBLightWidget({
       </div>
 
       {/* Widget Content - Buttons with consistent size */}
-      <div className="flex-1 flex items-center justify-center gap-3">
+      <div className="flex items-start justify-center gap-3 mt-2">
         {/* Light Toggle Button */}
         <button
           className={cn(
