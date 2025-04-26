@@ -1,115 +1,193 @@
 "use client"
 
+import type React from "react"
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, ArrowRight, Pause, Play, RotateCcw } from "lucide-react"
+import { Shuffle } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { useAccessories } from "@/contexts/device-context"
+import { LightbulbIcon } from "lucide-react"
+import { useBluetoothContext } from "@/contexts/bluetooth-context"
+import { useToast } from "@/hooks/use-toast"
 
 interface ChaseLightWidgetProps {
-  id: string
-  title?: string
-  accessoryId?: string
+  title: string
+  accessoryId: string
+  isConnected: boolean
+  isOn: boolean
+  relayPosition?: string | number
+  isEditing?: boolean
+  onToggle: () => void
+  onMouseDown?: (e: React.MouseEvent | React.TouchEvent) => void
+  onMouseUp?: () => void
+  onMouseLeave?: () => void
+  onTouchStart?: (e: React.TouchEvent) => void
+  onTouchEnd?: () => void
+  onTouchCancel?: () => void
 }
 
-export function ChaseLightWidget({ id, title = "Chase Light", accessoryId }: ChaseLightWidgetProps) {
-  const [pattern, setPattern] = useState<"left" | "right" | "hazard" | "off">("off")
-  const [isRunning, setIsRunning] = useState(false)
+export function ChaseLightWidget({
+  title,
+  accessoryId,
+  isConnected,
+  isOn,
+  relayPosition,
+  isEditing = false,
+  onToggle,
+  onMouseDown,
+  onMouseUp,
+  onMouseLeave,
+  onTouchStart,
+  onTouchEnd,
+  onTouchCancel,
+}: ChaseLightWidgetProps) {
+  const [selectedPattern, setSelectedPattern] = useState("pattern1")
+  const [shuffleActive, setShuffleActive] = useState(false)
+  const { toggleAccessoryStatus, accessories } = useAccessories()
+  const { isConnected: isBtConnected, sendCommand } = useBluetoothContext()
+  const { toast } = useToast()
 
-  // Simulate sending commands to the device
-  const sendCommand = async (command: string) => {
-    console.log(`Sending command to chase light: ${command}`)
-    // In a real implementation, this would send a command to the device
-    // await fetch(`/api/accessories/${accessoryId}/command`, {
-    //   method: "POST",
-    //   headers: { "Content-Type": "application/json" },
-    //   body: JSON.stringify({ command }),
-    // })
-  }
+  // Find the accessory data from the context to get the relay position
+  const accessoryData = accessories.find((acc) => acc.accessoryID === accessoryId)
+  const accessoryRelayPosition = accessoryData?.relayPosition
 
-  const handlePatternChange = (newPattern: "left" | "right" | "hazard" | "off") => {
-    setPattern(newPattern)
+  const handlePatternChange = async () => {
+    // Only proceed if Bluetooth is connected
+    if (!isBtConnected) {
+      toast({
+        title: "Bluetooth Error",
+        description: "Not connected to a Bluetooth device",
+        variant: "destructive",
+      })
+      return
+    }
 
-    if (newPattern === "off") {
-      setIsRunning(false)
-      sendCommand("stop")
-    } else {
-      setIsRunning(true)
-      sendCommand(newPattern)
+    try {
+      // Send the raw value 2 to the Bluetooth device
+      const success = await sendCommand(2)
+
+      if (success) {
+        console.log(`Sent shuffle command (value 2) to device ${accessoryId}`)
+
+        // Update the pattern state
+        setSelectedPattern((prev) => {
+          const newPattern = `pattern${Math.floor(Math.random() * 3) + 1}`
+          console.log(`Selected pattern ${newPattern} for device ${accessoryId}`)
+          return newPattern
+        })
+
+        // Activate the yellow flash effect
+        setShuffleActive(true)
+
+        // Turn off after 1 second
+        setTimeout(() => {
+          setShuffleActive(false)
+        }, 1000)
+      } else {
+        console.error("Failed to send shuffle command")
+        toast({
+          title: "Command Failed",
+          description: "Failed to send shuffle command",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Error sending shuffle command:", error)
+      toast({
+        title: "Error",
+        description: "Error sending shuffle command",
+        variant: "destructive",
+      })
     }
   }
 
-  const toggleRunning = () => {
-    const newRunningState = !isRunning
-    setIsRunning(newRunningState)
+  // Format relay position for display using the same approach as ToggleWidget
+  const formatRelayPosition = () => {
+    // Use the relay position from context if available, otherwise use the prop
+    const positionToFormat = accessoryRelayPosition || relayPosition
 
-    if (newRunningState && pattern !== "off") {
-      sendCommand(pattern)
-    } else {
-      sendCommand("stop")
+    if (positionToFormat === undefined || positionToFormat === null) return null
+
+    // If it's already a number, just return "Relay X"
+    if (typeof positionToFormat === "number") {
+      return `Relay ${positionToFormat}`
     }
+
+    // If it's a string, try to extract the number
+    if (typeof positionToFormat === "string") {
+      // If it's already in the format "Relay X", return as is
+      if (positionToFormat.toLowerCase().startsWith("relay")) {
+        return positionToFormat
+      }
+
+      // Otherwise, try to extract a number
+      const matches = positionToFormat.match(/\d+/)
+      if (matches) {
+        return `Relay ${matches[0]}`
+      }
+
+      // If no number found but string is not empty, return the string
+      if (positionToFormat.trim()) {
+        return `Relay ${positionToFormat}`
+      }
+    }
+
+    return null
   }
 
-  const resetPattern = () => {
-    setPattern("off")
-    setIsRunning(false)
-    sendCommand("stop")
-  }
+  const relayPositionDisplay = formatRelayPosition()
 
   return (
-    <Card className="bg-black text-white rounded-lg shadow-lg">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-2xl font-bold text-center">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 gap-4 mb-2">
-          <Button
-            size="lg"
-            className={`w-20 h-20 ${
-              pattern === "left" && isRunning ? "bg-amber-500 text-black" : "bg-gray-700 border border-gray-600"
-            }`}
-            onClick={() => handlePatternChange("left")}
-          >
-            <ArrowLeft className="h-10 w-10" />
-          </Button>
-
-          <Button
-            size="lg"
-            className={`w-20 h-20 ${
-              pattern === "right" && isRunning ? "bg-amber-500 text-black" : "bg-gray-700 border border-gray-600"
-            }`}
-            onClick={() => handlePatternChange("right")}
-          >
-            <ArrowRight className="h-10 w-10" />
-          </Button>
-
-          <Button
-            size="lg"
-            className={`w-20 h-20 ${
-              pattern === "hazard" && isRunning ? "bg-amber-500 text-black" : "bg-gray-700 border border-gray-600"
-            }`}
-            onClick={() => handlePatternChange("hazard")}
-          >
-            <div className="flex items-center justify-center">
-              <ArrowLeft className="h-6 w-6 mr-1" />
-              <ArrowRight className="h-6 w-6 ml-1" />
-            </div>
-          </Button>
-
-          <Button size="lg" className="w-20 h-20 bg-gray-700 border border-gray-600" onClick={resetPattern}>
-            <RotateCcw className="h-10 w-10" />
-          </Button>
+    <div
+      className={cn(
+        "relative flex flex-col items-center justify-center w-full h-full p-4 transition-colors rounded-lg bg-card",
+        isEditing ? "cursor-move" : isConnected ? "cursor-default" : "cursor-not-allowed opacity-70",
+      )}
+      onMouseDown={onMouseDown}
+      onMouseUp={onMouseUp}
+      onMouseLeave={onMouseLeave}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+      onTouchCancel={onTouchCancel}
+    >
+      {/* Relay position indicator */}
+      {relayPositionDisplay && (
+        <div className="absolute top-2 right-2 text-xs text-muted-foreground px-1.5 py-0.5 rounded">
+          {relayPositionDisplay}
         </div>
+      )}
 
-        <Button
-          size="lg"
-          className={`w-full mt-2 ${isRunning ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"}`}
-          onClick={toggleRunning}
-          disabled={pattern === "off"}
+      {/* Title with larger text and no background */}
+      <div className="text-xl font-semibold mb-3 text-center">{title}</div>
+
+      <div className="flex gap-3">
+        {/* Toggle button */}
+        <button
+          className={cn(
+            "w-20 h-20 rounded-full border-4 transition-all flex items-center justify-center",
+            isOn
+              ? "bg-green-500 border-green-700 text-white"
+              : "bg-muted/50 border-muted-foreground/20 text-muted-foreground",
+          )}
+          onClick={onToggle}
+          disabled={isEditing || !isConnected}
         >
-          {isRunning ? <Pause className="mr-2 h-5 w-5" /> : <Play className="mr-2 h-5 w-5" />}
-          {isRunning ? "Stop" : "Start"}
-        </Button>
-      </CardContent>
-    </Card>
+          <LightbulbIcon className="h-10 w-10" />
+        </button>
+
+        {/* Shuffle button */}
+        <button
+          className={cn(
+            "w-20 h-20 rounded-full border-4 transition-all flex items-center justify-center",
+            shuffleActive
+              ? "bg-yellow-400 border-yellow-500 text-white"
+              : "bg-muted/50 border-muted-foreground/20 text-muted-foreground",
+          )}
+          onClick={handlePatternChange}
+          disabled={isEditing || !isConnected}
+        >
+          <Shuffle className="h-10 w-10" />
+        </button>
+      </div>
+    </div>
   )
 }

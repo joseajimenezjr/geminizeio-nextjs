@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Clock, Trophy, Star, Edit, Trash2 } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import {
@@ -57,9 +57,8 @@ export function TimerWidget({
   onTouchEnd,
   onTouchCancel,
 }: TimerWidgetProps) {
-  const [time, setTime] = useState(0)
   const [isRunning, setIsRunning] = useState(false)
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const [time, setTime] = useState(0)
   const [bestTime, setBestTime] = useState<number | null>(initialBestTime)
   const [topTimes, setTopTimes] = useState<TopTimeEntry[] | null>(initialTopTimes)
   const [showNewBest, setShowNewBest] = useState(false)
@@ -68,6 +67,7 @@ export function TimerWidget({
   const [showTopTimesDialog, setShowTopTimesDialog] = useState(false)
   const [description, setDescription] = useState("")
   const [isNewBestTime, setIsNewBestTime] = useState(false)
+  const intervalRef = useRef<NodeJS.Timeout | null>(null)
   const startTimeRef = useRef<number | null>(null)
   const { toast } = useToast()
 
@@ -83,43 +83,6 @@ export function TimerWidget({
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDescriptionDialog, setShowDescriptionDialog] = useState(false)
   const [isWidgetEditing, setIsWidgetEditing] = useState(false)
-
-  // Format time as MM:SS.ms
-  const formatTime = (timeMs: number) => {
-    const minutes = Math.floor(timeMs / 60000)
-    const seconds = Math.floor((timeMs % 60000) / 1000)
-    const ms = Math.floor((timeMs % 1000) / 10)
-    return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}.${ms.toString().padStart(2, "0")}`
-  }
-
-  // Start/pause timer
-  const toggleTimer = () => {
-    if (isRunning) {
-      // Pause timer
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-        intervalRef.current = null
-      }
-      setIsRunning(false)
-    } else {
-      // Start timer
-      const startTime = Date.now() - time
-      intervalRef.current = setInterval(() => {
-        setTime(Date.now() - startTime)
-      }, 10) // Update every 10ms for smooth display
-      setIsRunning(true)
-    }
-  }
-
-  // Reset timer
-  const resetTimer = () => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
-    }
-    setTime(0)
-    setIsRunning(false)
-  }
 
   // Clean up interval on unmount
   useEffect(() => {
@@ -293,6 +256,15 @@ export function TimerWidget({
     }
   }
 
+  // Format time as mm:ss.ms
+  const formatTime = (ms: number) => {
+    const minutes = Math.floor(ms / 60000)
+    const seconds = Math.floor((ms % 60000) / 1000)
+    const milliseconds = Math.floor((ms % 1000) / 10)
+
+    return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}.${milliseconds.toString().padStart(2, "0")}`
+  }
+
   // Format date for display
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -453,7 +425,7 @@ export function TimerWidget({
           <Star className="h-5 w-5" />
         </div>
 
-        <div className="text-xl font-medium mb-4">{title}</div>
+        <div className="text-sm font-medium mb-1">{title}</div>
 
         {isRunning ? (
           <div className="text-3xl font-bold tabular-nums">{formatTime(time)}</div>
@@ -469,10 +441,10 @@ export function TimerWidget({
           </div>
         ) : (
           <div className="flex flex-col items-center">
-            <Clock className="h-20 w-20 mb-4 text-primary" />
-            <div className="text-sm text-center">Tap to start timer!</div>
+            <div className="text-sm text-center mb-1">Tap to start timer!</div>
+            <Clock className="h-12 w-12 mb-1 text-primary" />
             {bestTime !== null && (
-              <div className="flex items-center mt-4 text-xs">
+              <div className="flex items-center mt-1 text-xs">
                 <Trophy className="h-3 w-3 mr-1 text-yellow-500" />
                 <span className="tabular-nums">{formatTime(bestTime)}</span>
               </div>
