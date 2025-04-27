@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import { ArrowLeft, ArrowRight, AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -12,6 +12,8 @@ interface TurnSignalWidgetProps {
   onHazard: () => void
 }
 
+type ActiveSignal = "left" | "right" | "hazard" | null
+
 export function TurnSignalWidget({
   title = "Turn Signals",
   accessoryId,
@@ -19,26 +21,56 @@ export function TurnSignalWidget({
   onRight,
   onHazard,
 }: TurnSignalWidgetProps) {
-  const [leftActive, setLeftActive] = useState(false)
-  const [rightActive, setRightActive] = useState(false)
-  const [hazardActive, setHazardActive] = useState(false)
+  const [activeSignal, setActiveSignal] = useState<ActiveSignal>(null)
+  const [isFlashing, setIsFlashing] = useState(false)
+  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Clean up interval on unmount
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+      }
+    }
+  }, [])
+
+  // Set up flashing effect when activeSignal changes
+  useEffect(() => {
+    // Clear any existing interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+      intervalRef.current = null
+    }
+
+    // If there's an active signal, start the flashing interval
+    if (activeSignal) {
+      setIsFlashing(true)
+      intervalRef.current = setInterval(() => {
+        setIsFlashing((prev) => !prev)
+      }, 1000) // Flash every second
+    } else {
+      setIsFlashing(false)
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+      }
+    }
+  }, [activeSignal])
 
   const handleLeftClick = useCallback(() => {
-    setLeftActive(true)
-    setTimeout(() => setLeftActive(false), 500) // Simulate blink for 500ms
+    setActiveSignal((prev) => (prev === "left" ? null : "left"))
     onLeft()
   }, [onLeft])
 
   const handleRightClick = useCallback(() => {
-    setRightActive(true)
-    setTimeout(() => setRightActive(false), 500) // Simulate blink for 500ms
+    setActiveSignal((prev) => (prev === "right" ? null : "right"))
     onRight()
   }, [onRight])
 
   const handleHazardClick = useCallback(() => {
-    setHazardActive((prev) => !prev)
-    // Simulate toggling hazard lights
-    setTimeout(() => setHazardActive((prev) => !prev), 500)
+    setActiveSignal((prev) => (prev === "hazard" ? null : "hazard"))
     onHazard()
   }, [onHazard])
 
@@ -49,30 +81,33 @@ export function TurnSignalWidget({
         <button
           className={cn(
             "flex flex-1 items-center justify-center rounded-xl border border-gray-700 text-white hover:bg-gray-900 transition-colors duration-200",
-            leftActive && "bg-green-600",
+            activeSignal === "left" && isFlashing && "bg-yellow-500",
           )}
           onClick={handleLeftClick}
           aria-label="Activate Left Turn Signal"
+          aria-pressed={activeSignal === "left"}
         >
           <ArrowLeft className="h-8 w-8" />
         </button>
         <button
           className={cn(
             "flex flex-1 items-center justify-center rounded-xl border border-gray-700 text-white hover:bg-gray-900 transition-colors duration-200",
-            hazardActive && "bg-red-600",
+            activeSignal === "hazard" && isFlashing && "bg-red-600",
           )}
           onClick={handleHazardClick}
           aria-label="Toggle Hazard Lights"
+          aria-pressed={activeSignal === "hazard"}
         >
           <AlertTriangle className="h-8 w-8" />
         </button>
         <button
           className={cn(
             "flex flex-1 items-center justify-center rounded-xl border border-gray-700 text-white hover:bg-gray-900 transition-colors duration-200",
-            rightActive && "bg-green-600",
+            activeSignal === "right" && isFlashing && "bg-yellow-500",
           )}
           onClick={handleRightClick}
           aria-label="Activate Right Turn Signal"
+          aria-pressed={activeSignal === "right"}
         >
           <ArrowRight className="h-8 w-8" />
         </button>
