@@ -26,6 +26,112 @@ export function parseVoiceCommand(command: string) {
   let isValid = false
   let relayPosition: number | null = null
 
+  // Special handling for turn signals and hazard lights
+  let isTurnSignalCommand = false
+  let turnSignalAction: "left" | "right" | "hazard" | null = null
+  let turnSignalState: "on" | "off" | "toggle" = "toggle" // Default to toggle if not specified
+
+  // Check for turn signal commands
+  const leftSignalPatterns = ["left signal", "left turn signal", "left blinker", "left indicator", "turn left"]
+
+  const rightSignalPatterns = ["right signal", "right turn signal", "right blinker", "right indicator", "turn right"]
+
+  const hazardPatterns = [
+    "hazard",
+    "hazards",
+    "hazard lights",
+    "hazard signals",
+    "emergency lights",
+    "emergency signals",
+    "warning lights",
+  ]
+
+  // Check for left turn signal commands
+  for (const pattern of leftSignalPatterns) {
+    if (lowerCommand.includes(pattern)) {
+      isTurnSignalCommand = true
+      turnSignalAction = "left"
+      console.log("✅ Left turn signal command detected")
+
+      // Determine if it's on, off, or toggle
+      if (onActions.some((action) => lowerCommand.includes(action)) || lowerCommand.includes("on")) {
+        turnSignalState = "on"
+      } else if (offActions.some((action) => lowerCommand.includes(action)) || lowerCommand.includes("off")) {
+        turnSignalState = "off"
+      } else {
+        turnSignalState = "toggle"
+      }
+
+      isValid = true
+      break
+    }
+  }
+
+  // Check for right turn signal commands
+  if (!isTurnSignalCommand) {
+    for (const pattern of rightSignalPatterns) {
+      if (lowerCommand.includes(pattern)) {
+        isTurnSignalCommand = true
+        turnSignalAction = "right"
+        console.log("✅ Right turn signal command detected")
+
+        // Determine if it's on, off, or toggle
+        if (onActions.some((action) => lowerCommand.includes(action)) || lowerCommand.includes("on")) {
+          turnSignalState = "on"
+        } else if (offActions.some((action) => lowerCommand.includes(action)) || lowerCommand.includes("off")) {
+          turnSignalState = "off"
+        } else {
+          turnSignalState = "toggle"
+        }
+
+        isValid = true
+        break
+      }
+    }
+  }
+
+  // Check for hazard light commands
+  if (!isTurnSignalCommand) {
+    for (const pattern of hazardPatterns) {
+      if (lowerCommand.includes(pattern)) {
+        isTurnSignalCommand = true
+        turnSignalAction = "hazard"
+        console.log("✅ Hazard lights command detected")
+
+        // Determine if it's on, off, or toggle
+        if (onActions.some((action) => lowerCommand.includes(action)) || lowerCommand.includes("on")) {
+          turnSignalState = "on"
+        } else if (offActions.some((action) => lowerCommand.includes(action)) || lowerCommand.includes("off")) {
+          turnSignalState = "off"
+        } else {
+          turnSignalState = "toggle"
+        }
+
+        isValid = true
+        break
+      }
+    }
+  }
+
+  // If it's a turn signal command, set the target accordingly
+  if (isTurnSignalCommand) {
+    target =
+      turnSignalAction === "left" ? "left signal" : turnSignalAction === "right" ? "right signal" : "hazard lights"
+    action = turnSignalState === "on" ? "on" : turnSignalState === "off" ? "off" : "toggle"
+
+    // We're done parsing, return early
+    return {
+      isValid,
+      target,
+      action,
+      hasWakeWord,
+      relayPosition,
+      isTurnSignalCommand,
+      turnSignalAction,
+      turnSignalState,
+    }
+  }
+
   // Check for "turn on/off relay position number X"
   const relayPositionRegex = /(turn\s(?:on|off))\s(?:relay\s)?(?:(?:number\s|position\s)?)(\d+)/i
   const relayMatch = lowerCommand.match(relayPositionRegex)
@@ -160,5 +266,8 @@ export function parseVoiceCommand(command: string) {
     action,
     hasWakeWord,
     relayPosition,
+    isTurnSignalCommand,
+    turnSignalAction,
+    turnSignalState,
   }
 }

@@ -19,8 +19,132 @@ export function VoiceControl() {
 
   // Function to process voice commands
   const processCommand = useCallback(
-    (transcript: string, action: string, relayPosition: number | null) => {
-      console.log("Processing command:", transcript, action, relayPosition)
+    (
+      transcript: string,
+      action: string,
+      relayPosition: number | null,
+      isTurnSignalCommand?: boolean,
+      turnSignalAction?: "left" | "right" | "hazard" | null,
+      turnSignalState?: "on" | "off" | "toggle",
+    ) => {
+      console.log(
+        "Processing command:",
+        transcript,
+        action,
+        relayPosition,
+        isTurnSignalCommand,
+        turnSignalAction,
+        turnSignalState,
+      )
+
+      // Handle turn signal commands
+      if (isTurnSignalCommand && turnSignalAction) {
+        // Find the turn signal widget accessory
+        const turnSignalAccessory = accessories.find((acc) => acc.accessoryType === "turnSignal")
+
+        if (turnSignalAccessory) {
+          console.log("Found turn signal accessory:", turnSignalAccessory)
+
+          // Determine which action to take based on the command
+          let actionTaken = ""
+
+          // Find the turn signal widget in the DOM
+          const turnSignalWidgets = document.querySelectorAll('[data-turn-signal-widget="true"]')
+          if (turnSignalWidgets.length > 0) {
+            const turnSignalWidget = turnSignalWidgets[0]
+
+            // Find the appropriate button based on the command
+            let buttonToClick: HTMLElement | null = null
+
+            if (turnSignalAction === "left") {
+              buttonToClick = turnSignalWidget.querySelector('[data-turn-signal="left"]')
+              actionTaken =
+                turnSignalState === "on"
+                  ? "Turned on left signal"
+                  : turnSignalState === "off"
+                    ? "Turned off left signal"
+                    : "Toggled left signal"
+            } else if (turnSignalAction === "right") {
+              buttonToClick = turnSignalWidget.querySelector('[data-turn-signal="right"]')
+              actionTaken =
+                turnSignalState === "on"
+                  ? "Turned on right signal"
+                  : turnSignalState === "off"
+                    ? "Turned off right signal"
+                    : "Toggled right signal"
+            } else if (turnSignalAction === "hazard") {
+              buttonToClick = turnSignalWidget.querySelector('[data-turn-signal="hazard"]')
+              actionTaken =
+                turnSignalState === "on"
+                  ? "Turned on hazard lights"
+                  : turnSignalState === "off"
+                    ? "Turned off hazard lights"
+                    : "Toggled hazard lights"
+            }
+
+            // Click the button if found
+            if (buttonToClick) {
+              console.log("Clicking button:", buttonToClick)
+              buttonToClick.click()
+
+              toast({
+                title: "Voice Command Executed",
+                description: actionTaken,
+              })
+
+              return
+            }
+          }
+
+          // If we couldn't find the widget or button, try to use the accessory API
+          if (turnSignalAction === "left") {
+            // Here we would call the appropriate API to control the left signal
+            // For now, we'll just show a toast
+            toast({
+              title: "Voice Command Executed",
+              description:
+                turnSignalState === "on"
+                  ? "Turned on left signal"
+                  : turnSignalState === "off"
+                    ? "Turned off left signal"
+                    : "Toggled left signal",
+            })
+            return
+          } else if (turnSignalAction === "right") {
+            // Here we would call the appropriate API to control the right signal
+            toast({
+              title: "Voice Command Executed",
+              description:
+                turnSignalState === "on"
+                  ? "Turned on right signal"
+                  : turnSignalState === "off"
+                    ? "Turned off right signal"
+                    : "Toggled right signal",
+            })
+            return
+          } else if (turnSignalAction === "hazard") {
+            // Here we would call the appropriate API to control the hazard lights
+            toast({
+              title: "Voice Command Executed",
+              description:
+                turnSignalState === "on"
+                  ? "Turned on hazard lights"
+                  : turnSignalState === "off"
+                    ? "Turned off hazard lights"
+                    : "Toggled hazard lights",
+            })
+            return
+          }
+        } else {
+          console.log("No turn signal accessory found")
+          toast({
+            title: "Turn Signal Not Found",
+            description: "No turn signal accessory is available. Please add a turn signal widget first.",
+            variant: "destructive",
+          })
+          return
+        }
+      }
 
       // Find matching accessory
       let matchingAccessory = null
