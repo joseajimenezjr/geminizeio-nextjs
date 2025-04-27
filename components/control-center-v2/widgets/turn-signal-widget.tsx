@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useCallback, useEffect, useRef } from "react"
 import { ArrowLeft, ArrowRight, AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -80,6 +82,16 @@ export function TurnSignalWidget({
     onHazard()
   }, [onHazard])
 
+  // Helper function to prevent focus/hover state from sticking
+  const preventFocusSticking = (e: React.MouseEvent | React.TouchEvent) => {
+    // Prevent the default behavior that causes the hover state to stick
+    e.preventDefault()
+    // Immediately blur the target after clicking
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur()
+    }
+  }
+
   // Determine if left arrow should be lit
   const leftActive =
     activeSignal === "left" && isFlashing ? true : activeSignal === "hazard" && !isFlashing ? true : false
@@ -97,10 +109,14 @@ export function TurnSignalWidget({
       <div className="flex justify-between gap-3 flex-1">
         <button
           className={cn(
-            "flex flex-1 items-center justify-center rounded-xl border border-gray-700 text-white hover:bg-gray-900 transition-colors duration-200",
-            leftActive && "bg-yellow-500",
+            "flex flex-1 items-center justify-center rounded-xl border border-gray-700 text-white transition-colors duration-200",
+            leftActive
+              ? "bg-yellow-500"
+              : "bg-black hover:bg-gray-900 active:bg-black focus:bg-black focus:outline-none",
           )}
           onClick={handleLeftClick}
+          onMouseDown={preventFocusSticking}
+          onTouchStart={preventFocusSticking}
           aria-label="Activate Left Turn Signal"
           aria-pressed={activeSignal === "left"}
         >
@@ -108,10 +124,14 @@ export function TurnSignalWidget({
         </button>
         <button
           className={cn(
-            "flex flex-1 items-center justify-center rounded-xl border border-gray-700 text-white hover:bg-gray-900 transition-colors duration-200",
-            hazardActive && "bg-red-600",
+            "flex flex-1 items-center justify-center rounded-xl border border-gray-700 text-white transition-colors duration-200",
+            hazardActive
+              ? "bg-red-600"
+              : "bg-black hover:bg-gray-900 active:bg-black focus:bg-black focus:outline-none",
           )}
           onClick={handleHazardClick}
+          onMouseDown={preventFocusSticking}
+          onTouchStart={preventFocusSticking}
           aria-label="Toggle Hazard Lights"
           aria-pressed={activeSignal === "hazard"}
         >
@@ -119,10 +139,14 @@ export function TurnSignalWidget({
         </button>
         <button
           className={cn(
-            "flex flex-1 items-center justify-center rounded-xl border border-gray-700 text-white hover:bg-gray-900 transition-colors duration-200",
-            rightActive && "bg-yellow-500",
+            "flex flex-1 items-center justify-center rounded-xl border border-gray-700 text-white transition-colors duration-200",
+            rightActive
+              ? "bg-yellow-500"
+              : "bg-black hover:bg-gray-900 active:bg-black focus:bg-black focus:outline-none",
           )}
           onClick={handleRightClick}
+          onMouseDown={preventFocusSticking}
+          onTouchStart={preventFocusSticking}
           aria-label="Activate Right Turn Signal"
           aria-pressed={activeSignal === "right"}
         >
