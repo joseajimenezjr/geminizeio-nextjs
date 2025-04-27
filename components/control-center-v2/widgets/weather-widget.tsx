@@ -125,8 +125,8 @@ export function WeatherWidget() {
 
   return (
     <div className="p-3 flex flex-col items-center justify-center h-full">
-      <div className="text-lg font-medium text-muted-foreground mb-1 w-full text-center">
-        {weather.name}, {weather.sys.country}
+      <div className="text-2xl font-medium text-muted-foreground mb-1 w-full text-center">
+        {weather.name}
       </div>
       <div className="flex items-center justify-center">
         {getWeatherIcon()}
