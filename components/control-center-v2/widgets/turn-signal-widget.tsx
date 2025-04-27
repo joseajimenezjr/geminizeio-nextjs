@@ -137,7 +137,7 @@ export function TurnSignalWidget({
           onClick={handleLeftClick}
           data-turn-signal="left"
         >
-          {activeSignal === "left" && settings.countdownEnabled && (
+          {activeSignal === "left" && settings.countdownEnabled ? (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="absolute inset-0 flex items-center justify-center">
                 <svg className="absolute" width="100%" height="100%" viewBox="0 0 100 100">
@@ -161,8 +161,9 @@ export function TurnSignalWidget({
                 {countdown > 0 && <div className="text-xs">{countdown}s</div>}
               </div>
             </div>
+          ) : (
+            <ArrowLeft className="h-8 w-8" />
           )}
-          {!activeSignal === "left" || !settings.countdownEnabled ? <ArrowLeft className="h-8 w-8" /> : null}
         </Button>
         <Button
           variant="outline"
@@ -173,7 +174,7 @@ export function TurnSignalWidget({
           onClick={handleHazardClick}
           data-turn-signal="hazard"
         >
-          {activeSignal === "hazard" && settings.countdownEnabled && (
+          {activeSignal === "hazard" && settings.countdownEnabled ? (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="absolute inset-0 flex items-center justify-center">
                 <svg className="absolute" width="100%" height="100%" viewBox="0 0 100 100">
@@ -197,8 +198,9 @@ export function TurnSignalWidget({
                 {countdown > 0 && <div className="text-xs">{countdown}s</div>}
               </div>
             </div>
+          ) : (
+            <AlertTriangle className="h-8 w-8" />
           )}
-          {!activeSignal === "hazard" || !settings.countdownEnabled ? <AlertTriangle className="h-8 w-8" /> : null}
         </Button>
         <Button
           variant="outline"
@@ -209,7 +211,7 @@ export function TurnSignalWidget({
           onClick={handleRightClick}
           data-turn-signal="right"
         >
-          {activeSignal === "right" && settings.countdownEnabled && (
+          {activeSignal === "right" && settings.countdownEnabled ? (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="absolute inset-0 flex items-center justify-center">
                 <svg className="absolute" width="100%" height="100%" viewBox="0 0 100 100">
@@ -233,8 +235,9 @@ export function TurnSignalWidget({
                 {countdown > 0 && <div className="text-xs">{countdown}s</div>}
               </div>
             </div>
+          ) : (
+            <ArrowRight className="h-8 w-8" />
           )}
-          {!activeSignal === "right" || !settings.countdownEnabled ? <ArrowRight className="h-8 w-8" /> : null}
         </Button>
       </div>
     </div>
