@@ -209,7 +209,7 @@ export function ToggleWidget({
       <div
         ref={toggleButtonRef}
         className={cn(
-          "relative flex items-center justify-center w-20 h-20 rounded-full border-4 transition-all",
+          "relative flex items-center justify-center w-24 h-24 rounded-full border-4 transition-all",
           localIsOn
             ? "bg-green-500 border-green-600 text-white continuous-flash"
             : "bg-muted/50 border-muted-foreground/20 text-muted-foreground",
