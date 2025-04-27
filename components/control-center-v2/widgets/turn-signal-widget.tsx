@@ -81,10 +81,12 @@ export function TurnSignalWidget({
   }, [onHazard])
 
   // Determine if left arrow should be lit
-  const leftActive = (activeSignal === "left" && isFlashing) || (activeSignal === "hazard" && isFlashing)
+  const leftActive =
+    activeSignal === "left" && isFlashing ? true : activeSignal === "hazard" && !isFlashing ? true : false
 
   // Determine if right arrow should be lit
-  const rightActive = (activeSignal === "right" && isFlashing) || (activeSignal === "hazard" && !isFlashing)
+  const rightActive =
+    activeSignal === "right" && isFlashing ? true : activeSignal === "hazard" && !isFlashing ? true : false
 
   // Determine if hazard should be lit
   const hazardActive = activeSignal === "hazard" && isFlashing
