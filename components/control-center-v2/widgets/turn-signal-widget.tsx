@@ -177,7 +177,7 @@ export function TurnSignalWidget({
   const countdownProgress = countdown !== null ? (countdown / TOTAL_COUNTDOWN_TIME) * 100 : 0
 
   return (
-    <div className="p-4 bg-black rounded-xl border border-gray-800 w-full h-full flex flex-col relative">
+    <div className="p-4 bg-card rounded-xl border border-gray-800 w-full h-full flex flex-col relative">
       <div className="mb-4 text-lg font-medium text-white text-center">{title}</div>
       <div className="flex justify-between gap-3 flex-1">
         <button
