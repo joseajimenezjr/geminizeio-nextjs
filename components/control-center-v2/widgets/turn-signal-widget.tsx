@@ -125,19 +125,18 @@ export function TurnSignalWidget({
   }
 
   return (
-    <div className="p-4 h-full flex flex-col" data-turn-signal-widget="true">
+    <div className="p-4 pb-2 h-full flex flex-col" data-turn-signal-widget="true">
       <div className="text-sm font-medium mb-2">{title}</div>
-      <div className="flex-1 flex items-stretch justify-between gap-2">
+      <div className="flex-1 flex items-stretch justify-between gap-2 h-full">
         <Button
           variant="outline"
           className={cn(
-            "flex-1 relative h-24 flex flex-col items-center justify-center",
+            "flex-1 relative h-full flex flex-col items-center justify-center",
             activeSignal === "left" && "bg-amber-500 text-white hover:bg-amber-600 hover:text-white",
           )}
           onClick={handleLeftClick}
           data-turn-signal="left"
         >
-          <ArrowLeft className="h-8 w-8" />
           {activeSignal === "left" && settings.countdownEnabled && (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="absolute inset-0 flex items-center justify-center">
@@ -157,20 +156,23 @@ export function TurnSignalWidget({
                   />
                 </svg>
               </div>
-              <ArrowLeft className="h-8 w-8 z-10" />
+              <div className="flex flex-col items-center justify-center z-10">
+                <ArrowLeft className="h-8 w-8 mb-1" />
+                {countdown > 0 && <div className="text-xs">{countdown}s</div>}
+              </div>
             </div>
           )}
+          {!activeSignal === "left" || !settings.countdownEnabled ? <ArrowLeft className="h-8 w-8" /> : null}
         </Button>
         <Button
           variant="outline"
           className={cn(
-            "flex-1 relative h-24 flex flex-col items-center justify-center",
+            "flex-1 relative h-full flex flex-col items-center justify-center",
             activeSignal === "hazard" && "bg-red-500 text-white hover:bg-red-600 hover:text-white",
           )}
           onClick={handleHazardClick}
           data-turn-signal="hazard"
         >
-          <AlertTriangle className="h-8 w-8" />
           {activeSignal === "hazard" && settings.countdownEnabled && (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="absolute inset-0 flex items-center justify-center">
@@ -190,20 +192,23 @@ export function TurnSignalWidget({
                   />
                 </svg>
               </div>
-              <AlertTriangle className="h-8 w-8 z-10" />
+              <div className="flex flex-col items-center justify-center z-10">
+                <AlertTriangle className="h-8 w-8 mb-1" />
+                {countdown > 0 && <div className="text-xs">{countdown}s</div>}
+              </div>
             </div>
           )}
+          {!activeSignal === "hazard" || !settings.countdownEnabled ? <AlertTriangle className="h-8 w-8" /> : null}
         </Button>
         <Button
           variant="outline"
           className={cn(
-            "flex-1 relative h-24 flex flex-col items-center justify-center",
+            "flex-1 relative h-full flex flex-col items-center justify-center",
             activeSignal === "right" && "bg-amber-500 text-white hover:bg-amber-600 hover:text-white",
           )}
           onClick={handleRightClick}
           data-turn-signal="right"
         >
-          <ArrowRight className="h-8 w-8" />
           {activeSignal === "right" && settings.countdownEnabled && (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="absolute inset-0 flex items-center justify-center">
@@ -223,14 +228,15 @@ export function TurnSignalWidget({
                   />
                 </svg>
               </div>
-              <ArrowRight className="h-8 w-8 z-10" />
+              <div className="flex flex-col items-center justify-center z-10">
+                <ArrowRight className="h-8 w-8 mb-1" />
+                {countdown > 0 && <div className="text-xs">{countdown}s</div>}
+              </div>
             </div>
           )}
+          {!activeSignal === "right" || !settings.countdownEnabled ? <ArrowRight className="h-8 w-8" /> : null}
         </Button>
       </div>
-      {settings.countdownEnabled && activeSignal && (
-        <div className="mt-2 text-xs text-center text-muted-foreground">Auto-off in {countdown}s</div>
-      )}
     </div>
   )
 }
