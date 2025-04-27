@@ -36,6 +36,35 @@ const longPressStyle = `
     transform: scale(0.98);
     transition: all 0.2s ease;
   }
+  
+  /* Add this to ensure all widgets are draggable in edit mode */
+  .react-grid-item.react-draggable {
+    cursor: move;
+  }
+  
+  /* Make sure pointer events work properly during drag */
+  .react-grid-item.react-draggable-dragging {
+    z-index: 3;
+    pointer-events: auto !important;
+  }
+  
+  /* Fix for widgets in edit mode */
+  .edit-mode .widget-container {
+    pointer-events: auto !important;
+  }
+  
+  /* Ensure content inside widgets doesn't block drag events in edit mode */
+  .edit-mode .widget-container > * {
+    pointer-events: none;
+  }
+  
+  /* But allow clicks on buttons and interactive elements */
+  .edit-mode .widget-container button,
+  .edit-mode .widget-container input,
+  .edit-mode .widget-container select,
+  .edit-mode .widget-container a {
+    pointer-events: auto;
+  }
 `
 
 // Enable responsiveness with the WidthProvider
@@ -117,6 +146,7 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
   const [showUtilityLibrary, setShowUtilityLibrary] = useState(false)
   const [showOBDIILibrary, setShowOBDIILibrary] = useState(false)
   const [hasOBD2Accessory, setHasOBD2Accessory] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
 
   // Create a local state to track accessory statuses for immediate UI updates
   const [localAccessoryStatuses, setLocalAccessoryStatuses] = useState<Record<string, boolean>>({})
@@ -408,6 +438,21 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
 
       setWidgets(updatedWidgets)
     }
+  }
+
+  // Handle drag start
+  const onDragStart = () => {
+    setIsDragging(true)
+    // Cancel any long press timers when dragging starts
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
+  }
+
+  // Handle drag stop
+  const onDragStop = () => {
+    setIsDragging(false)
   }
 
   // Start editing mode
@@ -717,15 +762,16 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
     }
   }
 
-  // Handle long press start
+  // Handle long press start - MODIFIED to check for dragging state
   const handleWidgetMouseDown = (e: React.MouseEvent | React.TouchEvent, widgetId: string) => {
-    // Only enable long press in editing mode
-    if (!isEditing) {
-      return // Exit early if not in editing mode
+    // Only enable long press in editing mode and when not dragging
+    if (!isEditing || isDragging) {
+      return // Exit early if not in editing mode or if dragging
     }
 
-    e.preventDefault()
-    e.stopPropagation()
+    // Don't prevent default or stop propagation here - this allows drag to work
+    // e.preventDefault()
+    // e.stopPropagation()
 
     // Clear any existing timer
     if (longPressTimerRef.current) {
@@ -1136,7 +1182,7 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
   }, [])
 
   return (
-    <div className="flex h-screen flex-col bg-black text-white">
+    <div className={`flex h-screen flex-col bg-black text-white ${isEditing ? "edit-mode" : ""}`}>
       {/* Header */}
       <div className="flex items-center justify-between border-b border-gray-800 p-4">
         <div className="flex items-center gap-2">
@@ -1261,24 +1307,23 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
           isResizable={false}
           preventCollision={false}
           onLayoutChange={onLayoutChange}
+          onDragStart={onDragStart}
+          onDragStop={onDragStop}
           margin={[16, 16]}
           containerPadding={[0, 0]}
           compactType="vertical"
           autoSize={true}
+          draggableHandle={isEditing ? ".widget-container" : undefined}
         >
           {widgets.map((widget) => (
             <div
               key={widget.id}
               id={widget.id}
               className="widget-container bg-card rounded-lg shadow-sm overflow-hidden border h-full relative"
-              onMouseDown={(e) => handleWidgetMouseDown(e, widget.id)}
-              onMouseUp={() => handleWidgetMouseUp(widget.id)}
-              onMouseLeave={() => handleWidgetMouseLeave(widget.id)}
-              onTouchStart={(e) => handleWidgetMouseDown(e, widget.id)}
-              onTouchEnd={() => handleWidgetMouseUp(widget.id)}
-              onTouchCancel={() => handleWidgetMouseLeave(widget.id)}
+              data-grid-item-id={widget.id}
             >
               {renderWidget(widget)}
+              {isEditing && <div className="absolute inset-0 cursor-move bg-transparent" />}
             </div>
           ))}
         </ResponsiveGridLayout>
