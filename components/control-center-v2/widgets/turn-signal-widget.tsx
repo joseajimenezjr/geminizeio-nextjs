@@ -167,61 +167,75 @@ export function TurnSignalWidget({
   return (
     <div className="p-4 bg-black rounded-xl border border-gray-800 w-full h-full flex flex-col relative">
       <div className="mb-4 text-lg font-medium text-white text-center">{title}</div>
-      <div className="flex justify-between gap-3 flex-1">
-        <button
-          className={cn(
-            "flex flex-1 items-center justify-center rounded-xl border border-gray-700 text-white transition-colors duration-200 relative",
-            leftActive ? "bg-yellow-500" : "bg-black",
-          )}
-          onClick={handleLeftClick}
-          onMouseEnter={() => setIsHovered("left")}
-          onMouseLeave={() => setIsHovered(null)}
-          onTouchStart={() => {}}
-          onTouchEnd={() => setIsHovered(null)}
-          aria-label="Activate Left Turn Signal"
-          aria-pressed={activeSignal === "left"}
-        >
-          <ArrowLeft className="h-8 w-8" />
-          {showCountdown && activeSignal === "left" && (
-            <CountdownIndicator progress={countdownProgress} seconds={countdown || 0} />
-          )}
-        </button>
-        <button
-          className={cn(
-            "flex flex-1 items-center justify-center rounded-xl border border-gray-700 text-white transition-colors duration-200 relative",
-            hazardActive ? "bg-red-600" : "bg-black",
-          )}
-          onClick={handleHazardClick}
-          onMouseEnter={() => setIsHovered("hazard")}
-          onMouseLeave={() => setIsHovered(null)}
-          onTouchStart={() => {}}
-          onTouchEnd={() => setIsHovered(null)}
-          aria-label="Toggle Hazard Lights"
-          aria-pressed={activeSignal === "hazard"}
-        >
-          <AlertTriangle className="h-8 w-8" />
-          {showCountdown && activeSignal === "hazard" && (
-            <CountdownIndicator progress={countdownProgress} seconds={countdown || 0} />
-          )}
-        </button>
-        <button
-          className={cn(
-            "flex flex-1 items-center justify-center rounded-xl border border-gray-700 text-white transition-colors duration-200 relative",
-            rightActive ? "bg-yellow-500" : "bg-black",
-          )}
-          onClick={handleRightClick}
-          onMouseEnter={() => setIsHovered("right")}
-          onMouseLeave={() => setIsHovered(null)}
-          onTouchStart={() => {}}
-          onTouchEnd={() => setIsHovered(null)}
-          aria-label="Activate Right Turn Signal"
-          aria-pressed={activeSignal === "right"}
-        >
-          <ArrowRight className="h-8 w-8" />
-          {showCountdown && activeSignal === "right" && (
-            <CountdownIndicator progress={countdownProgress} seconds={countdown || 0} />
-          )}
-        </button>
+      <div className="flex flex-col gap-3 flex-1">
+        <div className="flex justify-between gap-3 flex-1">
+          <div className="flex flex-col items-center flex-1">
+            <button
+              className={cn(
+                "flex w-full h-full items-center justify-center rounded-xl border border-gray-700 text-white transition-colors duration-200",
+                leftActive ? "bg-yellow-500" : "bg-black",
+              )}
+              onClick={handleLeftClick}
+              onMouseEnter={() => setIsHovered("left")}
+              onMouseLeave={() => setIsHovered(null)}
+              onTouchStart={() => {}}
+              onTouchEnd={() => setIsHovered(null)}
+              aria-label="Activate Left Turn Signal"
+              aria-pressed={activeSignal === "left"}
+            >
+              <ArrowLeft className="h-8 w-8" />
+            </button>
+            {showCountdown && activeSignal === "left" && (
+              <div className="mt-2">
+                <CountdownIndicator progress={countdownProgress} seconds={countdown || 0} />
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col items-center flex-1">
+            <button
+              className={cn(
+                "flex w-full h-full items-center justify-center rounded-xl border border-gray-700 text-white transition-colors duration-200",
+                hazardActive ? "bg-red-600" : "bg-black",
+              )}
+              onClick={handleHazardClick}
+              onMouseEnter={() => setIsHovered("hazard")}
+              onMouseLeave={() => setIsHovered(null)}
+              onTouchStart={() => {}}
+              onTouchEnd={() => setIsHovered(null)}
+              aria-label="Toggle Hazard Lights"
+              aria-pressed={activeSignal === "hazard"}
+            >
+              <AlertTriangle className="h-8 w-8" />
+            </button>
+            {showCountdown && activeSignal === "hazard" && (
+              <div className="mt-2">
+                <CountdownIndicator progress={countdownProgress} seconds={countdown || 0} />
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col items-center flex-1">
+            <button
+              className={cn(
+                "flex w-full h-full items-center justify-center rounded-xl border border-gray-700 text-white transition-colors duration-200",
+                rightActive ? "bg-yellow-500" : "bg-black",
+              )}
+              onClick={handleRightClick}
+              onMouseEnter={() => setIsHovered("right")}
+              onMouseLeave={() => setIsHovered(null)}
+              onTouchStart={() => {}}
+              onTouchEnd={() => setIsHovered(null)}
+              aria-label="Activate Right Turn Signal"
+              aria-pressed={activeSignal === "right"}
+            >
+              <ArrowRight className="h-8 w-8" />
+            </button>
+            {showCountdown && activeSignal === "right" && (
+              <div className="mt-2">
+                <CountdownIndicator progress={countdownProgress} seconds={countdown || 0} />
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -229,18 +243,18 @@ export function TurnSignalWidget({
 
 // Countdown indicator component
 function CountdownIndicator({ progress, seconds }: { progress: number; seconds: number }) {
-  const circumference = 2 * Math.PI * 18 // 18 is the radius of the circle
+  const circumference = 2 * Math.PI * 14 // 14 is the radius of the circle (smaller than before)
   const strokeDashoffset = circumference * (1 - progress / 100)
 
   return (
-    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+    <div className="flex items-center justify-center">
       <div className="relative">
-        <svg width="44" height="44" viewBox="0 0 44 44" className="rotate-[-90deg]">
-          <circle cx="22" cy="22" r="18" fill="transparent" stroke="rgba(255, 255, 255, 0.2)" strokeWidth="3" />
+        <svg width="36" height="36" viewBox="0 0 36 36" className="rotate-[-90deg]">
+          <circle cx="18" cy="18" r="14" fill="transparent" stroke="rgba(255, 255, 255, 0.2)" strokeWidth="3" />
           <circle
-            cx="22"
-            cy="22"
-            r="18"
+            cx="18"
+            cy="18"
+            r="14"
             fill="transparent"
             stroke="white"
             strokeWidth="3"
@@ -249,7 +263,7 @@ function CountdownIndicator({ progress, seconds }: { progress: number; seconds: 
             strokeLinecap="round"
           />
         </svg>
-        <div className="absolute inset-0 flex items-center justify-center text-white font-medium text-sm">
+        <div className="absolute inset-0 flex items-center justify-center text-white font-medium text-xs">
           {seconds}
         </div>
       </div>
