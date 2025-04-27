@@ -26,6 +26,8 @@ import { BatteryWidget } from "./widgets/battery-widget"
 import { TemperatureWidget } from "./widgets/temperature-widget"
 import { TimerWidget } from "./widgets/timer-widget"
 import { TurnSignalWidget } from "./widgets/turn-signal-widget" // Import the new TurnSignalWidget
+import { TurnSignalSettingsDialog } from "./widgets/turn-signal-settings"
+import type { TurnSignalSettings } from "./widgets/turn-signal-widget"
 
 // Add a style tag for the long-press visual indicator
 const longPressStyle = `
@@ -123,6 +125,10 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
   const [hasTemperatureReader, setHasTemperatureReader] = useState(false)
 
   const TEMPERATURE_SERVICE_UUID = "869c10ef-71d9-4f55-92d6-859350c3b8f6"
+
+  // New state variables
+  const [showWidgetSettings, setShowWidgetSettings] = useState(false)
+  const [selectedWidgetForSettings, setSelectedWidgetForSettings] = useState<string | null>(null)
 
   // Filter accessories to only include supported types
   const supportedAccessories = useMemo(() => {
@@ -684,6 +690,33 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
     })
   }
 
+  // New function to handle widget settings
+  const handleWidgetSettings = (widgetId: string) => {
+    setSelectedWidgetForSettings(widgetId)
+    setShowWidgetSettings(true)
+    setContextMenu({ visible: false, widgetId: null, x: 0, y: 0 })
+  }
+
+  // New function to handle saving turn signal settings
+  const handleSaveTurnSignalSettings = (settings: TurnSignalSettings) => {
+    if (selectedWidgetForSettings) {
+      setWidgets((prevWidgets) =>
+        prevWidgets.map((widget) => {
+          if (widget.id === selectedWidgetForSettings) {
+            return {
+              ...widget,
+              settings: {
+                ...widget.settings,
+                ...settings,
+              },
+            }
+          }
+          return widget
+        }),
+      )
+    }
+  }
+
   // Handle long press start
   const handleWidgetMouseDown = (e: React.MouseEvent | React.TouchEvent, widgetId: string) => {
     // Only enable long press in editing mode
@@ -1054,6 +1087,22 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
             onLeft={() => {}}
             onRight={() => {}}
             onHazard={() => {}}
+            settings={widget.settings?.turnSignal}
+            onSettingsChange={(settings) => {
+              const updatedWidgets = widgets.map((w) => {
+                if (w.id === widget.id) {
+                  return {
+                    ...w,
+                    settings: {
+                      ...w.settings,
+                      turnSignal: settings,
+                    },
+                  }
+                }
+                return w
+              })
+              setWidgets(updatedWidgets)
+            }}
           />
         )
       default:
@@ -1271,6 +1320,13 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
           >
             <div className="p-2 flex flex-col">
               <div className="px-2 py-1 text-sm font-medium border-b mb-1">Widget Options</div>
+              <button
+                className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-accent hover:text-accent-foreground flex items-center gap-2"
+                onClick={() => handleWidgetSettings(contextMenu.widgetId!)}
+              >
+                <Settings className="h-4 w-4" />
+                Edit Settings
+              </button>
 
               {/* Remove option */}
               <button
@@ -1282,6 +1338,19 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
               </button>
             </div>
           </div>
+        )}
+        {showWidgetSettings && selectedWidgetForSettings && (
+          <TurnSignalSettingsDialog
+            open={showWidgetSettings}
+            onOpenChange={setShowWidgetSettings}
+            settings={
+              widgets.find((w) => w.id === selectedWidgetForSettings)?.settings?.turnSignal || {
+                countdownEnabled: true,
+                countdownDuration: 30,
+              }
+            }
+            onSave={handleSaveTurnSignalSettings}
+          />
         )}
       </div>
     </div>
