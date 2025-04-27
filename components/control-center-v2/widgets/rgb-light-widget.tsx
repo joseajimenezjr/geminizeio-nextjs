@@ -123,7 +123,7 @@ export function RGBLightWidget({
   }
 
   return (
-    <div className="flex flex-col h-full w-full bg-black rounded-xl text-white p-4 select-none relative">
+    <div className="flex flex-col h-full w-full bg-card rounded-xl text-white p-4 select-none relative">
       {/* Relay position indicator */}
       <div className="absolute top-2 right-2 text-xs text-muted-foreground px-1.5 py-0.5 rounded">
         {relayPositionDisplay}
