@@ -55,7 +55,7 @@ export const WIDGET_SIZES = {
   rgbLight: { w: 1, h: 1 },
   battery: { w: 1, h: 1 },
   temperature: { w: 1, h: 1 },
-  turnSignal: { w: 1, h: 1 },
+  turnSignal: { w: 2, h: 1 },
   "hazard-light": { w: 1, h: 1 },
 }
 
