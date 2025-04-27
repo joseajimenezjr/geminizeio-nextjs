@@ -183,7 +183,7 @@ export function TurnSignalWidget({
         <button
           className={cn(
             "flex flex-1 flex-col items-center justify-center rounded-xl border border-gray-700 text-white transition-colors duration-200",
-            leftActive ? "bg-yellow-500" : "bg-black",
+            leftActive ? "bg-yellow-500" : "bg-muted/50",
           )}
           onClick={handleLeftClick}
           onMouseEnter={() => setIsHovered("left")}
@@ -201,7 +201,7 @@ export function TurnSignalWidget({
         <button
           className={cn(
             "flex flex-1 flex-col items-center justify-center rounded-xl border border-gray-700 text-white transition-colors duration-200",
-            hazardActive ? "bg-red-600" : "bg-black",
+            hazardActive ? "bg-red-600" : "bg-muted/50",
           )}
           onClick={handleHazardClick}
           onMouseEnter={() => setIsHovered("hazard")}
@@ -219,7 +219,7 @@ export function TurnSignalWidget({
         <button
           className={cn(
             "flex flex-1 flex-col items-center justify-center rounded-xl border border-gray-700 text-white transition-colors duration-200",
-            rightActive ? "bg-yellow-500" : "bg-black",
+            rightActive ? "bg-yellow-500" : "bg-muted/50",
           )}
           onClick={handleRightClick}
           onMouseEnter={() => setIsHovered("right")}
