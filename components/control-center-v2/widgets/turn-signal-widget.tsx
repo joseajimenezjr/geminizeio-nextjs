@@ -60,19 +60,34 @@ export function TurnSignalWidget({
   }, [activeSignal])
 
   const handleLeftClick = useCallback(() => {
+    // If hazard is active, don't allow individual turn signals
+    if (activeSignal === "hazard") return
+
     setActiveSignal((prev) => (prev === "left" ? null : "left"))
     onLeft()
-  }, [onLeft])
+  }, [onLeft, activeSignal])
 
   const handleRightClick = useCallback(() => {
+    // If hazard is active, don't allow individual turn signals
+    if (activeSignal === "hazard") return
+
     setActiveSignal((prev) => (prev === "right" ? null : "right"))
     onRight()
-  }, [onRight])
+  }, [onRight, activeSignal])
 
   const handleHazardClick = useCallback(() => {
     setActiveSignal((prev) => (prev === "hazard" ? null : "hazard"))
     onHazard()
   }, [onHazard])
+
+  // Determine if left arrow should be lit
+  const leftActive = (activeSignal === "left" && isFlashing) || (activeSignal === "hazard" && isFlashing)
+
+  // Determine if right arrow should be lit
+  const rightActive = (activeSignal === "right" && isFlashing) || (activeSignal === "hazard" && !isFlashing)
+
+  // Determine if hazard should be lit
+  const hazardActive = activeSignal === "hazard" && isFlashing
 
   return (
     <div className="p-4 bg-black rounded-xl border border-gray-800 w-full h-full flex flex-col">
@@ -81,7 +96,7 @@ export function TurnSignalWidget({
         <button
           className={cn(
             "flex flex-1 items-center justify-center rounded-xl border border-gray-700 text-white hover:bg-gray-900 transition-colors duration-200",
-            activeSignal === "left" && isFlashing && "bg-yellow-500",
+            leftActive && "bg-yellow-500",
           )}
           onClick={handleLeftClick}
           aria-label="Activate Left Turn Signal"
@@ -92,7 +107,7 @@ export function TurnSignalWidget({
         <button
           className={cn(
             "flex flex-1 items-center justify-center rounded-xl border border-gray-700 text-white hover:bg-gray-900 transition-colors duration-200",
-            activeSignal === "hazard" && isFlashing && "bg-red-600",
+            hazardActive && "bg-red-600",
           )}
           onClick={handleHazardClick}
           aria-label="Toggle Hazard Lights"
@@ -103,7 +118,7 @@ export function TurnSignalWidget({
         <button
           className={cn(
             "flex flex-1 items-center justify-center rounded-xl border border-gray-700 text-white hover:bg-gray-900 transition-colors duration-200",
-            activeSignal === "right" && isFlashing && "bg-yellow-500",
+            rightActive && "bg-yellow-500",
           )}
           onClick={handleRightClick}
           aria-label="Activate Right Turn Signal"
