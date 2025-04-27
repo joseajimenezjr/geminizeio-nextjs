@@ -98,8 +98,8 @@ export function BatteryWidget({
         {batteryLevel}%{isCharging && <span className="text-green-500 ml-1">⚡</span>}
       </div>
 
-      <div className="w-full bg-gray-700 rounded-full h-2.5">
-        <div className={`h-2.5 rounded-full ${getColorClass()}`} style={{ width: `${batteryLevel}%` }}></div>
+      <div className="w-full bg-gray-700 rounded-full h-12">
+        <div className={`h-12 rounded-full ${getColorClass()}`} style={{ width: `${batteryLevel}%` }}></div>
       </div>
 
       <div className="text-xs text-muted-foreground mt-2">
