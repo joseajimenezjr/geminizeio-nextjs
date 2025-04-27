@@ -163,7 +163,7 @@ export function ChaseLightWidget({
         {/* Toggle button */}
         <button
           className={cn(
-            "w-20 h-20 rounded-full border-4 transition-all flex items-center justify-center",
+            "w-24 h-24 rounded-full border-4 transition-all flex items-center justify-center",
             isOn
               ? "bg-green-500 border-green-700 text-white"
               : "bg-muted/50 border-muted-foreground/20 text-muted-foreground",
@@ -177,7 +177,7 @@ export function ChaseLightWidget({
         {/* Shuffle button */}
         <button
           className={cn(
-            "w-20 h-20 rounded-full border-4 transition-all flex items-center justify-center",
+            "w-24 h-24 rounded-full border-4 transition-all flex items-center justify-center",
             shuffleActive
               ? "bg-yellow-400 border-yellow-500 text-white"
               : "bg-muted/50 border-muted-foreground/20 text-muted-foreground",
