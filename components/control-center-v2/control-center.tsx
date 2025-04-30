@@ -118,7 +118,19 @@ interface ControlCenterV2Props {
 export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props) {
   const { accessories, toggleAccessoryStatus, isLoading, updateAccessoryAttribute } = useAccessories()
   const { toast } = useToast()
-  const [isEditing, setIsEditing] = useState(false)
+  const [isEditing, setIsEditing] = useState<boolean>(false)
+
+  useEffect(() => {
+    console.log("ControlCenterV2 component rendered")
+    return () => {
+      console.log("ControlCenterV2 component unmounted")
+    }
+  }, [])
+
+  useEffect(() => {
+    console.log("isEditing state changed:", isEditing)
+  }, [isEditing])
+
   const [showLibrary, setShowLibrary] = useState(false)
   const [layouts, setLayouts] = useState<any>({
     lg: [],
@@ -457,9 +469,13 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
 
   // Start editing mode
   const handleStartEditing = () => {
+    console.log("Starting edit mode")
+    // Store the current layouts and widgets before editing
     setOriginalLayouts(JSON.parse(JSON.stringify(layouts)))
     setOriginalWidgets(JSON.parse(JSON.stringify(widgets)))
+    // Force the edit mode to be true
     setIsEditing(true)
+    console.log("Edit mode should now be enabled")
   }
 
   // Cancel editing
@@ -1203,7 +1219,15 @@ export function ControlCenterV2({ userData, setUserData }: ControlCenterV2Props)
               </Button>
             </>
           ) : (
-            <Button variant="outline" size="sm" onClick={handleStartEditing} className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                console.log("Edit Layout button clicked")
+                handleStartEditing()
+              }}
+              className="flex items-center gap-1"
+            >
               <Settings className="h-4 w-4" />
               Edit Layout
             </Button>

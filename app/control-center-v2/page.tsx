@@ -199,6 +199,8 @@ export default function ControlCenterV2Page() {
         {/* Add the AutoConnectHandler component */}
         <AutoConnectHandler />
 
+        {console.log("Rendering control center with userData:", userData)}
+
         {screenToShow === "add-hub" && (
           <div className="flex flex-col items-center justify-center h-full text-center space-y-6 py-12">
             <h2 className="text-2xl font-bold">Welcome to a new way of managing your off-road accessories</h2>
