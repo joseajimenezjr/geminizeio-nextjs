@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { ArrowLeft, ArrowRight, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -124,6 +123,59 @@ export function TurnSignalWidget({
     onHazard()
   }
 
+  // Custom large icons using SVG directly instead of Lucide components
+  const LargeLeftArrow = () => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="80"
+      height="80"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m12 19-7-7 7-7" />
+      <path d="M19 12H5" />
+    </svg>
+  )
+
+  const LargeRightArrow = () => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="80"
+      height="80"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m12 5 7 7-7 7" />
+      <path d="M5 12h14" />
+    </svg>
+  )
+
+  const LargeHazard = () => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="80"
+      height="80"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+      <path d="M12 9v4" />
+      <path d="M12 17h.01" />
+    </svg>
+  )
+
   return (
     <div className="p-4 pb-2 h-full flex flex-col" data-turn-signal-widget="true">
       <div className="text-sm font-medium mb-2">{title}</div>
@@ -131,7 +183,7 @@ export function TurnSignalWidget({
         <Button
           variant="outline"
           className={cn(
-            "flex-1 relative h-full flex flex-col items-center justify-center overflow-hidden",
+            "flex-1 relative h-full flex flex-col items-center justify-center overflow-hidden p-0",
             activeSignal === "left" && "bg-amber-500 text-white hover:bg-amber-600 hover:text-white",
           )}
           onClick={handleLeftClick}
@@ -157,18 +209,18 @@ export function TurnSignalWidget({
                 </svg>
               </div>
               <div className="flex flex-col items-center justify-center z-10">
-                <ArrowLeft className="h-40 w-40" />
+                <LargeLeftArrow />
                 {countdown > 0 && <div className="text-sm mt-2">{countdown}s</div>}
               </div>
             </div>
           ) : (
-            <ArrowLeft className="h-40 w-40" />
+            <LargeLeftArrow />
           )}
         </Button>
         <Button
           variant="outline"
           className={cn(
-            "flex-1 relative h-full flex flex-col items-center justify-center overflow-hidden",
+            "flex-1 relative h-full flex flex-col items-center justify-center overflow-hidden p-0",
             activeSignal === "hazard" && "bg-red-500 text-white hover:bg-red-600 hover:text-white",
           )}
           onClick={handleHazardClick}
@@ -194,18 +246,18 @@ export function TurnSignalWidget({
                 </svg>
               </div>
               <div className="flex flex-col items-center justify-center z-10">
-                <AlertTriangle className="h-40 w-40" />
+                <LargeHazard />
                 {countdown > 0 && <div className="text-sm mt-2">{countdown}s</div>}
               </div>
             </div>
           ) : (
-            <AlertTriangle className="h-40 w-40" />
+            <LargeHazard />
           )}
         </Button>
         <Button
           variant="outline"
           className={cn(
-            "flex-1 relative h-full flex flex-col items-center justify-center overflow-hidden",
+            "flex-1 relative h-full flex flex-col items-center justify-center overflow-hidden p-0",
             activeSignal === "right" && "bg-amber-500 text-white hover:bg-amber-600 hover:text-white",
           )}
           onClick={handleRightClick}
@@ -231,12 +283,12 @@ export function TurnSignalWidget({
                 </svg>
               </div>
               <div className="flex flex-col items-center justify-center z-10">
-                <ArrowRight className="h-40 w-40" />
+                <LargeRightArrow />
                 {countdown > 0 && <div className="text-sm mt-2">{countdown}s</div>}
               </div>
             </div>
           ) : (
-            <ArrowRight className="h-40 w-40" />
+            <LargeRightArrow />
           )}
         </Button>
       </div>
