@@ -131,7 +131,7 @@ export function TurnSignalWidget({
         <Button
           variant="outline"
           className={cn(
-            "flex-1 relative h-full flex flex-col items-center justify-center",
+            "flex-1 relative h-full flex flex-col items-center justify-center overflow-hidden",
             activeSignal === "left" && "bg-amber-500 text-white hover:bg-amber-600 hover:text-white",
           )}
           onClick={handleLeftClick}
@@ -157,18 +157,18 @@ export function TurnSignalWidget({
                 </svg>
               </div>
               <div className="flex flex-col items-center justify-center z-10">
-                <ArrowLeft className="h-8 w-8 mb-1" />
-                {countdown > 0 && <div className="text-xs">{countdown}s</div>}
+                <ArrowLeft className="h-40 w-40" />
+                {countdown > 0 && <div className="text-sm mt-2">{countdown}s</div>}
               </div>
             </div>
           ) : (
-            <ArrowLeft className="h-8 w-8" />
+            <ArrowLeft className="h-40 w-40" />
           )}
         </Button>
         <Button
           variant="outline"
           className={cn(
-            "flex-1 relative h-full flex flex-col items-center justify-center",
+            "flex-1 relative h-full flex flex-col items-center justify-center overflow-hidden",
             activeSignal === "hazard" && "bg-red-500 text-white hover:bg-red-600 hover:text-white",
           )}
           onClick={handleHazardClick}
@@ -194,18 +194,18 @@ export function TurnSignalWidget({
                 </svg>
               </div>
               <div className="flex flex-col items-center justify-center z-10">
-                <AlertTriangle className="h-8 w-8 mb-1" />
-                {countdown > 0 && <div className="text-xs">{countdown}s</div>}
+                <AlertTriangle className="h-40 w-40" />
+                {countdown > 0 && <div className="text-sm mt-2">{countdown}s</div>}
               </div>
             </div>
           ) : (
-            <AlertTriangle className="h-8 w-8" />
+            <AlertTriangle className="h-40 w-40" />
           )}
         </Button>
         <Button
           variant="outline"
           className={cn(
-            "flex-1 relative h-full flex flex-col items-center justify-center",
+            "flex-1 relative h-full flex flex-col items-center justify-center overflow-hidden",
             activeSignal === "right" && "bg-amber-500 text-white hover:bg-amber-600 hover:text-white",
           )}
           onClick={handleRightClick}
@@ -231,12 +231,12 @@ export function TurnSignalWidget({
                 </svg>
               </div>
               <div className="flex flex-col items-center justify-center z-10">
-                <ArrowRight className="h-8 w-8 mb-1" />
-                {countdown > 0 && <div className="text-xs">{countdown}s</div>}
+                <ArrowRight className="h-40 w-40" />
+                {countdown > 0 && <div className="text-sm mt-2">{countdown}s</div>}
               </div>
             </div>
           ) : (
-            <ArrowRight className="h-8 w-8" />
+            <ArrowRight className="h-40 w-40" />
           )}
         </Button>
       </div>
