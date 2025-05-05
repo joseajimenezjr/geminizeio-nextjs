@@ -57,6 +57,8 @@ export function LoginForm() {
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [confirmPasswordError, setConfirmPasswordError] = useState<string | null>(null)
   const [passwordMatch, setPasswordMatch] = useState<boolean>(false)
+  // New state to track whether to bypass the automatic redirect
+  const [bypassRedirect, setBypassRedirect] = useState(false)
 
   // State to track if we're in registration mode
   const [isRegistering, setIsRegistering] = useState(false)
@@ -95,7 +97,8 @@ export function LoginForm() {
           return
         }
 
-        if (session) {
+        // Only redirect if we're not in the post-registration state
+        if (session && !bypassRedirect) {
           router.push("/control-center-v2")
           router.refresh()
         }
@@ -105,7 +108,7 @@ export function LoginForm() {
     }
 
     checkSession()
-  }, [supabase.auth, router])
+  }, [supabase.auth, router, bypassRedirect])
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -199,7 +202,8 @@ export function LoginForm() {
         // Log success details
         console.log("Signup successful:", result)
 
-        setMessage("Account created! Check your email for the confirmation link.")
+        // Set bypass redirect flag to prevent automatic redirects
+        setBypassRedirect(true)
 
         // Reset the form
         setSignUpData({
@@ -214,27 +218,16 @@ export function LoginForm() {
           vehicleYear: "",
         })
 
-        // Show a message before redirecting to signin tab
-        setMessage("Account created successfully! Redirecting to login page...")
+        // Switch to the signin form
+        setIsRegistering(false)
 
-        // Wait a moment before switching to the signin form
-        setTimeout(() => {
-          // Switch to the signin form
-          setIsRegistering(false)
+        // Pre-fill the email field for convenience
+        setEmail(updatedSignUpData.email)
 
-          // Pre-fill the email field for convenience
-          setEmail(updatedSignUpData.email)
-
-          // Clear the signup message after switching forms
-          setMessage("Account created! You can now sign in with your credentials.")
-
-          // If we have a redirect URL from the server, use it
-          if (result.redirectUrl) {
-            setTimeout(() => {
-              router.push(result.redirectUrl)
-            }, 1000)
-          }
-        }, 1500)
+        // Show a clear message about checking email
+        setMessage(
+          "Account created! Please check your email for a confirmation link to activate your account. You'll need to verify your email before you can log in.",
+        )
       }
     } catch (error: any) {
       console.error("Error in signup form:", error)
@@ -367,7 +360,7 @@ export function LoginForm() {
               </Alert>
             )}
             {message && (
-              <Alert>
+              <Alert className={message.includes("check your email") ? "bg-blue-50 border-blue-200 text-blue-800" : ""}>
                 <AlertDescription>{message}</AlertDescription>
               </Alert>
             )}
