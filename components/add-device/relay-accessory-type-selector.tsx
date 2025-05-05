@@ -9,7 +9,7 @@ interface RelayAccessoryTypeOption {
   id: string
   title: string
   description: string
-  icon: React.ElementType
+  icon: React.ElementqType
   color: string
   bgColor: string
 }
@@ -22,33 +22,49 @@ export function RelayAccessoryTypeSelector({ onSelect }: RelayAccessoryTypeSelec
   const accessoryTypes: RelayAccessoryTypeOption[] = [
     {
       id: "light",
-      title: "Light",
-      description: "Control lighting through your Relay Hub",
+      title: "Toggle Light",
+      description: "Control toggle lighting, for example a light bar with just an on/off switch.",
       icon: Lightbulb,
       color: "text-amber-500",
       bgColor: "bg-amber-500/10",
     },
     {
-      id: "fan",
-      title: "Fan",
-      description: "Control fans through your Relay Hub",
+      id: "winch",
+      title: "winch",
+      description: "Control your winch to pull or loosen the rope.",
       icon: Fan,
       color: "text-cyan-500",
       bgColor: "bg-cyan-500/10",
     },
     {
-      id: "outlet",
-      title: "Smart Outlet",
-      description: "Control power outlets through your Relay Hub",
-      icon: Plug,
+      id: "chaseLight",
+      title: "Light with Trigger",
+      description: "Control your toggle light which supports triggering different patterns.",
+      icon: Lightbulb,
       color: "text-green-500",
       bgColor: "bg-green-500/10",
     },
     {
-      id: "thermostat",
-      title: "Thermostat",
-      description: "Control temperature through your Relay Hub",
+      id: "rgbLight",
+      title: "RGB Light",
+      description: "Control your RGB lights using a 433mhz transmitter.",
+      icon: Lightbulb,
+      color: "text-red-500",
+      bgColor: "bg-red-500/10",
+    },
+    {
+      id: "temp_reader",
+      title: "Clutch Belt Thermometer",
+      description: "Monitor the temperature of your clutch belt.",
       icon: Thermometer,
+      color: "text-red-500",
+      bgColor: "bg-red-500/10",
+    },
+    {
+      id: "voltage_reader",
+      title: "Voltage Reader",
+      description: "Monitor the voltage of your battery.",
+      icon: Lightbulb,
       color: "text-red-500",
       bgColor: "bg-red-500/10",
     },
